@@ -1,0 +1,12 @@
+export { authService } from './auth.service';
+export { userService } from './user.service';
+export { trackerService } from './tracker.service';
+export { challengesService } from './challenges.service';
+export { workoutsService } from './workouts.service';
+export { postsService } from './posts.service';
+export { groupsService } from './groups.service';
+export { socialService } from './social.service';
+export { marketplaceService } from './marketplace.service';
+export { earnService } from './earn.service';
+export { mealsService } from './meals.service';
+export { fastingService } from './fasting.service';

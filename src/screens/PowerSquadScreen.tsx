@@ -1,0 +1,227 @@
+import React from 'react';
+import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import Avatar from '../components/Avatar';
+import SectionHeader from '../components/SectionHeader';
+import { colors, radii, shadow, spacing } from '../theme';
+import { powerSquad, groupActions, groupActivity } from '../data/powerSquadData';
+
+export default function PowerSquadScreen() {
+  const navigation = useNavigation();
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Power Squad</Text>
+        <Ionicons name="ellipsis-horizontal" size={20} color={colors.textPrimary} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Image source={{ uri: powerSquad.cover }} style={styles.cover} />
+
+        <View style={styles.body}>
+          <View style={styles.avatarStack}>
+            {powerSquad.members.map((uri, i) => (
+              <View key={uri} style={[styles.avatarStackItem, { marginLeft: i === 0 ? 0 : -14 }]}>
+                <Avatar uri={uri} size={40} />
+              </View>
+            ))}
+            <View style={[styles.avatarStackMore, { marginLeft: -14 }]}>
+              <Text style={styles.avatarStackMoreText}>+{powerSquad.memberCount - powerSquad.members.length}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.groupName}>{powerSquad.name}</Text>
+          <Text style={styles.groupMeta}>Private Group • {powerSquad.memberCount} Members</Text>
+          <Text style={styles.groupDescription}>{powerSquad.description}</Text>
+
+          <View style={styles.actionsRow}>
+            {groupActions.map((action) => (
+              <TouchableOpacity key={action.id} style={styles.actionItem} activeOpacity={0.75}>
+                <View style={styles.actionIcon}>
+                  <Ionicons name={action.icon} size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.actionLabel}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <SectionHeader title="Group Activity" style={{ marginTop: spacing.xl }} />
+          {groupActivity.map((activity) => (
+            <View key={activity.id} style={[styles.activityCard, shadow.card]}>
+              <View style={styles.activityHeader}>
+                <Avatar uri={activity.avatar} size={36} />
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityName}>
+                    {activity.name} <Text style={styles.activityAction}>completed a workout</Text>
+                  </Text>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
+                </View>
+                <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
+              </View>
+              <Text style={styles.activityCaption}>{activity.caption}</Text>
+              <View style={styles.activityFooter}>
+                <View style={styles.footerItem}>
+                  <Ionicons name="heart-outline" size={16} color={colors.textSecondary} />
+                  <Text style={styles.footerText}>{activity.likes}</Text>
+                </View>
+                <View style={styles.footerItem}>
+                  <Ionicons name="chatbubble-outline" size={15} color={colors.textSecondary} />
+                  <Text style={styles.footerText}>{activity.comments}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  pageTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  cover: {
+    width: '100%',
+    height: 160,
+    backgroundColor: colors.border,
+  },
+  body: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  avatarStack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: -32,
+  },
+  avatarStackItem: {
+    borderWidth: 2.5,
+    borderColor: colors.background,
+    borderRadius: 22,
+  },
+  avatarStackMore: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    borderColor: colors.background,
+  },
+  avatarStackMoreText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  groupName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+  },
+  groupMeta: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  groupDescription: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+    lineHeight: 18,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+  },
+  actionItem: {
+    alignItems: 'center',
+  },
+  actionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  activityCard: {
+    backgroundColor: colors.card,
+    borderRadius: radii.xl,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activityInfo: {
+    flex: 1,
+    marginLeft: spacing.sm,
+  },
+  activityName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  activityAction: {
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  activityTime: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  activityCaption: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+  },
+  activityFooter: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  footerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  footerText: {
+    fontSize: 11.5,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+});

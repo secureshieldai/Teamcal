@@ -1,0 +1,71 @@
+import { useState } from 'react';
+import { useApiQuery } from './useApiQuery';
+import { postsService } from '../services/api/posts.service';
+import { groupsService } from '../services/api/groups.service';
+import type { Post, Group } from '../types/api';
+
+export function useFeed() {
+  // GET /api/posts/feed
+  const { data: posts, loading, error, refetch } = useApiQuery(
+    () => postsService.getFeed(),
+    [] as Post[],
+    []
+  );
+
+  // Map backend post shape → PostCard shape, fallback to mock
+  const mappedPosts = posts.map((p) => ({
+        id: p.id,
+        authorName: p.user?.name ?? 'Unknown',
+        authorAvatar: p.user?.avatar ?? '',
+        time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        caption: p.text,
+        photos: p.image ? [p.image] : [],
+        likes: p.likes,
+        comments: 0,
+      }));
+
+  return { posts: mappedPosts, loading, error, refetch };
+}
+
+export function useGroups() {
+  // GET /api/groups
+  const { data: groups, loading, refetch } = useApiQuery(
+    () => groupsService.getMyGroups(),
+    [] as Group[],
+    []
+  );
+  return { groups, loading, refetch };
+}
+
+export function useGroupDetail(id: string) {
+  return useApiQuery(
+    () => groupsService.get(id),
+    null,
+    [id]
+  );
+}
+
+export function useGroupActivity(id: string) {
+  // GET /api/groups/:id/activity — returns { posts }
+  return useApiQuery(
+    () => groupsService.getActivity(id),
+    [] as Post[],
+    [id]
+  );
+}
+
+export function useCreatePost() {
+  const [loading, setLoading] = useState(false);
+
+  // POST /api/posts
+  const createPost = async (text: string, image?: string, community?: string) => {
+    setLoading(true);
+    try {
+      return await postsService.create({ text, image, community });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { createPost, loading };
+}

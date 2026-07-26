@@ -1,0 +1,61 @@
+import { apiClient } from './client';
+import { storage } from '../storage';
+import type { AuthResponse, RegistrationResponse, User } from '../../types/api';
+
+export const authService = {
+  async register(email: string, password: string, name: string, referralCode?: string) {
+    const { data } = await apiClient.post<RegistrationResponse>('/auth/register', {
+      email, password, name, referralCode,
+    });
+    return data;
+  },
+
+  async verifyEmail(verificationToken: string, code: string) {
+    const { data } = await apiClient.post<AuthResponse>('/auth/verification/verify', {
+      verificationToken,
+      code,
+    });
+    await storage.setToken(data.token);
+    await storage.setUser(data.user);
+    return data;
+  },
+
+  async resendVerification(verificationToken: string) {
+    const { data } = await apiClient.post<{ success: boolean; message: string }>(
+      '/auth/verification/resend',
+      { verificationToken }
+    );
+    return data;
+  },
+
+  async login(email: string, password: string) {
+    const { data } = await apiClient.post<AuthResponse>('/auth/login', { email, password });
+    await storage.setToken(data.token);
+    await storage.setUser(data.user);
+    return data;
+  },
+
+  async firebase(idToken: string) {
+    const { data } = await apiClient.post<AuthResponse>('/auth/firebase', { idToken });
+    await storage.setToken(data.token);
+    await storage.setUser(data.user);
+    return data;
+  },
+
+  async me() {
+    const { data } = await apiClient.get<{ success: boolean; user: User }>('/auth/me');
+    await storage.setUser(data.user);
+    return data.user;
+  },
+
+  async logout() {
+    await storage.clear();
+  },
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    const { data } = await apiClient.patch<{ success: boolean; message: string }>('/auth/password', {
+      currentPassword, newPassword,
+    });
+    return data;
+  },
+};
