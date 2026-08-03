@@ -8,6 +8,8 @@ import StatusBadge from './components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
 import { pdfs, type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
+import { useEarnAssets } from '../../hooks/useEarnAssets';
+import CreateAssetModal from './components/CreateAssetModal';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
@@ -20,10 +22,10 @@ const UPLOAD_OPTIONS = [
   { key: 'combine', label: 'Combine Posts', icon: 'copy-outline' },
 ] as const;
 
-const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
-
 export default function PDFsTab({ navigation }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
+  const [createOption,setCreateOption]=useState<(typeof UPLOAD_OPTIONS)[number]|null>(null);
+  const userAssets=useEarnAssets('pdf');
 
   const totals = useMemo(
     () => ({
@@ -65,7 +67,7 @@ export default function PDFsTab({ navigation }: Props) {
       <Text style={styles.sectionTitle}>Upload or Create a PDF</Text>
       <View style={styles.optionsGrid}>
         {UPLOAD_OPTIONS.map((opt) => (
-          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => comingSoon(opt.label)}>
+          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => setCreateOption(opt)}>
             <View style={styles.optionIcon}>
               <Ionicons name={opt.icon as keyof typeof Ionicons.glyphMap} size={18} color={colors.primary} />
             </View>
@@ -77,9 +79,15 @@ export default function PDFsTab({ navigation }: Props) {
       <View style={styles.sectionHeaderRow}>
         <Text style={styles.sectionTitle}>Your PDFs</Text>
       </View>
+      {userAssets.error?<Text style={styles.itemMeta}>Could not load your PDFs: {userAssets.error}</Text>:null}
+      <View style={{ gap: spacing.md }}>
+        {userAssets.assets.map((pdf)=><TouchableOpacity key={pdf.id} style={[styles.itemCard,shadow.soft]} onPress={async()=>{try{await userAssets.update(pdf.id,{status:pdf.status==='published'?'draft':'published'});}catch(e){Alert.alert('Unable to update',(e as Error).message);}}}><Image source={{uri:pdf.image||`https://picsum.photos/seed/${pdf.id}/300/400`}} style={styles.pdfCover}/><View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{pdf.title}</Text><StatusBadge status={pdf.status}/></View><Text style={styles.itemMeta}>{pdf.subtype} · ${Number(pdf.price).toFixed(2)}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{pdf.metrics?.views||0} Views</Text><Text style={styles.itemStat}>{pdf.metrics?.purchases||0} Purchases</Text><Text style={styles.itemStat}>${pdf.metrics?.earned||0} Earned</Text></View></View></TouchableOpacity>)}
+        {!userAssets.loading&&!userAssets.assets.length?<Text style={styles.itemMeta}>No personal PDFs yet. Create one above.</Text>:null}
+      </View>
+      <Text style={styles.sectionTitle}>Showcase PDFs</Text>
       <View style={{ gap: spacing.md, marginBottom: spacing.xxl }}>
         {pdfs.map((pdf) => (
-          <TouchableOpacity key={pdf.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => comingSoon('PDF dashboard')}>
+          <TouchableOpacity key={pdf.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase PDF','This example is separate from your saved PDFs.')}>
             <Image source={{ uri: pdf.cover }} style={styles.pdfCover} />
             <View style={{ flex: 1 }}>
               <View style={styles.itemTopRow}>
@@ -100,6 +108,7 @@ export default function PDFsTab({ navigation }: Props) {
           </TouchableOpacity>
         ))}
       </View>
+      <CreateAssetModal visible={Boolean(createOption)} heading="Create PDF" subtype={createOption?.label||''} onClose={()=>setCreateOption(null)} onSubmit={value=>userAssets.create({kind:'pdf',subtype:createOption?.key||'upload',...value}).then(()=>{})}/>
     </ScrollView>
   );
 }

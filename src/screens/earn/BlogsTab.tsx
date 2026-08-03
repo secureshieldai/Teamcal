@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,8 @@ import MiniLineChart from '../../components/charts/MiniLineChart';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
 import { blogs, blogPosts, blogPerformanceTrend, type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
+import { useFocusEffect } from '@react-navigation/native';
+import { blogsService, type BlogSite } from '../../services/api/blogs.service';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
@@ -20,6 +22,9 @@ const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} i
 export default function BlogsTab({ navigation }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
   const [sort, setSort] = useState(SORT_OPTIONS[0]);
+  const [userBlogs,setUserBlogs]=useState<BlogSite[]>([]);
+  const [loadError,setLoadError]=useState('');
+  useFocusEffect(useCallback(()=>{let active=true;blogsService.sites().then(data=>{if(active){setUserBlogs(data);setLoadError('');}}).catch(e=>active&&setLoadError((e as Error).message));return()=>{active=false};},[]));
 
   const totals = useMemo(
     () => ({
@@ -55,7 +60,7 @@ export default function BlogsTab({ navigation }: Props) {
       </TouchableOpacity>
 
       <View style={styles.statsGrid}>
-        <StatCard label="My Blogs" value={String(totals.blogCount)} icon="albums-outline" />
+        <StatCard label="My Blogs" value={String(userBlogs.length)} icon="albums-outline" />
         <StatCard label="Published Posts" value={String(totals.posts)} icon="document-text-outline" />
         <StatCard label="Total Views" value={totals.views.toLocaleString()} icon="eye-outline" />
         <StatCard label="Total Earnings" value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="cash-outline" />
@@ -88,8 +93,15 @@ export default function BlogsTab({ navigation }: Props) {
       </View>
 
       <View style={{ gap: spacing.md }}>
+        {loadError?<Text style={styles.blogUrl}>Could not load your blogs: {loadError}</Text>:null}
+        {userBlogs.map(blog=><TouchableOpacity key={blog.id} style={[styles.blogCard,shadow.soft]} activeOpacity={0.85} onPress={()=>navigation.navigate('BlogDashboard',{blogId:blog.id})}><Image source={{uri:blog.cover||`https://picsum.photos/seed/${blog.id}/500/280`}} style={styles.blogCover}/><View style={styles.blogInfo}><View style={styles.blogTopRow}><Text style={styles.blogName} numberOfLines={1}>{blog.name}</Text><StatusBadge status={blog.status||'draft'}/></View><Text style={styles.blogUrl} numberOfLines={1}>{blog.slug}.teamcal.blog</Text><View style={styles.categoryPill}><Text style={styles.categoryPillText}>{blog.category||'General'}</Text></View><View style={styles.blogStatsRow}><Text style={styles.blogStat}>Saved to your account</Text></View></View><Ionicons name="chevron-forward" size={18} color={colors.textMuted}/></TouchableOpacity>)}
+        {!loadError&&!userBlogs.length?<Text style={styles.blogUrl}>No personal blogs yet. Create one above.</Text>:null}
+      </View>
+
+      <Text style={styles.sectionTitle}>Showcase Blogs</Text>
+      <View style={{ gap: spacing.md }}>
         {sortedBlogs.map((blog) => (
-          <TouchableOpacity key={blog.id} style={[styles.blogCard, shadow.soft]} activeOpacity={0.85} onPress={() => navigation.navigate('BlogDashboard', { blogId: blog.id })}>
+          <TouchableOpacity key={blog.id} style={[styles.blogCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase blog','This example demonstrates how your own saved blog will appear.')}>
             <Image source={{ uri: blog.cover }} style={styles.blogCover} />
             <View style={styles.blogInfo}>
               <View style={styles.blogTopRow}>

@@ -4,6 +4,87 @@ const { notifySafely } = require("../services/notification.service");
 const { getStripe } = require("../config/stripe");
 const { updateConnectedAccount } = require("./stripe.controller");
 
+const ASSET_KINDS = new Set(["pdf", "video", "store", "membership", "campaign"]);
+const ASSET_STATUSES = new Set(["draft", "processing", "published", "paused", "scheduled", "under-review"]);
+
+async function getAssets(req, res, next) {
+  try {
+    let query = supabase.from("user_records").select("*").eq("user_id", req.user.id).like("kind", "earn-%").order("created_at", { ascending: false });
+    if (req.query.kind) {
+      if (!ASSET_KINDS.has(req.query.kind)) return res.status(400).json({ success: false, message: "Invalid asset kind" });
+      query = query.eq("kind", `earn-${req.query.kind}`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    const assets = (data || []).map((record) => ({ id: record.id, kind: record.kind.slice(5), status: record.status, created_at: record.created_at, updated_at: record.updated_at, ...record.data }));
+    res.json({ success: true, assets });
+  } catch (err) { next(err); }
+}
+
+async function createAsset(req, res, next) {
+  try {
+    const { kind, subtype = "", title, description = "", image = null, status = "draft", price = 0, currency = "USD", metadata = {} } = req.body;
+    if (!ASSET_KINDS.has(kind)) return res.status(400).json({ success: false, message: "Invalid asset kind" });
+    if (!String(title || "").trim()) return res.status(400).json({ success: false, message: "Title is required" });
+    if (!ASSET_STATUSES.has(status)) return res.status(400).json({ success: false, message: "Invalid asset status" });
+    const assetData = { subtype, title: String(title).trim(), description, image, price: Number(price) || 0, currency: String(currency).toUpperCase(), metrics: {}, metadata };
+    const { data, error } = await supabase.from("user_records").insert({ user_id: req.user.id, kind: `earn-${kind}`, data: assetData, status }).select().single();
+    if (error) throw error;
+    res.status(201).json({ success: true, asset: { id: data.id, kind, status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
+  } catch (err) { next(err); }
+}
+
+async function updateAsset(req, res, next) {
+  try {
+    const { data: existing, error: findError } = await supabase.from("user_records").select("*").eq("id", req.params.id).eq("user_id", req.user.id).like("kind", "earn-%").maybeSingle();
+    if (findError) throw findError;
+    if (!existing) return res.status(404).json({ success: false, message: "Creator asset not found" });
+    if (req.body.status && !ASSET_STATUSES.has(req.body.status)) return res.status(400).json({ success: false, message: "Invalid asset status" });
+    const allowed = ["subtype", "title", "description", "image", "price", "currency", "metadata"];
+    const assetData = { ...existing.data, ...Object.fromEntries(allowed.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]])) };
+    const { data, error } = await supabase.from("user_records").update({ data: assetData, status: req.body.status || existing.status }).eq("id", req.params.id).eq("user_id", req.user.id).select().maybeSingle();
+    if (error) throw error;
+    res.json({ success: true, asset: { id: data.id, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
+  } catch (err) { next(err); }
+}
+
+async function deleteAsset(req, res, next) {
+  try {
+    const { data, error } = await supabase.from("user_records").delete().eq("id", req.params.id).eq("user_id", req.user.id).like("kind", "earn-%").select("id").maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ success: false, message: "Creator asset not found" });
+    res.json({ success: true });
+  } catch (err) { next(err); }
+}
+
+async function getSummary(req, res, next) {
+  try {
+    const [entryResult, payoutResult, assetResult, blogResult, articleResult, productResult, orderResult, referralResult] = await Promise.all([
+      supabase.from("earn_entries").select("*").eq("user_id", req.user.id).order("created_at", { ascending: false }),
+      supabase.from("payouts").select("*").eq("user_id", req.user.id).maybeSingle(),
+      supabase.from("user_records").select("kind,status,data").eq("user_id", req.user.id).like("kind", "earn-%"),
+      supabase.from("blog_sites").select("id,status").eq("user_id", req.user.id),
+      supabase.from("articles").select("earned,created_at").eq("user_id", req.user.id),
+      supabase.from("marketplace_products").select("id,price,sold_count,is_active").eq("seller_id", req.user.id),
+      supabase.from("marketplace_orders").select("total_amount,platform_fee_amount,status,paid_at,created_at").eq("seller_id", req.user.id),
+      supabase.from("referrals").select("id,status,reward").eq("referrer_id", req.user.id),
+    ]);
+    for (const result of [entryResult, payoutResult, assetResult, blogResult, articleResult, productResult, orderResult, referralResult]) if (result.error) throw result.error;
+    const entries = entryResult.data || [];
+    const monthlyCutoff = Date.now() - 30 * 86400000;
+    const blogEarnings = (articleResult.data || []).reduce((sum, item) => sum + Number(item.earned || 0), 0);
+    const paidOrders = (orderResult.data || []).filter((item) => item.status === "paid" || item.status === "complete" || item.status === "completed");
+    const storeEarnings = paidOrders.reduce((sum, item) => sum + Math.max(0, Number(item.total_amount || 0) - Number(item.platform_fee_amount || 0)) / 100, 0);
+    const monthlyBlog = (articleResult.data || []).filter((item) => new Date(item.created_at).getTime() >= monthlyCutoff).reduce((sum, item) => sum + Number(item.earned || 0), 0);
+    const monthlyStore = paidOrders.filter((item) => new Date(item.paid_at || item.created_at).getTime() >= monthlyCutoff).reduce((sum, item) => sum + Math.max(0, Number(item.total_amount || 0) - Number(item.platform_fee_amount || 0)) / 100, 0);
+    const total = blogEarnings + storeEarnings;
+    const monthly = monthlyBlog + monthlyStore;
+    const payout = payoutResult.data || {};
+    const sourceTotals = { blogs: blogEarnings, stores: storeEarnings };
+    res.json({ success: true, summary: { balance: Number(payout.pending || 0), lifetimeEarnings: total, last30Days: monthly, availableBalance: Number(payout.pending || 0), pendingEarnings: Number(payout.pending || 0), totalWithdrawn: Number(payout.paid_out || 0), sourceTotals, counts: { assets: (assetResult.data || []).length, blogs: (blogResult.data || []).length, products: (productResult.data || []).length, referrals: (referralResult.data || []).length } }, entries, payout, assets: assetResult.data || [] });
+  } catch (err) { next(err); }
+}
+
 /** GET /api/earn/entries */
 async function getEarnEntries(req, res, next) {
   try {
@@ -232,4 +313,5 @@ async function handleReferralJoin(referralCode, newUserId) {
 module.exports = {
   getEarnEntries, getReferrals, inviteReferral, handleReferralJoin,
   getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
+  getSummary, getAssets, createAsset, updateAsset, deleteAsset,
 };

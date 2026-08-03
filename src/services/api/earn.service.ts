@@ -9,8 +9,17 @@ export interface Referral {
   created_at: string;
 }
 export type StripePayout={connected:boolean;provider?:string;stripe_account_id?:string;stripe_details_submitted?:boolean;stripe_charges_enabled?:boolean;stripe_payouts_enabled?:boolean;stripe_account_status?:string;history?:unknown[]};
+export type EarnAssetKind='pdf'|'video'|'store'|'membership'|'campaign';
+export type EarnAssetStatus='draft'|'processing'|'published'|'paused'|'scheduled'|'under-review';
+export type EarnAsset={id:string;kind:EarnAssetKind;subtype:string;title:string;description:string;image?:string|null;status:EarnAssetStatus;price:number;currency:string;metrics:Record<string,number>;metadata:Record<string,unknown>;created_at:string;updated_at:string};
+export type EarnSummary={balance:number;lifetimeEarnings:number;last30Days:number;availableBalance:number;pendingEarnings:number;totalWithdrawn:number;sourceTotals:Record<string,number>;counts:{assets:number;blogs:number;products:number;referrals:number}};
 
 export const earnService = {
+  async getSummary(){const {data}=await apiClient.get<{success:boolean;summary:EarnSummary;entries:EarnEntry[];payout:StripePayout;assets:EarnAsset[]}>('/earn/summary');return data;},
+  async getAssets(kind?:EarnAssetKind){const {data}=await apiClient.get<{success:boolean;assets:EarnAsset[]}>('/earn/assets',{params:{kind}});return data.assets;},
+  async createAsset(value:{kind:EarnAssetKind;subtype?:string;title:string;description?:string;image?:string;status?:EarnAssetStatus;price?:number;currency?:string;metadata?:Record<string,unknown>}){const {data}=await apiClient.post<{success:boolean;asset:EarnAsset}>('/earn/assets',value);return data.asset;},
+  async updateAsset(id:string,value:Partial<Omit<EarnAsset,'id'|'kind'|'created_at'|'updated_at'|'metrics'>>){const {data}=await apiClient.patch<{success:boolean;asset:EarnAsset}>(`/earn/assets/${id}`,value);return data.asset;},
+  async deleteAsset(id:string){await apiClient.delete(`/earn/assets/${id}`);},
   /**
    * GET /api/earn/entries
    * Returns { entries, total, monthly }

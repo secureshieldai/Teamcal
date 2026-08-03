@@ -8,6 +8,8 @@ import StatusBadge from './components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
 import { memberships, membershipActivity, type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
+import { useEarnAssets } from '../../hooks/useEarnAssets';
+import CreateAssetModal from './components/CreateAssetModal';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
@@ -20,10 +22,10 @@ const CREATE_OPTIONS = [
   { key: 'preview', label: 'Preview Community', icon: 'eye-outline' },
 ] as const;
 
-const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
-
 export default function MembershipsTab({ navigation }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
+  const [createOption,setCreateOption]=useState<(typeof CREATE_OPTIONS)[number]|null>(null);
+  const userAssets=useEarnAssets('membership');
 
   const totals = useMemo(
     () => ({
@@ -65,7 +67,7 @@ export default function MembershipsTab({ navigation }: Props) {
       <Text style={styles.sectionTitle}>Create a Paid Community</Text>
       <View style={styles.optionsGrid}>
         {CREATE_OPTIONS.map((opt) => (
-          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => comingSoon(opt.label)}>
+          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => setCreateOption(opt)}>
             <View style={styles.optionIcon}>
               <Ionicons name={opt.icon as keyof typeof Ionicons.glyphMap} size={18} color={colors.primary} />
             </View>
@@ -75,9 +77,12 @@ export default function MembershipsTab({ navigation }: Props) {
       </View>
 
       <Text style={styles.sectionTitle}>Your Communities</Text>
+      {userAssets.error?<Text style={styles.itemMeta}>Could not load your communities: {userAssets.error}</Text>:null}
+      <View style={{gap:spacing.md}}>{userAssets.assets.map(membership=><TouchableOpacity key={membership.id} style={[styles.itemCard,shadow.soft]} onPress={async()=>{try{await userAssets.update(membership.id,{status:membership.status==='published'?'draft':'published'});}catch(e){Alert.alert('Unable to update',(e as Error).message);}}}><Image source={{uri:membership.image||`https://picsum.photos/seed/${membership.id}/200/200`}} style={styles.communityImage}/><View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{membership.title}</Text><StatusBadge status={membership.status}/></View><Text style={styles.itemMeta}>{membership.subtype}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{membership.metrics?.members||0} Members</Text><Text style={styles.itemStat}>{membership.metrics?.paying||0} Paying</Text><Text style={styles.itemStat}>${membership.metrics?.mrr||0} MRR</Text></View></View></TouchableOpacity>)}{!userAssets.loading&&!userAssets.assets.length?<Text style={styles.itemMeta}>No personal communities yet. Create one above.</Text>:null}</View>
+      <Text style={styles.sectionTitle}>Showcase Communities</Text>
       <View style={{ gap: spacing.md }}>
         {memberships.map((membership) => (
-          <TouchableOpacity key={membership.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => comingSoon('Community dashboard')}>
+          <TouchableOpacity key={membership.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase membership','This example is separate from your saved memberships.')}>
             <Image source={{ uri: membership.image }} style={styles.communityImage} />
             <View style={{ flex: 1 }}>
               <View style={styles.itemTopRow}>
@@ -98,6 +103,7 @@ export default function MembershipsTab({ navigation }: Props) {
           </TouchableOpacity>
         ))}
       </View>
+      <CreateAssetModal visible={Boolean(createOption)} heading="Create Membership" subtype={createOption?.label||''} onClose={()=>setCreateOption(null)} onSubmit={value=>userAssets.create({kind:'membership',subtype:createOption?.key||'create',...value}).then(()=>{})}/>
 
       <Text style={styles.sectionTitle}>Recent Membership Activity</Text>
       <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>

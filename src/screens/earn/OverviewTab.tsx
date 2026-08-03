@@ -10,19 +10,18 @@ import DonutChart from '../../components/charts/DonutChart';
 import MiniLineChart from '../../components/charts/MiniLineChart';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
 import {
-  earnSummary,
   earningsBySource,
   earningsTrend,
   topPerformingContent,
   recentTransactions,
-  withdrawalHistory,
   withdrawSettings,
   earnQuickActions,
   type DateRangeKey,
   type TopContentType,
 } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
-import { earnService, type StripePayout } from '../../services/api/earn.service';
+import { earnService, type EarnSummary, type StripePayout } from '../../services/api/earn.service';
+import type { EarnEntry } from '../../types/api';
 
 type EarnTab = 'Overview' | 'Blogs' | 'PDFs' | 'Videos' | 'Stores' | 'Memberships' | 'Referrals';
 
@@ -52,12 +51,17 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
   const [stripePayout,setStripePayout]=useState<StripePayout|null>(null);
   const [withdrawAmount,setWithdrawAmount]=useState('');
   const [payoutBusy,setPayoutBusy]=useState(false);
-  const refreshPayout=()=>earnService.payoutStatus().then(x=>setStripePayout(x.payout)).catch(()=>{});
-  useEffect(()=>{refreshPayout();},[]);
+  const [summary,setSummary]=useState<EarnSummary>({balance:0,lifetimeEarnings:0,last30Days:0,availableBalance:0,pendingEarnings:0,totalWithdrawn:0,sourceTotals:{},counts:{assets:0,blogs:0,products:0,referrals:0}});
+  const [entries,setEntries]=useState<EarnEntry[]>([]);
+  const [loadError,setLoadError]=useState('');
+  const refreshPayout=()=>earnService.payoutStatus().then(x=>{setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message));
+  const refreshSummary=()=>earnService.getSummary().then(x=>{setSummary(x.summary);setEntries(x.entries);setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message));
+  useEffect(()=>{refreshSummary();refreshPayout();},[]);
   const connectStripe=async()=>{try{setPayoutBusy(true);if(stripePayout?.connected){await Linking.openURL(await earnService.payoutLoginLink());}else{const result=await earnService.connectStripe();await Linking.openURL(result.onboardingUrl);}}catch(error){Alert.alert('Unable to open Stripe',(error as Error).message);}finally{setPayoutBusy(false);}};
   const withdraw=async()=>{const amount=Number(withdrawAmount);if(!amount)return;try{setPayoutBusy(true);await earnService.withdraw(amount);setWithdrawAmount('');await refreshPayout();Alert.alert('Withdrawal requested','Stripe is processing your payout.');}catch(error){Alert.alert('Unable to withdraw',(error as Error).message);}finally{setPayoutBusy(false);}};
 
-  const totalSource = useMemo(() => earningsBySource.reduce((s, e) => s + e.value, 0), []);
+  const personalSources=useMemo(()=>earningsBySource.map(source=>({...source,value:Number(summary.sourceTotals[source.key]||0)})),[summary.sourceTotals]);
+  const totalSource = useMemo(() => Math.max(1,personalSources.reduce((s, e) => s + e.value, 0)), [personalSources]);
   const filteredContent = useMemo(
     () => (contentFilter === 'All' ? topPerformingContent : topPerformingContent.filter((c) => c.type === contentFilter)),
     [contentFilter]
@@ -75,14 +79,15 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.statsRow}>
-        <StatCard label="Lifetime Earnings" value={`$${earnSummary.lifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="trending-up-outline" size="lg" />
-        <StatCard label="Last 30 Days" value={`$${earnSummary.last30Days.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="calendar-outline" size="lg" />
+        <StatCard label="Lifetime Earnings" value={`$${summary.lifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="trending-up-outline" size="lg" />
+        <StatCard label="Last 30 Days" value={`$${summary.last30Days.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="calendar-outline" size="lg" />
       </View>
       <View style={styles.statsRowSm}>
-        <StatCard label="Available Balance" value={`$${earnSummary.availableBalance.toFixed(2)}`} icon="wallet-outline" />
-        <StatCard label="Pending Earnings" value={`$${earnSummary.pendingEarnings.toFixed(2)}`} icon="time-outline" />
-        <StatCard label="Total Withdrawn" value={`$${earnSummary.totalWithdrawn.toLocaleString()}`} icon="business-outline" />
+        <StatCard label="Available Balance" value={`$${summary.availableBalance.toFixed(2)}`} icon="wallet-outline" />
+        <StatCard label="Pending Earnings" value={`$${summary.pendingEarnings.toFixed(2)}`} icon="time-outline" />
+        <StatCard label="Total Withdrawn" value={`$${summary.totalWithdrawn.toLocaleString()}`} icon="business-outline" />
       </View>
+      {loadError?<Text style={styles.disabledHint}>Could not load personal earnings: {loadError}</Text>:null}
 
       <View style={styles.dateRow}>
         <DateRangeDropdown value={range} onChange={setRange} />
@@ -105,9 +110,9 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
           <Text style={styles.cardTitle}>Earnings by Source</Text>
         </View>
         <View style={styles.sourceRow}>
-          <DonutChart segments={earningsBySource.map((s) => ({ value: s.value, color: s.color }))} size={100} strokeWidth={16} />
+          <DonutChart segments={personalSources.map((s) => ({ value: s.value, color: s.color }))} size={100} strokeWidth={16} />
           <View style={styles.legend}>
-            {earningsBySource.map((source) => (
+            {personalSources.map((source) => (
               <View key={source.key} style={styles.legendRow}>
                 <View style={[styles.legendDot, { backgroundColor: source.color }]} />
                 <Text style={styles.legendLabel} numberOfLines={1}>
@@ -138,7 +143,7 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
       </View>
 
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Top-Performing Content</Text>
+        <Text style={styles.sectionTitle}>Showcase Top-Performing Content</Text>
         <TouchableOpacity onPress={() => comingSoon('Full analytics')}>
           <Text style={styles.seeAll}>See all analytics</Text>
         </TouchableOpacity>
@@ -170,11 +175,17 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
       </View>
 
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+        <Text style={styles.sectionTitle}>Your Reward Activity</Text>
         <TouchableOpacity onPress={() => comingSoon('Full transaction history')}>
           <Text style={styles.seeAll}>See all</Text>
         </TouchableOpacity>
       </View>
+      <View style={[styles.card, shadow.card]}>
+        {entries.map((entry,i)=><View key={entry.id} style={[styles.txRow,i===entries.length-1&&{borderBottomWidth:0}]}><View style={styles.txIcon}><Ionicons name="gift-outline" size={16} color={colors.primary}/></View><View style={{flex:1}}><Text style={styles.txTitle}>{entry.label}</Text><Text style={styles.txMeta}>{entry.source} · {new Date(entry.created_at).toLocaleString()}</Text></View><Text style={styles.txAmount}>+{entry.amount} pts</Text></View>)}
+        {!entries.length?<Text style={styles.txMeta}>No personal reward activity yet.</Text>:null}
+      </View>
+
+      <Text style={styles.sectionTitle}>Showcase Transactions</Text>
       <View style={[styles.card, shadow.card]}>
         {recentTransactions.map((tx, i) => (
           <View key={tx.id} style={[styles.txRow, i === recentTransactions.length - 1 && { borderBottomWidth: 0 }]}>
@@ -221,11 +232,11 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
       <View style={[styles.card, shadow.card]}>
         <View style={styles.withdrawStatRow}>
           <Text style={styles.withdrawLabel}>Available to withdraw</Text>
-          <Text style={styles.withdrawValue}>${earnSummary.availableBalance.toFixed(2)}</Text>
+          <Text style={styles.withdrawValue}>${summary.availableBalance.toFixed(2)}</Text>
         </View>
         <View style={styles.withdrawStatRow}>
           <Text style={styles.withdrawLabel}>Pending balance</Text>
-          <Text style={styles.withdrawValueMuted}>${earnSummary.pendingEarnings.toFixed(2)}</Text>
+          <Text style={styles.withdrawValueMuted}>${summary.pendingEarnings.toFixed(2)}</Text>
         </View>
         <View style={styles.withdrawStatRow}>
           <Text style={styles.withdrawLabel}>Minimum withdrawal</Text>
@@ -248,17 +259,18 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
 
       <Text style={styles.sectionTitle}>Withdrawal History</Text>
       <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>
-        {withdrawalHistory.map((wd, i) => (
-          <View key={wd.id} style={[styles.txRow, i === withdrawalHistory.length - 1 && { borderBottomWidth: 0 }]}>
+        {((stripePayout?.history as {id:string;amount:number;createdAt:string;status:string}[]|undefined)||[]).map((wd, i, list) => (
+          <View key={wd.id} style={[styles.txRow, i === list.length - 1 && { borderBottomWidth: 0 }]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.txTitle}>${wd.amount.toFixed(2)}</Text>
               <Text style={styles.txMeta}>
-                {wd.date} · {wd.method}
+                {new Date(wd.createdAt).toLocaleString()} · Stripe
               </Text>
             </View>
             <StatusBadge status={wd.status} />
           </View>
         ))}
+        {!((stripePayout?.history as unknown[]|undefined)||[]).length?<Text style={styles.txMeta}>No personal withdrawals yet.</Text>:null}
       </View>
     </ScrollView>
   );
