@@ -2,7 +2,7 @@ import { apiClient } from './client';
 import type { TrackerEntry } from '../../types/api';
 
 // Backend tracker names
-export type TrackerName = 'calories' | 'weight' | 'water' | 'steps' | 'workouts' | 'sleep' | 'meals';
+export type TrackerName = 'calories' | 'weight' | 'water' | 'steps' | 'workouts' | 'sleep' | 'meals' | 'walks';
 
 export interface TrackerTodayResponse {
   success: boolean;
@@ -26,9 +26,24 @@ export const trackerService = {
     return data.entry;
   },
 
+  async syncDailySteps(value: number, source: string, date = new Date()) {
+    const start = new Date(date); start.setHours(0, 0, 0, 0);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const day = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+    const { data } = await apiClient.post<{ success: boolean; entry: TrackerEntry; replaced: boolean }>(
+      '/tracker/steps/sync',
+      { value: Math.max(0, Math.round(value)), source, day, dayStart: start.getTime(), dayEnd: end.getTime() }
+    );
+    return data.entry;
+  },
+
   /** GET /api/tracker/:tracker/today  — entries + sum for current day */
   async getToday(tracker: TrackerName) {
-    const { data } = await apiClient.get<TrackerTodayResponse>(`/tracker/${tracker}/today`);
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const { data } = await apiClient.get<TrackerTodayResponse>(`/tracker/${tracker}/today`, {
+      params: { start: start.getTime(), end: end.getTime() },
+    });
     return data;
   },
 
@@ -36,7 +51,7 @@ export const trackerService = {
   async getLastN(tracker: TrackerName, days = 7) {
     const { data } = await apiClient.get<{ success: boolean; data: TrackerLastNDay[] }>(
       `/tracker/${tracker}/lastn`,
-      { params: { days } }
+      { params: { days, timezoneOffsetMinutes: new Date().getTimezoneOffset() } }
     );
     return data.data;
   },
@@ -48,6 +63,20 @@ export const trackerService = {
       { params: { limit } }
     );
     return data.entries;
+  },
+
+  /** GET /api/tracker/:tracker/streak?dailyGoal=N */
+  async getStreak(tracker: TrackerName, dailyGoal: number) {
+    const { data } = await apiClient.get<{ success: boolean; streak: number }>(
+      `/tracker/${tracker}/streak`,
+      { params: { dailyGoal } }
+    );
+    return data.streak;
+  },
+
+  /** DELETE /api/tracker/:tracker/:id */
+  async deleteEntry(tracker: TrackerName, id: string) {
+    await apiClient.delete(`/tracker/${tracker}/${id}`);
   },
 
   /** Convenience: fetch today's totals for home screen summary */

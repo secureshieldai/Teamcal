@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme';
+import { colors, radii, spacing } from '../../theme';
 
 type NextBackProps = {
   onBack?: () => void;
@@ -51,40 +51,46 @@ const styles = StyleSheet.create({
   backButton: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: colors.navy,
+    borderColor: colors.textPrimary,
     borderRadius: radii.pill,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   backText: {
-    ...typography.bodyBold,
-    color: colors.navy,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   nextButton: {
     flex: 2,
     backgroundColor: colors.primary,
     borderRadius: radii.pill,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   nextText: {
-    ...typography.bodyBold,
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.white,
   },
   primaryButton: {
-    backgroundColor: colors.navy,
+    backgroundColor: colors.primary,
     borderRadius: radii.pill,
-    paddingVertical: spacing.md + 2,
+    paddingVertical: spacing.md + 4,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryText: {
-    ...typography.bodyBold,
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.white,
   },
   caption: {
     textAlign: 'center',
-    ...typography.caption,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.textSecondary,
     marginTop: spacing.md,
   },

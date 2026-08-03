@@ -1,4 +1,5 @@
 const { supabase } = require("../config/supabase");
+const { uploadPublicImage } = require("../services/storage.service");
 
 /** GET /api/user/profile */
 async function getProfile(req, res, next) {
@@ -48,7 +49,7 @@ async function uploadAvatar(req, res, next) {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
-    const url = `/uploads/${req.file.filename}`;
+    const url = await uploadPublicImage("avatars", req.user.id, req.file);
     await supabase.from("users").update({ avatar: url }).eq("id", req.user.id);
     res.json({ success: true, url });
   } catch (err) {

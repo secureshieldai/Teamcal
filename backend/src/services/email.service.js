@@ -43,4 +43,9 @@ async function sendVerificationEmail(to, code) {
   }
 }
 
-module.exports = { sendVerificationEmail };
+async function sendPasswordResetEmail(to, code) {
+  const from = process.env.EMAIL_FROM || `TeamCal <${process.env.SMTP_USER}>`;
+  await getTransporter().sendMail({ from, to, subject: "Reset your TeamCal password", text: `Your TeamCal password reset code is ${code}. It expires in 10 minutes.`, html: `<div style="font-family:Arial,sans-serif"><h2>Reset your password</h2><p>Use this code to continue:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px">${code}</p><p>This code expires in 10 minutes.</p></div>` });
+}
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail };

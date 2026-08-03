@@ -38,7 +38,7 @@ export const marketplaceService = {
     return data.products;
   },
   async get(id: string) { const { data } = await apiClient.get<{ success:boolean; product:Product }>(`/marketplace/products/${id}`); return data.product; },
-  async checkout(productIds: string[]) { const { data } = await apiClient.post<{ success:boolean; order:MarketplaceOrder }>('/marketplace/checkout',{productIds});return data.order; },
+  async checkout(productIds: string[]) { const { data } = await apiClient.post<{ success:boolean; order:MarketplaceOrder;checkoutUrl:string }>('/marketplace/checkout',{productIds});return data; },
   async getOrders() { const { data } = await apiClient.get<{ success:boolean; orders:MarketplaceOrder[] }>('/marketplace/orders');return data.orders; },
 };
-export type MarketplaceOrder={id:string;ts:number;value:number;meta:{items:{id:string;title:string;price:number}[];currency:string;status:string}};
+export type MarketplaceOrder={id:string;created_at:string;total_amount:number;currency:string;status:string;items:{id:string;title:string;price:number;quantity:number}[]};

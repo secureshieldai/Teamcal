@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,18 +8,19 @@ import AuthTextField from '../../components/auth/AuthTextField';
 import AuthButton from '../../components/auth/AuthButton';
 import { colors, radii, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
+import { authService } from '../../services/api/auth.service';
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
+    if(!email.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigation.navigate('VerifyCode', { mode: 'reset', email: email || 'you@example.com' });
-    }, 700);
+    try { const result=await authService.requestPasswordReset(email.trim());navigation.navigate('VerifyCode',{mode:'reset',email:email.trim(),verificationToken:result.verificationToken}); }
+    catch(error){ Alert.alert('Unable to send reset code',(error as Error).message); }
+    finally{setLoading(false);}
   };
 
   return (

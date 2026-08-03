@@ -110,7 +110,7 @@ async function logScanResult(req, res, next) {
       tracker: "meals",
       ts: Date.now(),
       value: totals?.kcal || 0,
-      meta: { name: "Scanned meal", ...totals },
+      meta: { name: items?.[0]?.name || "Scanned meal", barcode: items?.[0]?.barcode || null, source: items?.[0]?.source || null, sourceId: items?.[0]?.sourceId || null, items, ...totals },
     });
 
     res.status(201).json({ success: true, entry });

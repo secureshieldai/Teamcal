@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AuthLayout from '../../components/auth/AuthLayout';
 import AuthTextField from '../../components/auth/AuthTextField';
 import AuthButton from '../../components/auth/AuthButton';
 import { colors, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
+import { authService } from '../../services/api/auth.service';
 
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {resetToken}=useRoute<RouteProp<RootStackParamList,'ResetPassword'>>().params;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
       return;
@@ -26,10 +28,9 @@ export default function ResetPasswordScreen() {
     }
     setError('');
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-    }, 700);
+    try { await authService.resetPassword(resetToken,password);navigation.reset({ index: 0, routes: [{ name: 'Login' }] }); }
+    catch(error){setError((error as Error).message);}
+    finally{setLoading(false);}
   };
 
   return (

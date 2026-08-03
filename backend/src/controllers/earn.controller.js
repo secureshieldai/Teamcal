@@ -1,6 +1,8 @@
 const { supabase } = require("../config/supabase");
-const { v4: uuidv4 } = require("uuid");
+const { randomUUID } = require("node:crypto");
 const { notifySafely } = require("../services/notification.service");
+const { getStripe } = require("../config/stripe");
+const { updateConnectedAccount } = require("./stripe.controller");
 
 /** GET /api/earn/entries */
 async function getEarnEntries(req, res, next) {
@@ -91,27 +93,29 @@ async function getPayout(req, res, next) {
 /** POST /api/earn/payout/connect */
 async function connectPayout(req, res, next) {
   try {
-    const { provider, account } = req.body;
-    const { data: payout, error } = await supabase
-      .from("payouts")
-      .update({ connected: true, provider, account })
-      .eq("user_id", req.user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.json({ success: true, payout });
+    const stripe=getStripe();
+    const {data:user,error:userError}=await supabase.from("users").select("email,name").eq("id",req.user.id).single();if(userError)throw userError;
+    let {data:payout}=await supabase.from("payouts").select("*").eq("user_id",req.user.id).maybeSingle();
+    if(!payout){const created=await supabase.from("payouts").insert({user_id:req.user.id}).select().single();if(created.error)throw created.error;payout=created.data;}
+    let accountId=payout.stripe_account_id;
+    if(!accountId){const account=await stripe.accounts.create({type:"express",country:req.body.country||process.env.STRIPE_DEFAULT_COUNTRY||"US",email:user.email,business_profile:{name:user.name||undefined},capabilities:{card_payments:{requested:true},transfers:{requested:true}},metadata:{teamcalUserId:req.user.id}});accountId=account.id;const saved=await supabase.from("payouts").update({provider:"stripe",account:accountId,stripe_account_id:accountId,stripe_account_status:"onboarding"}).eq("user_id",req.user.id).select().single();if(saved.error)throw saved.error;payout=saved.data;}
+    const base=(process.env.PUBLIC_APP_URL||"http://localhost:8081").replace(/\/$/,"");
+    const link=await stripe.accountLinks.create({account:accountId,refresh_url:`${base}/stripe/connect/refresh`,return_url:`${base}/stripe/connect/return`,type:"account_onboarding",collection_options:{fields:"eventually_due"}});
+    res.json({success:true,payout,onboardingUrl:link.url,expiresAt:link.expires_at});
   } catch (err) {
     next(err);
   }
 }
+
+async function payoutStatus(req,res,next){try{const {data:payout,error}=await supabase.from("payouts").select("*").eq("user_id",req.user.id).maybeSingle();if(error)throw error;if(!payout?.stripe_account_id)return res.json({success:true,payout:payout||null,requirements:[]});const account=await getStripe().accounts.retrieve(payout.stripe_account_id);const updated=await updateConnectedAccount(account);res.json({success:true,payout:updated,requirements:account.requirements?.currently_due||[],disabledReason:account.requirements?.disabled_reason||null});}catch(e){next(e);}}
+async function payoutLoginLink(req,res,next){try{const {data:payout}=await supabase.from("payouts").select("stripe_account_id").eq("user_id",req.user.id).maybeSingle();if(!payout?.stripe_account_id)return res.status(400).json({success:false,message:"No Stripe account connected"});const link=await getStripe().accounts.createLoginLink(payout.stripe_account_id);res.json({success:true,url:link.url});}catch(e){next(e);}}
 
 /** POST /api/earn/payout/disconnect */
 async function disconnectPayout(req, res, next) {
   try {
     const { data: payout, error } = await supabase
       .from("payouts")
-      .update({ connected: false, provider: null, account: "" })
+      .update({ connected: false, stripe_account_status: "disconnected" })
       .eq("user_id", req.user.id)
       .select()
       .single();
@@ -141,16 +145,15 @@ async function withdraw(req, res, next) {
     if (!payout.connected) {
       return res.status(400).json({ success: false, message: "No payout method connected" });
     }
-    if (amount > payout.pending) {
-      return res.status(400).json({ success: false, message: "Insufficient balance" });
-    }
-
-    const entry = { id: uuidv4(), amount, status: "processing", createdAt: new Date() };
+    if(!payout.stripe_account_id||!payout.stripe_payouts_enabled)return res.status(400).json({success:false,message:"Stripe payouts are not enabled"});
+    const currency=String(req.body.currency||"usd").toLowerCase();const amountMinor=Math.round(amount*100);
+    const stripePayout=await getStripe().payouts.create({amount:amountMinor,currency,metadata:{teamcalUserId:req.user.id}},{stripeAccount:payout.stripe_account_id,idempotencyKey:`withdraw:${req.user.id}:${req.body.idempotencyKey||randomUUID()}`});
+    const entry = { id: randomUUID(), stripePayoutId:stripePayout.id, amount, currency, status: stripePayout.status, createdAt: new Date() };
     const newHistory = [entry, ...(payout.history || [])];
 
     const { data: updated, error } = await supabase
       .from("payouts")
-      .update({ pending: payout.pending - amount, history: newHistory })
+      .update({ history: newHistory })
       .eq("user_id", req.user.id)
       .select()
       .single();
@@ -228,5 +231,5 @@ async function handleReferralJoin(referralCode, newUserId) {
 
 module.exports = {
   getEarnEntries, getReferrals, inviteReferral, handleReferralJoin,
-  getPayout, connectPayout, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
+  getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
 };

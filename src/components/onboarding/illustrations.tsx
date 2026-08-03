@@ -16,7 +16,7 @@ export function IconChipsRow({ items }: { items: { icon: IconName; label: string
       {items.map((item) => (
         <View key={item.label} style={styles.chip}>
           <View style={styles.chipIcon}>
-            <Ionicons name={item.icon} size={18} color={colors.primary} />
+            <Ionicons name={item.icon} size={22} color={colors.primary} />
           </View>
           <Text style={styles.chipLabel}>{item.label}</Text>
         </View>
@@ -25,30 +25,26 @@ export function IconChipsRow({ items }: { items: { icon: IconName; label: string
   );
 }
 
-export function MacroDial({ value, label }: { value: string; label: string }) {
-  const badges: { icon: IconName; label: string }[] = [
-    { icon: 'flame-outline', label: 'Macros' },
-    { icon: 'water-outline', label: 'Water' },
-    { icon: 'moon-outline', label: 'Fasting' },
-    { icon: 'scale-outline', label: 'Weight' },
-    { icon: 'restaurant-outline', label: 'Meals' },
-    { icon: 'bed-outline', label: 'Sleep' },
-  ];
-
+export function CalorieRing({ value, label }: { value: string; label: string }) {
   return (
-    <View style={styles.dialWrap}>
-      <View style={styles.dialRing}>
-        <Text style={styles.dialValue}>{value}</Text>
-        <Text style={styles.dialLabel}>{label}</Text>
-      </View>
-      <View style={styles.dialGrid}>
-        {badges.map((badge) => (
-          <View key={badge.label} style={styles.dialBadge}>
-            <Ionicons name={badge.icon} size={14} color={colors.primary} />
-            <Text style={styles.dialBadgeLabel}>{badge.label}</Text>
+    <View style={styles.dialRing}>
+      <Text style={styles.dialValue}>{value}</Text>
+      <Text style={styles.dialLabel}>{label}</Text>
+    </View>
+  );
+}
+
+export function AIGrid({ items }: { items: { icon: IconName; label: string }[] }) {
+  return (
+    <View style={styles.aiGridWrap}>
+      {items.map((item) => (
+        <View key={item.label} style={[styles.aiGridItem, shadow.soft]}>
+          <View style={styles.chipIcon}>
+            <Ionicons name={item.icon} size={20} color={colors.primary} />
           </View>
-        ))}
-      </View>
+          <Text style={styles.aiGridLabel}>{item.label}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -198,113 +194,71 @@ export function FeedPostMini({
   );
 }
 
-export function GroupCard({ members }: { members: string[] }) {
+export function JourneyPhoto({ uri, height = 230 }: { uri: string; height?: number }) {
   return (
-    <View style={styles.groupWrap}>
-      <View style={[styles.card, shadow.card]}>
-        <Text style={styles.groupTitle}>Stronger Together</Text>
-        <Text style={styles.groupSubtitle}>12 Members</Text>
-        <View style={styles.avatarStack}>
-          {members.slice(0, 4).map((uri, i) => (
-            <View key={uri} style={[styles.avatarStackItem, { marginLeft: i === 0 ? 0 : -14 }]}>
-              <Avatar uri={uri} size={36} />
-            </View>
-          ))}
-          <View style={[styles.avatarStackMore, { marginLeft: -14 }]}>
-            <Text style={styles.avatarStackMoreText}>+8</Text>
-          </View>
-        </View>
+    <View style={styles.journeyWrap}>
+      <Image source={{ uri }} style={[styles.photo, { height }]} />
+      <View style={styles.journeyBadge}>
+        <Ionicons name="trophy" size={22} color={colors.white} />
       </View>
-      <View style={[styles.card, shadow.card, { marginTop: spacing.md }]}>
-        {[
-          { icon: 'person-add-outline' as IconName, label: 'Invite Friends' },
-          { icon: 'people-circle-outline' as IconName, label: 'Create Team' },
-          { icon: 'enter-outline' as IconName, label: 'Join a Group' },
-          { icon: 'chatbox-ellipses-outline' as IconName, label: 'Team Chat' },
-        ].map((item, i, arr) => (
-          <View key={item.label} style={[styles.listRow, i === arr.length - 1 && { borderBottomWidth: 0 }]}>
+    </View>
+  );
+}
+
+export function FeatureChecklist({ items, badge }: { items: { icon: IconName; label: string }[]; badge: string }) {
+  return (
+    <View style={{ width: '100%' }}>
+      <View style={[styles.card, shadow.card, styles.checklistGrid]}>
+        {items.map((item) => (
+          <View key={item.label} style={styles.checklistItem}>
             <View style={styles.listIcon}>
-              <Ionicons name={item.icon} size={16} color={colors.primary} />
+              <Ionicons name={item.icon} size={15} color={colors.primary} />
             </View>
-            <Text style={styles.listLabel}>{item.label}</Text>
+            <Text style={styles.checklistLabel}>{item.label}</Text>
           </View>
         ))}
       </View>
-    </View>
-  );
-}
-
-export function MarketplaceIllustration({ categories }: { categories: { icon: IconName; label: string }[] }) {
-  return (
-    <View style={{ width: '100%' }}>
-      <View style={styles.marketGrid}>
-        {categories.map((cat) => (
-          <View key={cat.label} style={styles.marketItem}>
-            <View style={styles.chipIcon}>
-              <Ionicons name={cat.icon} size={18} color={colors.primary} />
-            </View>
-            <Text style={styles.chipLabel}>{cat.label}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.promoBanner}>
-        <Text style={styles.promoTitle}>30-Day Team{'\n'}Challenge Pack</Text>
-        <View style={styles.promoButton}>
-          <Text style={styles.promoButtonText}>Shop Now</Text>
-        </View>
+      <View style={styles.checklistBadge}>
+        <Ionicons name="star" size={14} color={colors.primary} />
+        <Text style={styles.checklistBadgeText}>{badge}</Text>
       </View>
     </View>
   );
 }
 
-export function RewardsIllustration({ points, items }: { points: string; items: { label: string; points: string }[] }) {
+export function GiftBoxGraphic() {
   return (
-    <View style={{ width: '100%' }}>
-      <View style={styles.pointsCard}>
-        <View>
-          <Text style={styles.pointsLabel}>Your Points</Text>
-          <Text style={styles.pointsValue}>{points}</Text>
-        </View>
-        <View style={styles.pointsBadge}>
-          <Ionicons name="star" size={26} color={colors.primary} />
-        </View>
+    <View style={styles.giftWrap}>
+      <View style={styles.giftCircle}>
+        <Ionicons name="gift" size={64} color={colors.primary} />
       </View>
-      <View style={[styles.card, shadow.card, { marginTop: spacing.md }]}>
-        {items.map((item, i) => (
-          <View key={item.label} style={[styles.listRow, i === items.length - 1 && { borderBottomWidth: 0 }]}>
-            <Text style={[styles.listLabel, { marginLeft: 0 }]}>{item.label}</Text>
-            <Text style={styles.rewardPoints}>{item.points}</Text>
-          </View>
-        ))}
+      <Ionicons name="sparkles" size={18} color={colors.primary} style={styles.giftSparkleTopLeft} />
+      <Ionicons name="sparkles" size={14} color={colors.primary} style={styles.giftSparkleBottomRight} />
+    </View>
+  );
+}
+
+export function BellGraphic() {
+  return (
+    <View style={styles.bellWrap}>
+      <View style={styles.giftCircle}>
+        <Ionicons name="notifications" size={60} color={colors.primary} />
+      </View>
+      <View style={styles.bellBadge}>
+        <Text style={styles.bellBadgeText}>1</Text>
       </View>
     </View>
   );
 }
 
-export function InviteIllustration({ photo, code }: { photo: string; code: string }) {
+export function AllSetCheck() {
   return (
-    <View style={{ width: '100%', alignItems: 'center' }}>
-      <Image source={{ uri: photo }} style={[styles.photo, { height: 160 }]} />
-      <View style={[styles.card, shadow.card, styles.inviteCard]}>
-        <Text style={styles.inviteLabel}>Your Invite Code</Text>
-        <View style={styles.inviteCodeRow}>
-          <Text style={styles.inviteCode}>{code}</Text>
-          <Ionicons name="copy-outline" size={18} color={colors.primary} />
-        </View>
+    <View style={styles.trophyWrap}>
+      <View style={[styles.trophyCircle, { backgroundColor: colors.primary }]}>
+        <Ionicons name="checkmark" size={72} color={colors.white} />
       </View>
-    </View>
-  );
-}
-
-export function ShieldGraphic() {
-  return (
-    <View style={styles.shieldWrap}>
-      <View style={styles.shieldCircle}>
-        <Ionicons name="shield-checkmark" size={64} color={colors.primary} />
-      </View>
-      <View style={styles.shieldBanner}>
-        <Text style={styles.shieldBannerText}>TEAMCAL</Text>
-      </View>
+      <Ionicons name="sparkles" size={18} color={colors.primary} style={styles.sparkleTopLeft} />
+      <Ionicons name="sparkles" size={14} color={colors.primary} style={styles.sparkleBottomRight} />
     </View>
   );
 }
@@ -317,77 +271,73 @@ const styles = StyleSheet.create({
   },
   chipsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: spacing.xl,
     marginTop: spacing.lg,
   },
   chip: {
     alignItems: 'center',
-    width: 76,
+    width: 82,
   },
   chipIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#FFEDE3',
     alignItems: 'center',
     justifyContent: 'center',
   },
   chipLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: colors.textPrimary,
     marginTop: spacing.xs,
     textAlign: 'center',
   },
-  dialWrap: {
-    alignItems: 'center',
-    width: '100%',
-  },
   dialRing: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 12,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 14,
     borderColor: colors.ringTrack,
     borderTopColor: colors.primary,
     borderRightColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ rotateZ: '0deg' }],
   },
   dialValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   dialLabel: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+    fontWeight: '600',
   },
-  dialGrid: {
+  aiGridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
+    gap: spacing.md,
+    marginTop: spacing.xl,
+    width: '100%',
   },
-  dialBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  aiGridItem: {
+    width: '46%',
     backgroundColor: colors.card,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    width: '30%',
-    justifyContent: 'center',
+    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    gap: 6,
   },
-  dialBadgeLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.textSecondary,
+  aiGridLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
   },
   robotOuter: {
     width: 160,
@@ -643,138 +593,67 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
   },
-  groupWrap: {
+  journeyWrap: {
     width: '100%',
+    position: 'relative',
   },
-  groupTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  groupSubtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  avatarStack: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  avatarStackItem: {
-    borderWidth: 2,
-    borderColor: colors.card,
-    borderRadius: 20,
-  },
-  avatarStackMore: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.navy,
+  journeyBadge: {
+    position: 'absolute',
+    bottom: -18,
+    left: spacing.xl,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.card,
+    borderWidth: 3,
+    borderColor: colors.background,
   },
-  avatarStackMoreText: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  marketGrid: {
+  checklistGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  marketItem: {
-    alignItems: 'center',
-    width: 72,
-  },
-  promoBanner: {
-    backgroundColor: colors.navy,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.xs,
   },
-  promoTitle: {
-    color: colors.white,
-    fontWeight: '800',
-    fontSize: 14,
-    lineHeight: 18,
-    flex: 1,
-  },
-  promoButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  promoButtonText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  pointsCard: {
-    backgroundColor: colors.navy,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pointsLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  pointsValue: {
-    color: colors.white,
-    fontSize: 24,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  pointsBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rewardPoints: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  inviteCard: {
-    marginTop: spacing.lg,
-    alignItems: 'center',
-  },
-  inviteLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  inviteCodeRow: {
+  checklistItem: {
+    width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  inviteCode: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.navy,
-    letterSpacing: 2,
+  checklistLabel: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
-  shieldWrap: {
+  checklistBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.lg,
+    backgroundColor: '#FFEDE3',
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingVertical: spacing.sm + 2,
   },
-  shieldCircle: {
+  checklistBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  giftWrap: {
+    width: 170,
+    height: 170,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  giftCircle: {
     width: 150,
     height: 150,
     borderRadius: 75,
@@ -782,17 +661,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shieldBanner: {
-    backgroundColor: colors.navy,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    marginTop: -spacing.md,
+  giftSparkleTopLeft: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
   },
-  shieldBannerText: {
+  giftSparkleBottomRight: {
+    position: 'absolute',
+    bottom: 8,
+    right: 4,
+  },
+  bellWrap: {
+    width: 170,
+    height: 170,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 14,
+    right: 20,
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF3B30',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 3,
+    borderColor: colors.background,
+  },
+  bellBadgeText: {
     color: colors.white,
-    fontWeight: '800',
-    letterSpacing: 2,
     fontSize: 13,
+    fontWeight: '800',
   },
 });

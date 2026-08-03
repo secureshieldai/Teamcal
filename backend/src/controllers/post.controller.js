@@ -1,5 +1,6 @@
 const { supabase } = require("../config/supabase");
 const { notifySafely } = require("../services/notification.service");
+const { uploadPublicImage } = require("../services/storage.service");
 
 /** POST /api/posts */
 async function createPost(req, res, next) {
@@ -40,7 +41,8 @@ async function createPost(req, res, next) {
 async function uploadPostImage(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: "No file" });
-    res.json({ success: true, url: `/uploads/${req.file.filename}` });
+    const url = await uploadPublicImage("posts", req.user.id, req.file);
+    res.json({ success: true, url });
   } catch (err) {
     next(err);
   }

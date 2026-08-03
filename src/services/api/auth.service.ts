@@ -58,4 +58,7 @@ export const authService = {
     });
     return data;
   },
+  async requestPasswordReset(email:string){const {data}=await apiClient.post<{success:boolean;verificationToken:string;message:string}>('/auth/password-reset/request',{email});return data;},
+  async verifyPasswordReset(verificationToken:string,code:string){const {data}=await apiClient.post<{success:boolean;resetToken:string}>('/auth/password-reset/verify',{verificationToken,code});return data;},
+  async resetPassword(resetToken:string,newPassword:string){const {data}=await apiClient.post<{success:boolean;message:string}>('/auth/password-reset/complete',{resetToken,newPassword});return data;},
 };

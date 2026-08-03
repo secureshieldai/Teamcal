@@ -24,7 +24,7 @@ export interface TodayMealTotals {
   carbs: number;
   fats: number;
 }
-export type ScanResult = { id: string; ts: number; barcode?: string; image?: string | null; items: { name: string; grams: number; kcal: number; p: number; c: number; f: number; confidence: number }[]; totals: { kcal: number; p: number; c: number; f: number } };
+export type ScanResult = { id: string; ts: number; barcode?: string; image?: string | null; source?: string; items: { name: string; brand?: string | null; grams: number; servingUnit?: string; servingText?: string | null; kcal: number; p: number; c: number; f: number; confidence: number; source?: string; sourceId?: string; barcode?: string }[]; totals: { kcal: number; p: number; c: number; f: number } };
 
 export const mealsService = {
   async scanImage(asset: { uri: string; mimeType?: string | null; fileName?: string | null }) {

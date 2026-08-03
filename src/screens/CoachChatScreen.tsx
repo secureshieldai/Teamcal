@@ -1,12 +1,36 @@
-import React from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import Avatar from '../components/Avatar';
 import ChatBubble from '../components/ChatBubble';
+import CoachMascotAvatar from '../components/CoachMascotAvatar';
 import { colors, radii, shadow, spacing, typography } from '../theme';
-import { coachProfile, messages } from '../data/coachChatData';
+import { coachProfile, type ChatMessage } from '../data/coachChatData';
+import { coachService } from '../services/api/coach.service';
+import { fastingService } from '../services/api/fasting.service';
+import { trackerService } from '../services/api/tracker.service';
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+const TYPING_ID = 'typing-indicator';
+
+async function buildCoachContext() {
+  const [fast, water, steps, sleep] = await Promise.all([
+    fastingService.getActive().catch(() => null),
+    trackerService.getToday('water').catch(() => ({ sum: 0 })),
+    trackerService.getToday('steps').catch(() => ({ sum: 0 })),
+    trackerService.getToday('sleep').catch(() => ({ sum: 0 })),
+  ]);
+  return {
+    fastHours: fast?.active ? (Date.now() - fast.started_at) / 3_600_000 : 0,
+    hydrationMl: water.sum,
+    steps: steps.sum,
+    sleepHours: sleep.sum,
+  };
+}
 
 function VoiceNoteBubble({ duration, time }: { duration: string; time: string }) {
   return (
@@ -49,6 +73,53 @@ function ProgressCardBubble({ time }: { time: string }) {
 
 export default function CoachChatScreen() {
   const navigation = useNavigation();
+  const scrollRef = useRef<ScrollView>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'welcome',
+      kind: 'text',
+      fromMe: false,
+      text: "Hey! \u{1F44B} I'm your TeamCal Coach. Ask me anything about fasting, meals, sleep, or workouts.",
+      time: formatTime(new Date()),
+    },
+  ]);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = useCallback(async () => {
+    const text = draft.trim();
+    if (!text || sending) return;
+
+    setDraft('');
+    setSending(true);
+    setMessages((prev) => [
+      ...prev,
+      { id: `u-${Date.now()}`, kind: 'text', fromMe: true, text, time: formatTime(new Date()) },
+      { id: TYPING_ID, kind: 'text', fromMe: false, text: '...', time: '' },
+    ]);
+
+    try {
+      const context = await buildCoachContext();
+      const { reply } = await coachService.sendMessage(text, context);
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== TYPING_ID),
+        { id: `c-${Date.now()}`, kind: 'text', fromMe: false, text: reply, time: formatTime(new Date()) },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== TYPING_ID),
+        {
+          id: `e-${Date.now()}`,
+          kind: 'text',
+          fromMe: false,
+          text: "Sorry, I couldn't respond right now. Please try again.",
+          time: formatTime(new Date()),
+        },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  }, [draft, sending]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -58,7 +129,7 @@ export default function CoachChatScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color={colors.white} />
         </TouchableOpacity>
-        <Avatar uri={coachProfile.avatar} size={36} />
+        <CoachMascotAvatar size={36} />
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{coachProfile.name}</Text>
           <Text style={styles.headerStatus}>Online</Text>
@@ -67,25 +138,24 @@ export default function CoachChatScreen() {
           <Ionicons name="call-outline" size={20} color={colors.white} />
         </TouchableOpacity>
         <TouchableOpacity style={{ marginLeft: spacing.md }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="videocam-outline" size={20} color={colors.white} />
-        </TouchableOpacity>
-        <TouchableOpacity style={{ marginLeft: spacing.md }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="ellipsis-vertical" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      >
         <View style={styles.profileCard}>
-          <Avatar uri={coachProfile.avatar} size={64} />
+          <CoachMascotAvatar size={64} />
           <View style={styles.profileNameRow}>
             <Text style={styles.profileName}>{coachProfile.name}</Text>
             <Ionicons name="checkmark-circle" size={15} color={colors.primary} />
           </View>
           <Text style={styles.profileRole}>{coachProfile.role}</Text>
           <Text style={styles.profileTagline}>{coachProfile.tagline}</Text>
-          <TouchableOpacity style={styles.profileButton} activeOpacity={0.85}>
-            <Text style={styles.profileButtonText}>View Coach Profile</Text>
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.dateDivider}>Today</Text>
@@ -110,16 +180,23 @@ export default function CoachChatScreen() {
       </ScrollView>
 
       <View style={styles.inputBar}>
-        <Ionicons name="add-circle-outline" size={24} color={colors.textSecondary} />
         <TextInput
           style={styles.input}
           placeholder="Type a message..."
           placeholderTextColor={colors.textMuted}
+          value={draft}
+          onChangeText={setDraft}
+          onSubmitEditing={handleSend}
+          returnKeyType="send"
+          editable={!sending}
         />
-        <Ionicons name="happy-outline" size={22} color={colors.textSecondary} />
-        <Ionicons name="camera-outline" size={22} color={colors.textSecondary} style={{ marginLeft: spacing.sm }} />
-        <TouchableOpacity style={styles.micButton}>
-          <Ionicons name="mic" size={18} color={colors.white} />
+        <Ionicons name="image-outline" size={22} color={colors.textSecondary} />
+        <TouchableOpacity style={styles.micButton} onPress={handleSend} disabled={sending || !draft.trim()}>
+          {sending ? (
+            <ActivityIndicator size="small" color={colors.white} />
+          ) : (
+            <Ionicons name={draft.trim() ? 'send' : 'mic'} size={18} color={colors.white} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -127,14 +204,6 @@ export default function CoachChatScreen() {
         <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
           <Ionicons name="call-outline" size={16} color={colors.textPrimary} />
           <Text style={styles.actionButtonText}>Voice Call</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-          <Ionicons name="videocam-outline" size={16} color={colors.textPrimary} />
-          <Text style={styles.actionButtonText}>Video Call</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-          <Ionicons name="radio-outline" size={16} color={colors.textPrimary} />
-          <Text style={styles.actionButtonText}>Go Live</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -199,18 +268,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  profileButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.md,
-  },
-  profileButtonText: {
-    color: colors.white,
-    fontWeight: '700',
-    fontSize: 12.5,
   },
   dateDivider: {
     textAlign: 'center',

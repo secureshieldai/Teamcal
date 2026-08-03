@@ -4,11 +4,10 @@ export type RootStackParamList = {
   SignUp: undefined;
   ForgotPassword: undefined;
   VerifyCode: { mode: 'signup' | 'reset'; email: string; verificationToken?: string };
-  ResetPassword: { email: string };
+  ResetPassword: { email: string; resetToken: string };
   MainTabs: undefined;
   CoachChat: undefined;
-  Plus: undefined;
-  ScanFood: { mode?: 'food' | 'barcode' } | undefined;
+  ScanFood: { mode?: 'food' | 'barcode' | 'cook' } | undefined;
   Challenges: undefined;
   Leaderboards: undefined;
   MealPlanner: undefined;
@@ -35,6 +34,17 @@ export type RootStackParamList = {
   MarketplaceDetail: { productId: string };
   MarketplaceOrders: undefined;
   NotificationsInbox: undefined;
+  BlogDetail: { blogId: string };
+  Water: undefined;
+  Steps: undefined;
+  Fasting: undefined;
+  Profile: undefined;
+  BlogDashboard: { blogId: string };
+  CreateBlog: undefined;
+  AudienceEngine: { sourceLabel?: string } | undefined;
+  Goals: undefined;
+  ChallengeDetail: { challengeId: string };
+  ChallengeInvite: { challengeId: string };
 };
 
 export type NoParamRoute = {
@@ -45,5 +55,5 @@ export type MainTabParamList = {
   Home: undefined;
   Explore: undefined;
   Community: undefined;
-  Profile: undefined;
+  Earn: undefined;
 };

@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const rateLimit = require("express-rate-limit");
+const { lookupUsdaBarcode } = require("../services/foodDataCentral.service");
 
 const AI_ENABLED = Boolean(process.env.GEMINI_API_KEY);
 let genAI, model;
@@ -78,9 +79,7 @@ async function scanMeal(req, res, next) {
 
     if (!AI_ENABLED) return res.status(503).json({ success: false, message: "AI Vision is not configured on the server" });
 
-    const fs = require("fs");
-    const imageData = fs.readFileSync(req.file.path);
-    const base64 = imageData.toString("base64");
+    const base64 = req.file.buffer.toString("base64");
     const mimeType = req.file.mimetype;
 
     const prompt = `Analyze this food image. Return ONLY valid JSON (no markdown) with this exact shape:
@@ -103,12 +102,8 @@ Estimate realistic portion sizes and macros per 100g scaled to estimated grams.`
       const text = result.response.text().replace(/```json|```/g, "").trim();
       parsed = JSON.parse(text);
     } catch {
-      fs.unlink(req.file.path, () => {});
       return res.status(502).json({ success: false, message: "AI Vision returned an unreadable result. Please retake the photo." });
     }
-
-    // Clean up temp file
-    fs.unlinkSync(req.file.path);
 
     res.json({
       success: true,
@@ -120,8 +115,8 @@ Estimate realistic portion sizes and macros per 100g scaled to estimated grams.`
       },
     });
   } catch (err) {
-    if (req.file?.path) require("fs").unlink(req.file.path, () => {});
-    next(err);
+    const message = err?.message || "AI Vision request failed";
+    res.status(502).json({ success: false, message: process.env.NODE_ENV === "production" ? "AI Vision is temporarily unavailable" : message });
   }
 }
 
@@ -129,13 +124,25 @@ async function lookupBarcode(req, res, next) {
   try {
     const code = String(req.body.code || "").replace(/\D/g, "");
     if (code.length < 8 || code.length > 14) return res.status(400).json({ success: false, message: "Invalid barcode" });
-    const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`, { headers: { "User-Agent": "TeamCal/1.0 support@teamcal.app" } });
-    if (!response.ok) return res.status(502).json({ success: false, message: "Barcode service is unavailable" });
-    const payload = await response.json();
-    if (!payload.product) return res.status(404).json({ success: false, message: "Product not found. Scan the front label with AI Vision instead." });
-    const p = payload.product; const n = p.nutriments || {}; const serving = Number(p.serving_quantity) || 100; const scale = serving / 100;
-    const item = { name: p.product_name || p.generic_name || `Product ${code}`, grams: serving, kcal: Math.round(Number(n['energy-kcal_100g'] || 0) * scale), p: Math.round(Number(n.proteins_100g || 0) * scale * 10) / 10, c: Math.round(Number(n.carbohydrates_100g || 0) * scale * 10) / 10, f: Math.round(Number(n.fat_100g || 0) * scale * 10) / 10, confidence: 1 };
-    res.json({ success: true, result: { id: `barcode-${Date.now()}`, ts: Date.now(), barcode: code, image: p.image_front_url || p.image_url || null, items: [item], totals: { kcal: item.kcal, p: item.p, c: item.c, f: item.f } } });
+    let p = null;
+    try {
+      const fields = "code,product_name,generic_name,brands,image_front_url,image_url,serving_quantity,serving_size,nutriments";
+      const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${fields}`, { headers: { "User-Agent": `TeamCal/1.0 (${process.env.OPEN_FOOD_FACTS_CONTACT || "support@teamcal.app"})` }, signal: AbortSignal.timeout(10000) });
+      if (response.ok) { const payload = await response.json(); if (payload.status === 1 && payload.product) p = payload.product; }
+    } catch { /* USDA is an independent fallback. */ }
+
+    const n = p?.nutriments || {};
+    const hasOffNutrition = ["energy-kcal_100g", "proteins_100g", "carbohydrates_100g", "fat_100g"].some(key => Number(n[key]) > 0);
+    let item;
+    if (p && hasOffNutrition) {
+      const serving = Number(p.serving_quantity) || 100; const scale = serving / 100;
+      item = { name: p.product_name || p.generic_name || `Product ${code}`, brand: p.brands || null, grams: serving, servingUnit: "g", servingText: p.serving_size || null, kcal: Math.round(Number(n["energy-kcal_100g"] || 0) * scale), p: Math.round(Number(n.proteins_100g || 0) * scale * 10) / 10, c: Math.round(Number(n.carbohydrates_100g || 0) * scale * 10) / 10, f: Math.round(Number(n.fat_100g || 0) * scale * 10) / 10, confidence: 1, source: "open-food-facts", sourceId: code, barcode: code };
+    } else {
+      item = await lookupUsdaBarcode(code);
+      if (!item && p) item = { name: p.product_name || p.generic_name || `Product ${code}`, brand: p.brands || null, grams: Number(p.serving_quantity) || 100, servingUnit: "g", servingText: p.serving_size || null, kcal: 0, p: 0, c: 0, f: 0, confidence: 0.5, source: "open-food-facts", sourceId: code, barcode: code };
+    }
+    if (!item) return res.status(404).json({ success: false, message: process.env.USDA_FDC_API_KEY ? "Product not found. Scan the front label with AI Vision instead." : "Product not found in Open Food Facts. USDA lookup is not configured." });
+    res.json({ success: true, result: { id: `barcode-${Date.now()}`, ts: Date.now(), barcode: code, image: p?.image_front_url || p?.image_url || null, source: item.source, items: [item], totals: { kcal: item.kcal, p: item.p, c: item.c, f: item.f } } });
   } catch (err) { next(err); }
 }
 

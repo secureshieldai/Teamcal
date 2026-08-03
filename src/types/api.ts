@@ -15,6 +15,10 @@ export interface User {
   goal_fats_g: number;
   goal_water_ml: number;
   goal_steps: number;
+  goal_fast_hours: number;
+  goal_sleep_hours: number;
+  goal_weight_kg: number;
+  goal_focus_areas: string[];
   created_at: string;
 }
 
@@ -66,12 +70,26 @@ export interface Challenge {
   starts_at: number | null;
   ends_at: number | null;
   current_day?: number;
+  challenge_type: string;
+  goal_target: number | null;
+  goal_unit: string | null;
+  max_participants: number | null;
+  rules: string | null;
+  creator_name?: string | null;
 }
 
 export interface ChallengeMembership {
   current_day: number;
   completed: boolean;
   joined_at: string;
+}
+
+export interface ChallengeMember {
+  id: string;
+  name: string;
+  avatar: string | null;
+  current_day: number;
+  completed: boolean;
 }
 
 // ── Workouts ──────────────────────────────────────────────────────────

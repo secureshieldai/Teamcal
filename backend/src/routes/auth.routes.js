@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-const { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword } = require("../controllers/auth.controller");
+const { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword, requestPasswordReset, verifyPasswordReset, resetPassword } = require("../controllers/auth.controller");
 const { protect } = require("../middleware/auth");
 const { validate } = require("../middleware/validate");
 const rateLimit = require("express-rate-limit");
@@ -61,5 +61,8 @@ router.patch(
 
 // Firebase OAuth (Google / Apple) — sends Firebase ID token, gets back our JWT
 router.post("/firebase", authAttemptLimit, [body("idToken").notEmpty()], validate, firebaseAuth);
+router.post("/password-reset/request", authAttemptLimit, [body("email").isEmail().normalizeEmail()], validate, requestPasswordReset);
+router.post("/password-reset/verify", authAttemptLimit, [body("verificationToken").notEmpty(),body("code").matches(/^\d{6}$/)], validate, verifyPasswordReset);
+router.post("/password-reset/complete", authAttemptLimit, [body("resetToken").notEmpty(),body("newPassword").isLength({min:8})], validate, resetPassword);
 
 module.exports = router;

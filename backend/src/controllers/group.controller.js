@@ -28,6 +28,34 @@ async function getMyGroups(req, res, next) {
   }
 }
 
+/** GET /api/groups/discover — public groups the user hasn't joined yet, most members first */
+async function discoverGroups(req, res, next) {
+  try {
+    const { data: memberships, error: mErr } = await supabase
+      .from("group_members")
+      .select("group_id")
+      .eq("user_id", req.user.id);
+    if (mErr) throw mErr;
+
+    const joinedIds = memberships.map((m) => m.group_id);
+
+    let query = supabase
+      .from("groups")
+      .select("*")
+      .eq("is_private", false)
+      .order("member_count", { ascending: false })
+      .limit(20);
+    if (joinedIds.length) query = query.not("id", "in", `(${joinedIds.join(",")})`);
+
+    const { data: groups, error } = await query;
+    if (error) throw error;
+
+    res.json({ success: true, groups: groups || [] });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** GET /api/groups/:id */
 async function getGroup(req, res, next) {
   try {
@@ -219,6 +247,6 @@ async function getGroupActivity(req, res, next) {
 }
 
 module.exports = {
-  getMyGroups, getGroup, createGroup, updateGroup,
+  getMyGroups, discoverGroups, getGroup, createGroup, updateGroup,
   joinGroup, leaveGroup, getGroupActivity,
 };

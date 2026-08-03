@@ -49,6 +49,10 @@ describe("API shell", () => {
 
     expect(response.headers["access-control-allow-origin"]).toBe("http://localhost:8081");
   });
+
+  test("Stripe webhook rejects unsigned payloads", async () => {
+    await request(app).post("/api/stripe/webhook").set("Content-Type","application/json").send(Buffer.from("{}")) .expect(400);
+  });
 });
 
 describe("authentication validation", () => {
@@ -110,7 +114,12 @@ describe("protected route boundaries", () => {
     ["get", "/api/challenges"],
     ["get", "/api/groups"],
     ["get", "/api/workouts"],
-    ["get", "/api/marketplace/products"],
+  ["get", "/api/marketplace/products"],
+  ["get", "/api/personal"],
+  ["get", "/api/earn/payout/status"],
+  ["post", "/api/earn/payout/login-link"],
+  ["post", "/api/marketplace/checkout"],
+  ["get", "/api/marketplace/disputes"],
   ];
 
   test.each(protectedRequests)("%s %s requires a bearer token", async (method, path) => {

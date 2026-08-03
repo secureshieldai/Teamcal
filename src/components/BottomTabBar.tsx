@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, shadow, typography } from '../theme';
 
-type TabKey = 'home' | 'explore' | 'community' | 'profile';
+type TabKey = 'home' | 'explore' | 'community' | 'earn';
 
 type Props = {
   activeTab: TabKey;
@@ -15,8 +15,8 @@ type Props = {
 const TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
   { key: 'explore', label: 'Explore', icon: 'search-outline', activeIcon: 'search' },
-  { key: 'community', label: 'Community', icon: 'people-outline', activeIcon: 'people' },
-  { key: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+  { key: 'community', label: 'Social', icon: 'people-outline', activeIcon: 'people' },
+  { key: 'earn', label: 'Earn', icon: 'wallet-outline', activeIcon: 'wallet' },
 ];
 
 export default function BottomTabBar({ activeTab, onChangeTab, onPressAdd }: Props) {

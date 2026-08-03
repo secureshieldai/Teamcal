@@ -1,13 +1,14 @@
 const express = require("express");
 const { protect } = require("../middleware/auth");
 const {
-  addEntry, getEntries, getToday, getLastN, removeEntry, clearTracker, getStreak,
+  addEntry, syncDailySteps, getEntries, getToday, getLastN, removeEntry, clearTracker, getStreak,
 } = require("../controllers/tracker.controller");
 
 const router = express.Router();
 
 router.use(protect);
 
+router.post("/steps/sync", syncDailySteps);
 router.post("/:tracker", addEntry);
 router.get("/:tracker/today", getToday);
 router.get("/:tracker/lastn", getLastN);

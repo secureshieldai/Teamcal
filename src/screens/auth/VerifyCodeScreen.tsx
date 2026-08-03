@@ -14,6 +14,7 @@ export default function VerifyCodeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'VerifyCode'>>();
   const { mode, email, verificationToken } = route.params;
+  const [sessionToken,setSessionToken]=useState(verificationToken);
   const { verifyEmail } = useAuth();
 
   const [code, setCode] = useState<string[]>(Array(6).fill(''));
@@ -31,11 +32,13 @@ export default function VerifyCodeScreen() {
     setLoading(true);
     try {
       if (mode === 'signup') {
-        if (!verificationToken) throw new Error('Verification session is missing. Please sign up again.');
-        await verifyEmail(verificationToken, code.join(''));
+        if (!sessionToken) throw new Error('Verification session is missing. Please sign up again.');
+        await verifyEmail(sessionToken, code.join(''));
         navigation.replace('MainTabs');
       } else {
-        navigation.navigate('ResetPassword', { email });
+        if (!sessionToken) throw new Error('Verification session is missing. Please request another code.');
+        const result=await authService.verifyPasswordReset(sessionToken,code.join(''));
+        navigation.navigate('ResetPassword', { email, resetToken:result.resetToken });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not verify the code');
@@ -45,11 +48,12 @@ export default function VerifyCodeScreen() {
   };
 
   const handleResend = async () => {
-    if (!verificationToken || loading) return;
+    if (!sessionToken || loading) return;
     setError('');
     setLoading(true);
     try {
-      const result = await authService.resendVerification(verificationToken);
+      const result = mode==='signup' ? await authService.resendVerification(sessionToken) : await authService.requestPasswordReset(email);
+      if(mode==='reset' && 'verificationToken' in result)setSessionToken(result.verificationToken as string);
       setError(result.message);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not resend the code');
@@ -65,7 +69,7 @@ export default function VerifyCodeScreen() {
       footer={
         <View style={styles.resendRow}>
           <Text style={styles.resendText}>Didn't get a code? </Text>
-          <TouchableOpacity onPress={handleResend} disabled={loading || mode !== 'signup'} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={handleResend} disabled={loading} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Text style={styles.resendLink}>Resend</Text>
           </TouchableOpacity>
         </View>

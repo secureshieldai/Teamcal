@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { v4: uuidv4 } = require("uuid");
+const { randomUUID } = require("node:crypto");
 const { supabase } = require("../config/supabase");
 const { verifyFirebaseToken } = require("../config/firebase");
 const { handleReferralJoin } = require("./earn.controller");
@@ -25,6 +25,9 @@ function readVerificationToken(token) {
   }
   return decoded;
 }
+
+function signPurposeToken(id,purpose,expiresIn="15m"){return jwt.sign({id,purpose},process.env.JWT_SECRET,{expiresIn});}
+function readPurposeToken(token,purpose){const decoded=jwt.verify(token,process.env.JWT_SECRET);if(decoded.purpose!==purpose){const e=new Error("Invalid or expired session");e.statusCode=401;throw e;}return decoded;}
 
 function publicUser(u) {
   const { password_hash, ...rest } = u;
@@ -55,7 +58,7 @@ async function register(req, res, next) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const newReferralCode = uuidv4().slice(0, 8).toUpperCase();
+    const newReferralCode = randomUUID().slice(0, 8).toUpperCase();
 
     const { data: user, error } = await supabase
       .from("users")
@@ -206,12 +209,12 @@ async function firebaseAuth(req, res, next) {
 
     if (!user) {
       // Auto-create user — no password needed for OAuth
-      const referralCode = uuidv4().slice(0, 8).toUpperCase();
+      const referralCode = randomUUID().slice(0, 8).toUpperCase();
       const { data: created, error } = await supabase
         .from("users")
         .insert({
           email,
-          password_hash: await bcrypt.hash(uuidv4(), 10), // random unusable password
+          password_hash: await bcrypt.hash(randomUUID(), 10), // random unusable password
           name,
           avatar,
           referral_code: referralCode,
@@ -265,4 +268,8 @@ async function changePassword(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword };
+async function requestPasswordReset(req,res,next){try{const {data:user}=await supabase.from("users").select("id,email").eq("email",req.body.email.toLowerCase()).maybeSingle();if(!user)return res.status(404).json({success:false,message:"No account found for that email"});await issueVerificationCode(user,{purpose:"password-reset"});res.json({success:true,verificationToken:signPurposeToken(user.id,"password-reset-verification"),message:"Reset code sent"});}catch(e){next(e);}}
+async function verifyPasswordReset(req,res,next){try{const {id}=readPurposeToken(req.body.verificationToken,"password-reset-verification");await verifyCode(id,req.body.code);res.json({success:true,resetToken:signPurposeToken(id,"password-reset","10m")});}catch(e){next(e);}}
+async function resetPassword(req,res,next){try{const {id}=readPurposeToken(req.body.resetToken,"password-reset");const password_hash=await bcrypt.hash(req.body.newPassword,12);const {error}=await supabase.from("users").update({password_hash}).eq("id",id);if(error)throw error;res.json({success:true,message:"Password updated"});}catch(e){next(e);}}
+
+module.exports = { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword, requestPasswordReset, verifyPasswordReset, resetPassword };

@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useApiQuery } from './useApiQuery';
 import { postsService } from '../services/api/posts.service';
 import { groupsService } from '../services/api/groups.service';
 import type { Post, Group } from '../types/api';
+
+// Map backend post shape → PostCard shape
+function mapPosts(posts: Post[]) {
+  return posts.map((p) => ({
+    id: p.id,
+    authorName: p.user?.name ?? 'Unknown',
+    authorAvatar: p.user?.avatar ?? '',
+    time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    caption: p.text,
+    photos: p.image ? [p.image] : [],
+    likes: p.likes,
+    comments: 0,
+  }));
+}
 
 export function useFeed() {
   // GET /api/posts/feed
@@ -12,19 +26,20 @@ export function useFeed() {
     []
   );
 
-  // Map backend post shape → PostCard shape, fallback to mock
-  const mappedPosts = posts.map((p) => ({
-        id: p.id,
-        authorName: p.user?.name ?? 'Unknown',
-        authorAvatar: p.user?.avatar ?? '',
-        time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        caption: p.text,
-        photos: p.image ? [p.image] : [],
-        likes: p.likes,
-        comments: 0,
-      }));
+  const mapped = useMemo(() => mapPosts(posts), [posts]);
+  return { posts: mapped, loading, error, refetch };
+}
 
-  return { posts: mappedPosts, loading, error, refetch };
+export function useMyPosts() {
+  // GET /api/posts/mine
+  const { data: posts, loading, error, refetch } = useApiQuery(
+    () => postsService.getMyPosts(),
+    [] as Post[],
+    []
+  );
+
+  const mapped = useMemo(() => mapPosts(posts), [posts]);
+  return { posts: mapped, loading, error, refetch };
 }
 
 export function useGroups() {
@@ -35,6 +50,16 @@ export function useGroups() {
     []
   );
   return { groups, loading, refetch };
+}
+
+export function useDiscoverGroups() {
+  // GET /api/groups/discover
+  const { data: groups, loading, error, refetch } = useApiQuery(
+    () => groupsService.discover(),
+    [] as Group[],
+    []
+  );
+  return { groups, loading, error, refetch };
 }
 
 export function useGroupDetail(id: string) {

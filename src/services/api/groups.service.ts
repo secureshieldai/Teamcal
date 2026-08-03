@@ -7,6 +7,12 @@ export const groupsService = {
     return data.groups;
   },
 
+  /** GET /api/groups/discover — public groups not yet joined, most members first */
+  async discover() {
+    const { data } = await apiClient.get<{ success: boolean; groups: Group[] }>('/groups/discover');
+    return data.groups;
+  },
+
   async get(id: string) {
     const { data } = await apiClient.get<{
       success: boolean;

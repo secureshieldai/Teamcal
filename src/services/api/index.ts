@@ -10,3 +10,6 @@ export { marketplaceService } from './marketplace.service';
 export { earnService } from './earn.service';
 export { mealsService } from './meals.service';
 export { fastingService } from './fasting.service';
+export { coachService } from './coach.service';
+export { blogsService } from './blogs.service';
+export { personalService } from './personal.service';

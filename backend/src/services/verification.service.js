@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const { supabase } = require("../config/supabase");
-const { sendVerificationEmail } = require("./email.service");
+const { sendVerificationEmail, sendPasswordResetEmail } = require("./email.service");
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -11,7 +11,7 @@ function hashCode(userId, code) {
   return crypto.createHmac("sha256", secret).update(`${userId}:${code}`).digest("hex");
 }
 
-async function issueVerificationCode(user, { enforceCooldown = false } = {}) {
+async function issueVerificationCode(user, { enforceCooldown = false, purpose = "verification" } = {}) {
   if (enforceCooldown) {
     const { data: existing } = await supabase
       .from("email_verification_otps")
@@ -38,7 +38,7 @@ async function issueVerificationCode(user, { enforceCooldown = false } = {}) {
   if (error) throw error;
 
   try {
-    await sendVerificationEmail(user.email, code);
+    await (purpose === "password-reset" ? sendPasswordResetEmail(user.email, code) : sendVerificationEmail(user.email, code));
   } catch (error) {
     await supabase.from("email_verification_otps").delete().eq("user_id", user.id);
     throw error;

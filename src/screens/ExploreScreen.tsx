@@ -1,39 +1,43 @@
 import React, { useState } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchBar from '../components/SearchBar';
 import SectionHeader from '../components/SectionHeader';
-import QuickAccessGrid from '../components/QuickAccessGrid';
-import PopularChallengeCards from '../components/PopularChallengeCards';
-import TopCreatorsList from '../components/TopCreatorsList';
-import CategoriesGrid from '../components/CategoriesGrid';
+import ToolsGrid from '../components/ToolsGrid';
 import { colors, spacing, typography } from '../theme';
-import { quickAccessItems, popularChallenges, topCreators, categories } from '../data/exploreData';
-import type { NoParamRoute, RootStackParamList } from '../navigation/types';
+import { tools } from '../data/exploreData';
+import type { RootStackParamList } from '../navigation/types';
 
-const QUICK_ACCESS_DESTINATIONS: Record<string, NoParamRoute> = {
-  'meal-planner': 'MealPlanner',
-  workouts: 'Workouts',
-  'ai-coach': 'CoachChat',
-  'grocery-list': 'GroceryList',
-  more: 'Plus',
-};
-
-const CATEGORY_DESTINATIONS: Record<string, NoParamRoute> = {
-  nutrition: 'MealPlanner',
-  workouts: 'Workouts',
-  challenges: 'Challenges',
-  meals: 'MealPlanner',
-  programs: 'Marketplace',
-  supplements: 'Marketplace',
-  recipes: 'MealPlanner',
-};
+const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
 export default function ExploreScreen() {
   const [query, setQuery] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const handlePressTool = (id: string) => {
+    switch (id) {
+      case 'ai-food-scanner': navigation.navigate('ScanFood', { mode: 'food' }); return;
+      case 'barcode-scanner': navigation.navigate('ScanFood', { mode: 'barcode' }); return;
+      case 'scan-cook': navigation.navigate('ScanFood', { mode: 'cook' }); return;
+      case 'meal-planner': navigation.navigate('MealPlanner'); return;
+      case 'ai-coach': navigation.navigate('CoachChat'); return;
+      case 'grocery-list': navigation.navigate('GroceryList'); return;
+      case 'workout': navigation.navigate('Workouts'); return;
+      case 'step-tracker': navigation.navigate('Steps'); return;
+      case 'water-tracker': navigation.navigate('Water'); return;
+      case 'fasting-tracker': navigation.navigate('Fasting'); return;
+      case 'weight-tracker': navigation.navigate('QuickLogEntry', { kind: 'weight' }); return;
+      case 'sleep-tracker': navigation.navigate('QuickLogEntry', { kind: 'sleep' }); return;
+      case 'supplement-tracker': navigation.navigate('QuickLogEntry', { kind: 'supplement' }); return;
+      case 'mood-journal': navigation.navigate('QuickLogEntry', { kind: 'mood' }); return;
+      case 'my-goals': navigation.navigate('Goals'); return;
+      case 'recipe-library': comingSoon('Recipe Library'); return;
+      case 'my-recipes': comingSoon('My Recipes'); return;
+      case 'period-tracker': comingSoon('Period Tracker'); return;
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -48,7 +52,7 @@ export default function ExploreScreen() {
 
         <View style={styles.searchWrap}>
           <SearchBar
-            placeholder="Search tools, meals, people, challenges..."
+            placeholder="Search tools, meals, recipes, features..."
             value={query}
             onChangeText={setQuery}
             onSubmit={() => navigation.navigate('GlobalSearch', { query })}
@@ -56,41 +60,8 @@ export default function ExploreScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Quick Access" actionLabel="See All" onPressAction={() => navigation.navigate('Plus')} />
-          <QuickAccessGrid
-            items={quickAccessItems}
-            onPressItem={(id) => {
-              if (id === 'ai-food-scanner' || id === 'barcode-scanner') { navigation.navigate('ScanFood', { mode: id === 'barcode-scanner' ? 'barcode' : 'food' }); return; }
-              const trackerKind: Record<string, string> = { 'steps-tracker': 'steps', 'water-tracker': 'water', 'fasting-tracker': 'fasting' };
-              if (trackerKind[id]) { navigation.navigate('QuickLogEntry', { kind: trackerKind[id] }); return; }
-              const destination = QUICK_ACCESS_DESTINATIONS[id];
-              if (destination) navigation.navigate(destination as never);
-            }}
-          />
-        </View>
-
-        <View style={styles.sectionNoPad}>
-          <SectionHeader title="Popular This Week" actionLabel="See All" onPressAction={() => navigation.navigate('Challenges')} style={styles.paddedHeader} />
-          <PopularChallengeCards
-            challenges={popularChallenges}
-            onPressChallenge={() => navigation.navigate('Challenges')}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <SectionHeader title="Top Creators" actionLabel="See All" onPressAction={() => navigation.navigate('GlobalSearch', { query: 'coach' })} />
-          <TopCreatorsList creators={topCreators} />
-        </View>
-
-        <View style={styles.section}>
-          <SectionHeader title="Categories" />
-          <CategoriesGrid
-            categories={categories}
-            onPressCategory={(id) => {
-              const destination = CATEGORY_DESTINATIONS[id];
-              if (destination) navigation.navigate(destination as never);
-            }}
-          />
+          <SectionHeader title="Tools" />
+          <ToolsGrid items={tools} onPressItem={handlePressTool} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -121,11 +92,5 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: spacing.lg,
     marginTop: spacing.xl,
-  },
-  sectionNoPad: {
-    marginTop: spacing.xl,
-  },
-  paddedHeader: {
-    paddingHorizontal: spacing.lg,
   },
 });

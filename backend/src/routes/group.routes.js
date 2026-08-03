@@ -1,7 +1,7 @@
 const express = require("express");
 const { protect } = require("../middleware/auth");
 const {
-  getMyGroups, getGroup, createGroup, updateGroup,
+  getMyGroups, discoverGroups, getGroup, createGroup, updateGroup,
   joinGroup, leaveGroup, getGroupActivity,
 } = require("../controllers/group.controller");
 
@@ -11,6 +11,7 @@ router.use(protect);
 
 router.get("/", getMyGroups);
 router.post("/", createGroup);
+router.get("/discover", discoverGroups);
 router.get("/:id", getGroup);
 router.patch("/:id", updateGroup);
 router.post("/:id/join", joinGroup);

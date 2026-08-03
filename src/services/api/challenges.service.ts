@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Challenge, ChallengeMembership } from '../../types/api';
+import type { Challenge, ChallengeMember, ChallengeMembership } from '../../types/api';
 
 type Tab = 'discover' | 'my' | 'completed';
 
@@ -45,8 +45,29 @@ export const challengesService = {
     );
     return data.membership;
   },
-  async create(payload: { title: string; description?: string; durationDays: number; photo?: string; isPublic?: boolean }) {
+  async create(payload: {
+    title: string;
+    description?: string;
+    durationDays: number;
+    totalDays?: number;
+    photo?: string;
+    isPublic?: boolean;
+    icon?: string;
+    iconColor?: string;
+    challengeType?: string;
+    goalTarget?: number;
+    goalUnit?: string;
+    maxParticipants?: number;
+    startsAt?: number;
+    endsAt?: number;
+    rules?: string;
+  }) {
     const { data } = await apiClient.post<{ success: boolean; challenge: Challenge }>('/challenges', payload);
     return data.challenge;
+  },
+
+  async getMembers(id: string) {
+    const { data } = await apiClient.get<{ success: boolean; members: ChallengeMember[] }>(`/challenges/${id}/members`);
+    return data.members;
   },
 };

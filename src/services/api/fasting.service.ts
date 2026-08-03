@@ -25,6 +25,12 @@ export const fastingService = {
     return data.fast;
   },
 
+  /** PATCH /api/fasting/extend — hoursDelta can be negative to shorten the target */
+  async extend(hoursDelta: number) {
+    const { data } = await apiClient.patch<{ success: boolean; fast: FastLog }>('/fasting/extend', { hoursDelta });
+    return data.fast;
+  },
+
   /**
    * GET /api/fasting/history
    * Backend returns { history, total } — NOT { fasts }

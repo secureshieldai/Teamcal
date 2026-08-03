@@ -8,7 +8,6 @@ import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import VerifyCodeScreen from '../screens/auth/VerifyCodeScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import CoachChatScreen from '../screens/CoachChatScreen';
-import PlusScreen from '../screens/PlusScreen';
 import ScanFoodScreen from '../screens/ScanFoodScreen';
 import ChallengesScreen from '../screens/ChallengesScreen';
 import LeaderboardsScreen from '../screens/LeaderboardsScreen';
@@ -32,6 +31,17 @@ import ProfileCollectionScreen from '../screens/ProfileCollectionScreen';
 import MarketplaceDetailScreen from '../screens/MarketplaceDetailScreen';
 import MarketplaceOrdersScreen from '../screens/MarketplaceOrdersScreen';
 import NotificationsInboxScreen from '../screens/NotificationsInboxScreen';
+import BlogDetailScreen from '../screens/social/BlogDetailScreen';
+import WaterScreen from '../screens/WaterScreen';
+import StepsScreen from '../screens/StepsScreen';
+import FastingScreen from '../screens/FastingScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import BlogDashboardScreen from '../screens/BlogDashboardScreen';
+import CreateBlogScreen from '../screens/CreateBlogScreen';
+import AudienceEngineScreen from '../screens/AudienceEngineScreen';
+import GoalsScreen from '../screens/GoalsScreen';
+import ChallengeDetailScreen from '../screens/ChallengeDetailScreen';
+import ChallengeInviteScreen from '../screens/ChallengeInviteScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -50,8 +60,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="CoachChat" component={CoachChatScreen} />
-      <Stack.Screen name="Plus" component={PlusScreen} options={{ presentation: 'modal' }} />
-      <Stack.Screen name="ScanFood" component={ScanFoodScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="ScanFood" component={ScanFoodScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="Challenges" component={ChallengesScreen} />
       <Stack.Screen name="Leaderboards" component={LeaderboardsScreen} />
       <Stack.Screen name="MealPlanner" component={MealPlannerScreen} />
@@ -78,6 +87,17 @@ export default function RootNavigator() {
       <Stack.Screen name="MarketplaceDetail" component={MarketplaceDetailScreen} />
       <Stack.Screen name="MarketplaceOrders" component={MarketplaceOrdersScreen} />
       <Stack.Screen name="NotificationsInbox" component={NotificationsInboxScreen} />
+      <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
+      <Stack.Screen name="Water" component={WaterScreen} />
+      <Stack.Screen name="Steps" component={StepsScreen} />
+      <Stack.Screen name="Fasting" component={FastingScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="BlogDashboard" component={BlogDashboardScreen} />
+      <Stack.Screen name="CreateBlog" component={CreateBlogScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="AudienceEngine" component={AudienceEngineScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="Goals" component={GoalsScreen} />
+      <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
+      <Stack.Screen name="ChallengeInvite" component={ChallengeInviteScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }

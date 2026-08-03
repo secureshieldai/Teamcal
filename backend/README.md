@@ -423,6 +423,25 @@ Logging a workout automatically awards 30 XP and records a `workouts` tracker en
 
 All product responses include `price_display` formatted as `"$XX.XX"`.
 
+### Stripe Connect production setup
+
+Apply Migration 009, then configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PUBLIC_APP_URL`, `STRIPE_PLATFORM_FEE_BPS`, and `STRIPE_DEFAULT_COUNTRY` from `.env.example`.
+
+Create a Stripe webhook destination for `https://YOUR_API/api/stripe/webhook` and subscribe to platform plus connected-account events: `account.updated`, `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `refund.updated`, `refund.failed`, `payout.paid`, and `payout.failed`.
+
+Connect and payment endpoints:
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/earn/payout/connect` | Create/reuse an Express account and return hosted onboarding URL |
+| `GET` | `/api/earn/payout/status` | Refresh capabilities and outstanding requirements |
+| `POST` | `/api/earn/payout/login-link` | Return an Express Dashboard login link |
+| `POST` | `/api/earn/payout/withdraw` | Create a payout on the connected account |
+| `POST` | `/api/marketplace/checkout` | Create Stripe Checkout with destination transfer and platform fee |
+| `POST` | `/api/marketplace/orders/:id/refund` | Seller-authorized refund with transfer and fee reversal |
+| `GET` | `/api/marketplace/disputes` | Seller dispute list synchronized by webhooks |
+| `POST` | `/api/stripe/webhook` | Signature-verified, idempotent Stripe event receiver |
+
 ---
 
 ## Error Responses

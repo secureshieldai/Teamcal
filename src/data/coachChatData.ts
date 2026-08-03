@@ -1,8 +1,7 @@
 export const coachProfile = {
-  name: 'Coach Mike',
-  avatar: 'https://i.pravatar.cc/150?img=14',
+  name: 'TeamCal Coach',
   online: true,
-  role: 'Certified Nutrition & Fitness Coach',
+  role: 'TeamCal AI Coach',
   tagline: 'Helping you hit your goals!',
 };
 

@@ -30,6 +30,8 @@ const challengeRoutes = require("./routes/challenge.routes");
 const groupRoutes = require("./routes/group.routes");
 const workoutRoutes = require("./routes/workout.routes");
 const marketplaceRoutes = require("./routes/marketplace.routes");
+const personalRoutes = require("./routes/personal.routes");
+const stripeRoutes = require("./routes/stripe.routes");
 
 const app = express();
 
@@ -57,6 +59,8 @@ app.use(
 );
 
 app.use(compression());
+// Stripe must receive the exact raw payload for webhook signature verification.
+app.use("/api/stripe", stripeRoutes);
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
@@ -112,6 +116,7 @@ app.use("/api/challenges", challengeRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
+app.use("/api/personal", personalRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));

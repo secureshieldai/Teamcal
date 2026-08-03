@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
 import { colors, radii, shadow, spacing } from '../theme';
 import { postsService } from '../services/api/posts.service';
+import { personalService } from '../services/api/personal.service';
 
 export type Post = {
   id: string;
@@ -22,10 +22,9 @@ export default function PostCard({ post, onComment }: { post: Post; onComment?: 
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
-  const saveKey = `saved_post_${post.id}`;
-  useEffect(() => { AsyncStorage.getItem(saveKey).then(v => setSaved(v === '1')); }, [saveKey]);
+  useEffect(() => { personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {}); }, [post.id]);
   const toggleLike = async () => { const previous = { likes, liked }; setLiked(!liked); setLikes(Math.max(0, likes + (liked ? -1 : 1))); try { const result = await postsService.toggleLike(post.id); setLikes(result.likes); setLiked(result.liked); } catch (e) { setLikes(previous.likes); setLiked(previous.liked); Alert.alert('Unable to like post', (e as Error).message); } };
-  const toggleSaved = async () => { const next = !saved; setSaved(next); if (next) await AsyncStorage.setItem(saveKey, '1'); else await AsyncStorage.removeItem(saveKey); };
+  const toggleSaved = async () => { const previous=saved;setSaved(!saved);try{setSaved(await personalService.toggle('saved-post',post.id,{caption:post.caption,authorName:post.authorName,photos:post.photos}));}catch(error){setSaved(previous);Alert.alert('Unable to save post',(error as Error).message);} };
   return (
     <View style={[styles.card, shadow.card]}>
       <View style={styles.header}>

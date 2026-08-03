@@ -11,21 +11,25 @@ import StatTilesRow from '../components/StatTilesRow';
 import FriendsProgressRow from '../components/FriendsProgressRow';
 import CoachChatCard from '../components/CoachChatCard';
 import QuickLogRow from '../components/QuickLogRow';
-import { colors } from '../theme';
+import SectionHeader from '../components/SectionHeader';
+import { colors, spacing } from '../theme';
 import {
   currentUser,
   stories,
   coach,
   quickLogItems,
+  quickActionItems,
 } from '../data/homeData';
 import { useHomeSummary } from '../hooks/useHome';
 import { useAuth } from '../context/AuthContext';
-import type { NoParamRoute, RootStackParamList } from '../navigation/types';
+import type { RootStackParamList } from '../navigation/types';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { notificationsService } from '../services/api/notifications.service';
 
-const QUICK_LOG_DESTINATIONS: Record<string, NoParamRoute> = {
-  more: 'Plus',
+const QUICK_ACTION_KINDS: Record<string, string> = {
+  'log-meal': 'meal',
+  'log-supplement': 'supplement',
+  'log-mood': 'mood',
 };
 
 export default function HomeScreen() {
@@ -54,7 +58,12 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <HomeHeader avatarUri={currentUserDisplay.avatar} hasNotification={notifications.data.unreadCount > 0} onPressNotifications={() => navigation.navigate('NotificationsInbox')} />
+        <HomeHeader
+          avatarUri={currentUserDisplay.avatar}
+          hasNotification={notifications.data.unreadCount > 0}
+          onPressNotifications={() => navigation.navigate('NotificationsInbox')}
+          onPressAvatar={() => navigation.navigate('Profile')}
+        />
 
         <StoriesRow currentUserAvatar={currentUserDisplay.avatar} stories={stories} />
 
@@ -82,18 +91,26 @@ export default function HomeScreen() {
           onOpenChat={() => navigation.navigate('CoachChat')}
         />
 
-        <QuickLogRow
-          items={quickLogItems}
-          onPressItem={(id) => {
-            if (id === 'scan') { navigation.navigate('ScanFood', { mode: 'food' }); return; }
-            if (['water', 'workout', 'weight'].includes(id)) {
-              navigation.navigate('QuickLogEntry', { kind: id });
-              return;
-            }
-            const destination = QUICK_LOG_DESTINATIONS[id];
-            if (destination) navigation.navigate(destination as never);
-          }}
-        />
+        <View style={styles.quickLogSection}>
+          <SectionHeader title="Quick Log" />
+          <QuickLogRow
+            items={quickLogItems}
+            onPressItem={(id) => {
+              if (id === 'scan') { navigation.navigate('ScanFood', { mode: 'food' }); return; }
+              if (id === 'water') { navigation.navigate('Water'); return; }
+              if (id === 'workout') { navigation.navigate('Workouts'); return; }
+              if (id === 'weight') { navigation.navigate('QuickLogEntry', { kind: 'weight' }); return; }
+            }}
+          />
+          <QuickLogRow
+            items={quickActionItems}
+            style={styles.quickActionRow}
+            onPressItem={(id) => {
+              const kind = QUICK_ACTION_KINDS[id];
+              if (kind) navigation.navigate('QuickLogEntry', { kind });
+            }}
+          />
+        </View>
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -111,5 +128,12 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 8,
+  },
+  quickLogSection: {
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  quickActionRow: {
+    marginTop: spacing.lg,
   },
 });

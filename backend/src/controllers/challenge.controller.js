@@ -60,7 +60,7 @@ async function getChallenges(req, res, next) {
     // discover — all public active challenges
     const { data: challenges, error } = await supabase
       .from("challenges")
-      .select("*")
+      .select("*, creator:users(name)")
       .eq("status", "active")
       .eq("is_public", true)
       .order("joined_count", { ascending: false })
@@ -73,7 +73,9 @@ async function getChallenges(req, res, next) {
       .eq("status", "active")
       .eq("is_public", true);
 
-    res.json({ success: true, challenges, total: count || 0 });
+    const mapped = (challenges || []).map((c) => ({ ...c, creator_name: c.creator?.name || null, creator: undefined }));
+
+    res.json({ success: true, challenges: mapped, total: count || 0 });
   } catch (err) {
     next(err);
   }
@@ -144,6 +146,11 @@ async function createChallenge(req, res, next) {
         is_public: b.isPublic !== false,
         starts_at: b.startsAt || Date.now(),
         ends_at: b.endsAt || null,
+        challenge_type: b.challengeType || "custom",
+        goal_target: b.goalTarget != null ? Number(b.goalTarget) : null,
+        goal_unit: b.goalUnit || null,
+        max_participants: b.maxParticipants != null ? Number(b.maxParticipants) : null,
+        rules: b.rules || null,
       })
       .select()
       .single();
@@ -252,7 +259,33 @@ async function updateProgress(req, res, next) {
   }
 }
 
+/** GET /api/challenges/:id/members */
+async function getChallengeMembers(req, res, next) {
+  try {
+    const { data: members, error } = await supabase
+      .from("challenge_members")
+      .select("user_id, current_day, completed, users(name, avatar)")
+      .eq("challenge_id", req.params.id)
+      .order("current_day", { ascending: false });
+
+    if (error) throw error;
+
+    const mapped = (members || []).map((m) => ({
+      id: m.user_id,
+      name: m.users?.name || "Member",
+      avatar: m.users?.avatar || null,
+      current_day: m.current_day,
+      completed: m.completed,
+    }));
+
+    res.json({ success: true, members: mapped });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getChallenges, getFeatured, getChallenge,
   createChallenge, joinChallenge, leaveChallenge, updateProgress,
+  getChallengeMembers,
 };

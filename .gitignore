@@ -29,6 +29,8 @@ backend/logs/
 backend/uploads/
 coverage/
 backend/coverage/
+expo-*.log
+.claude/
 
 # macOS
 .DS_Store

@@ -19,6 +19,9 @@ alter table if exists earn_entries
 -- Migration 003: Performance indexes
 create index if not exists idx_fast_logs_started_at   on fast_logs(user_id, started_at desc);
 create index if not exists idx_tracker_entries_ts      on tracker_entries(user_id, tracker, ts desc);
+create unique index if not exists idx_unique_synced_steps_per_source_day
+  on tracker_entries(user_id, tracker, (meta->>'syncKey'))
+  where tracker = 'steps' and meta ? 'syncKey';
 
 -- Migration 004: retained for numbering compatibility. Blog routes are active,
 -- so their backing tables must not be dropped.
@@ -97,3 +100,36 @@ do $$ begin create trigger trg_articles_updated_at before update on articles for
 alter table email_verification_otps enable row level security;
 alter table blog_sites enable row level security;
 alter table articles enable row level security;
+
+-- Migration 007: Extend challenges with type/goal/capacity/rules for the guided creation flow.
+alter table if exists challenges add column if not exists challenge_type text default 'cyustom';
+alter table if exists challenges add column if not exists goal_target numeric;
+alter table if exists challenges add column if not exists goal_unit text;
+alter table if exists challenges add column if not exists max_participants int;
+alter table if exists challenges add column if not exists rules text;
+
+-- Migration 008: User-owned content, separate from frontend showcase data.
+create table if not exists user_records (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null references users(id) on delete cascade,
+  kind text not null, external_key text, data jsonb not null default '{}', status text not null default 'active',
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  unique(user_id, kind, external_key)
+);
+create index if not exists idx_user_records_owner_kind on user_records(user_id, kind, updated_at desc);
+do $$ begin create trigger trg_user_records_updated_at before update on user_records for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
+alter table user_records enable row level security;
+
+-- Migration 009: Stripe Connect accounts, Checkout orders, refunds, disputes, and idempotent webhooks.
+alter table payouts add column if not exists stripe_account_id text unique;
+alter table payouts add column if not exists stripe_details_submitted boolean not null default false;
+alter table payouts add column if not exists stripe_charges_enabled boolean not null default false;
+alter table payouts add column if not exists stripe_payouts_enabled boolean not null default false;
+alter table payouts add column if not exists stripe_account_status text not null default 'not-connected';
+create table if not exists marketplace_orders (id uuid primary key default gen_random_uuid(),buyer_id uuid not null references users(id),seller_id uuid not null references users(id),currency text not null,total_amount bigint not null check(total_amount>=0),platform_fee_amount bigint not null default 0,status text not null,items jsonb not null default '[]',stripe_checkout_session_id text unique,stripe_payment_intent_id text unique,paid_at timestamptz,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+create index if not exists idx_marketplace_orders_buyer on marketplace_orders(buyer_id,created_at desc);create index if not exists idx_marketplace_orders_seller on marketplace_orders(seller_id,created_at desc);
+create table if not exists stripe_refunds (id text primary key,order_id uuid not null references marketplace_orders(id),amount bigint not null,currency text not null,status text,reason text,requested_by uuid references users(id),raw jsonb,created_at timestamptz not null default now());
+create table if not exists stripe_disputes (id text primary key,order_id uuid references marketplace_orders(id),charge_id text,payment_intent_id text,amount bigint,currency text,reason text,status text,evidence_due_by timestamptz,raw jsonb,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+create table if not exists stripe_webhook_events (id text primary key,type text not null,stripe_account_id text,livemode boolean not null default false,processed_at timestamptz not null default now());
+do $$ begin create trigger trg_marketplace_orders_updated_at before update on marketplace_orders for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;do $$ begin create trigger trg_stripe_disputes_updated_at before update on stripe_disputes for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
+create or replace function increment_product_sold_count(product_id uuid,increment_by int default 1) returns void language sql as $$ update marketplace_products set sold_count=coalesce(sold_count,0)+greatest(increment_by,0) where id=product_id; $$;
+alter table marketplace_orders enable row level security;alter table stripe_refunds enable row level security;alter table stripe_disputes enable row level security;alter table stripe_webhook_events enable row level security;
