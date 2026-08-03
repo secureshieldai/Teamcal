@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Point this at your backend. For local dev, use your machine's LAN IP (not localhost).
 // e.g. 'http://192.168.1.10:3001/api'
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://teamcal-mr7g.onrender.com/api';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
