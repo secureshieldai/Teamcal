@@ -22,10 +22,12 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function StatusBadge({ status }: { status: string }) {
-  const palette = STATUS_COLORS[status] ?? { bg: colors.border, text: colors.textSecondary };
+  const raw = typeof status === 'string' ? status : String(status ?? 'Unknown');
+  const label = raw.split('-').map((part) => part ? part[0].toUpperCase() + part.slice(1) : part).join(' ');
+  const palette = STATUS_COLORS[label] ?? { bg: colors.border, text: colors.textSecondary };
   return (
     <View style={[styles.badge, { backgroundColor: palette.bg }]}>
-      <Text style={[styles.text, { color: palette.text }]}>{status}</Text>
+      <Text style={[styles.text, { color: palette.text }]}>{label}</Text>
     </View>
   );
 }
