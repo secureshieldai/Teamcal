@@ -6,7 +6,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Avatar from '../../components/Avatar';
 import { colors, radii, spacing, typography } from '../../theme';
 import { mockBlogPosts, type MockBlogComment } from '../../data/socialMockData';
-import { useProfile } from '../../hooks/useProfile';
 import type { RootStackParamList } from '../../navigation/types';
 import { personalService } from '../../services/api/personal.service';
 import {socialService} from '../../services/api/social.service';
@@ -18,7 +17,6 @@ const VISIBLE_COMMENTS = 3;
 export default function BlogDetailScreen({ route, navigation }: Props) {
   const { blogId } = route.params;
   const [post,setPost]=useState(mockBlogPosts.find((p) => p.id === blogId) ?? mockBlogPosts[0]);
-  const { profileUser } = useProfile();
 
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -26,14 +24,15 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
   const [comments, setComments] = useState<MockBlogComment[]>(post.comments);
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState('');
-  useEffect(()=>{socialService.getSocialBlog(blogId).then(item=>{const mapped={id:item.id,image:item.cover||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:item.user?.verified,date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,likes:0,commentCount:0,body:[{type:'paragraph' as const,text:item.body||''}],comments:[]};setPost(mapped);setLikeCount(0);setComments([]);}).catch(()=>{});},[blogId]);
+  const [siteId,setSiteId]=useState('');const [following,setFollowing]=useState(false);
+  useEffect(()=>{socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);const mapped={id:item.id,image:item.cover||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:item.user?.verified,date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,likes:0,commentCount:0,body:[{type:'paragraph' as const,text:item.body||''}],comments:[]};setPost(mapped);setLikeCount(0);setComments([]);}).catch(()=>{});},[blogId]);
   useEffect(() => {
-    Promise.all([personalService.list('saved-blog'),personalService.list<MockBlogComment & {blogId:string}>('blog-comment'),personalService.list('liked-blog')]).then(([savedRows,commentRows,likedRows])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(likedRows.some(r=>r.external_key===post.id));const mine=commentRows.filter(r=>r.data.blogId===post.id).map(r=>({...r.data,id:r.id}));setComments([...post.comments,...mine]);}).catch(()=>{});
+    Promise.all([personalService.list('saved-blog'),socialService.getArticleEngagement(post.id)]).then(([savedRows,engagement])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(engagement.liked);setLikeCount(engagement.likes);setComments([...post.comments,...engagement.comments]);}).catch(()=>{});
   }, [post.id]);
 
   const toggleLike = async () => {
     const previous=liked;setLiked(!liked);setLikeCount(v=>Math.max(0,v+(liked?-1:1)));
-    try{const active=await personalService.toggle('liked-blog',post.id,{title:post.title});setLiked(active);}catch{setLiked(previous);setLikeCount(v=>Math.max(0,v+(previous?1:-1)));}
+    try{const result=await socialService.toggleArticleLike(post.id);setLiked(result.liked);setLikeCount(result.likes);}catch{setLiked(previous);setLikeCount(v=>Math.max(0,v+(previous?1:-1)));}
   };
 
   const toggleSaved = async () => {
@@ -42,8 +41,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
 
   const sendComment = async () => {
     if (!draft.trim()) return;
-    const value={blogId:post.id,name:profileUser.name||'You',avatar:profileUser.avatar,time:'now',text:draft.trim(),likes:0};
-    try{const record=await personalService.create('blog-comment',value,{externalKey:`${post.id}:${Date.now()}`});setComments(prev=>[...prev,{...value,id:record.id}]);setDraft('');setExpanded(true);}catch{}
+    try{const comment=await socialService.addArticleComment(post.id,draft.trim());setComments(prev=>[...prev,comment]);setDraft('');setExpanded(true);}catch{}
   };
 
   const visibleComments = expanded ? comments : comments.slice(0, VISIBLE_COMMENTS);
@@ -83,6 +81,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
               </View>
               <Text style={styles.authorMeta}>{post.date} · {post.readMinutes} min read</Text>
             </View>
+            {siteId?<TouchableOpacity onPress={async()=>setFollowing(await socialService.toggleBlogFollow(siteId))}><Text style={{color:colors.primary,fontWeight:'700'}}>{following?'Following':'Follow'}</Text></TouchableOpacity>:null}
           </View>
 
           <ActionRow

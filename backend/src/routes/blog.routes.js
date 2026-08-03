@@ -2,7 +2,7 @@ const express = require("express");
 const { protect } = require("../middleware/auth");
 const {
   getMySites, createSite, updateSite, deleteSite,
-  getArticles, createArticle, updateArticle, deleteArticle, recordView,
+  getArticles, createArticle, updateArticle, deleteArticle, recordView, getAnalytics,
 } = require("../controllers/blog.controller");
 
 const router = express.Router();
@@ -14,6 +14,7 @@ router.get("/sites", getMySites);
 router.post("/sites", createSite);
 router.patch("/sites/:id", updateSite);
 router.delete("/sites/:id", deleteSite);
+router.get("/sites/:id/analytics", getAnalytics);
 
 // Articles
 router.get("/sites/:blogId/articles", getArticles);

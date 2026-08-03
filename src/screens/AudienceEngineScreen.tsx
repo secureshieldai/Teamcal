@@ -16,10 +16,10 @@ import {
   audienceEngineConnectedAccounts,
   audienceEngineTemplates,
   audienceEngineCampaigns,
-  audienceEnginePerformance,
 } from '../data/earnData';
 import type { RootStackParamList } from '../navigation/types';
 import { personalService } from '../services/api/personal.service';
+import {coachService,type GeneratedAudiencePost} from '../services/api/coach.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AudienceEngine'>;
 
@@ -43,7 +43,10 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>(audienceEngineConnectedAccounts.map((a) => a.key));
   const [schedulingOption, setSchedulingOption] = useState<'smart' | 'custom' | 'queue'>('smart');
   const [personalCampaigns, setPersonalCampaigns] = useState<typeof audienceEngineCampaigns>([]);
-  useEffect(() => { personalService.list<Omit<(typeof audienceEngineCampaigns)[number], 'id'>>('audience-campaign').then(rows => setPersonalCampaigns(rows.map(r => ({ id:r.id, ...r.data })))).catch(() => {}); }, []);
+  const [generatedPosts,setGeneratedPosts]=useState<GeneratedAudiencePost[]>([]);
+  const [connectedAccounts,setConnectedAccounts]=useState<{key:string;label:string;accounts:number;color:string;icon:string}[]>([]);
+  const generatePosts=async()=>setGeneratedPosts(await coachService.generateAudience({topic:contentKey||sourceLabel||'Healthy living',instructions,tone,formats,count:Math.min(postsCount,12)}));
+  useEffect(() => { Promise.all([personalService.list<Omit<(typeof audienceEngineCampaigns)[number], 'id'>>('audience-campaign'),personalService.list<{platform:string;handle:string}>('audience-account')]).then(([campaigns,accounts])=>{setPersonalCampaigns(campaigns.map(r => ({ id:r.id, ...r.data })));const mapped=accounts.map(r=>({key:r.id,label:`${r.data.platform} ${r.data.handle}`,accounts:1,color:colors.primary,icon:'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(mapped.map(x=>x.key));}).catch(() => {}); }, []);
 
   const toggleKeyPoint = (v: string) => setKeyPoints((prev) => (prev.includes(v) ? prev.filter((k) => k !== v) : [...prev, v]));
   const toggleFormat = (key: string) => setFormats((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -64,6 +67,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const persistCampaign = async (status: 'Scheduled'|'Draft') => {
     const value = { title: contentKey || sourceLabel || 'My Campaign', contentType: sourceLabel || 'Custom Content', posts: postsCount, status, date: new Date().toLocaleDateString() };
     const record = await personalService.create('audience-campaign', value, { status: status.toLowerCase() });
+    await personalService.create('audience-publication',{campaignId:record.id,instructions,keyPoints,tone,avoid,notes,formats,objective,accounts:selectedAccounts,schedulingOption,approvals,postsCount,posts:generatedPosts},{externalKey:record.id,status:status.toLowerCase()});
     setPersonalCampaigns(current => [{ id: record.id, ...value }, ...current]);
   };
   const finishSchedule = async () => {
@@ -96,7 +100,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
 
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Connected Accounts</Text>
-            <TouchableOpacity onPress={() => comingSoon('Manage accounts')}>
+            <TouchableOpacity onPress={() => navigation.navigate('AudienceAccounts')}>
               <Text style={styles.manageText}>Manage</Text>
             </TouchableOpacity>
           </View>
@@ -154,12 +158,12 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
           <Text style={styles.sectionTitle}>Performance Overview</Text>
           <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>
             <View style={styles.perfStatsRow}>
-              <PerfStat label="Posts Published" value={String(audienceEnginePerformance.postsPublished)} />
-              <PerfStat label="Impressions" value={`${(audienceEnginePerformance.impressions / 1000).toFixed(1)}K`} />
-              <PerfStat label="Link Clicks" value={audienceEnginePerformance.linkClicks.toLocaleString()} />
+              <PerfStat label="Posts Published" value={String(personalCampaigns.filter(x=>x.status==='Scheduled').reduce((n,x)=>n+x.posts,0))} />
+              <PerfStat label="Impressions" value="0" />
+              <PerfStat label="Link Clicks" value="0" />
             </View>
             <View style={{ alignItems: 'center', marginTop: spacing.md }}>
-              <MiniLineChart values={audienceEnginePerformance.revenue} labels={audienceEnginePerformance.labels} width={270} />
+              <MiniLineChart values={[0,0,0,0,0,0,0]} labels={['Mon','Tue','Wed','Thu','Fri','Sat','Sun']} width={270} />
             </View>
           </View>
         </ScrollView>
@@ -194,10 +198,11 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
           onBack={() => setStep(2)}
         />
       )}
-      {mode === 'wizard' && step === 4 && <GenerateStep onNext={() => setStep(5)} onBack={() => setStep(3)} />}
-      {mode === 'wizard' && step === 5 && <ReviewStep approvals={approvals} setApprovals={setApprovals} onNext={() => setStep(6)} onBack={() => setStep(4)} />}
+      {mode === 'wizard' && step === 4 && <GenerateStep posts={generatedPosts} generate={generatePosts} onNext={() => setStep(5)} onBack={() => setStep(3)} />}
+      {mode === 'wizard' && step === 5 && <ReviewStep posts={generatedPosts} setPosts={setGeneratedPosts} approvals={approvals} setApprovals={setApprovals} onNext={() => setStep(6)} onBack={() => setStep(4)} />}
       {mode === 'wizard' && step === 6 && (
         <ScheduleStep
+          accounts={connectedAccounts}
           selectedAccounts={selectedAccounts}
           toggleAccount={toggleAccount}
           schedulingOption={schedulingOption}

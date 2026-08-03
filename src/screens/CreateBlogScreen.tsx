@@ -8,6 +8,8 @@ import { colors, radii, shadow, spacing, typography } from '../theme';
 import { blogCreateTypes, blogCategories, blogThemeColors } from '../data/earnData';
 import type { RootStackParamList } from '../navigation/types';
 import { blogsService } from '../services/api/blogs.service';
+import { postsService } from '../services/api/posts.service';
+import * as ImagePicker from 'expo-image-picker';
 
 const STEP_COUNT = 7;
 
@@ -25,6 +27,8 @@ export default function CreateBlogScreen() {
   const [publicDiscoverable, setPublicDiscoverable] = useState(true);
   const [creating, setCreating] = useState(false);
   const [createdBlogId, setCreatedBlogId] = useState('');
+  const [logo,setLogo]=useState('');const [cover,setCover]=useState('');
+  const chooseImage=async(kind:'logo'|'cover')=>{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;setCreating(true);try{const url=await postsService.uploadImage(result.assets[0].uri);if(kind==='logo')setLogo(url);else setCover(url);}catch(e){Alert.alert('Upload failed',(e as Error).message)}finally{setCreating(false)}};
 
   const suggestedSubdomain = useMemo(
     () => (subdomain || name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'my-blog',
@@ -41,7 +45,7 @@ export default function CreateBlogScreen() {
     if (step === STEP_COUNT - 1) {
       setCreating(true);
       try {
-        const site = await blogsService.createSite({ name: name.trim(), slug: suggestedSubdomain, category, description: tagline.trim(), theme: themeColor, aiPrefs: JSON.stringify({ blogType, allowFollow, allowComments, publicDiscoverable }) });
+        const site = await blogsService.createSite({ name: name.trim(), slug: suggestedSubdomain, category, description: tagline.trim(), theme: themeColor,logo:logo||undefined,cover:cover||undefined, aiPrefs: JSON.stringify({ blogType, allowFollow, allowComments, publicDiscoverable }) });
         setCreatedBlogId(site.id);
         setStep(STEP_COUNT);
       } catch (error) { Alert.alert('Unable to create blog', (error as Error).message); }
@@ -137,11 +141,11 @@ export default function CreateBlogScreen() {
           <>
             <Text style={styles.stepTitle}>Upload logo & cover</Text>
             <Text style={styles.stepSubtitle}>Add a logo and cover image for your blog.</Text>
-            <TouchableOpacity style={styles.uploadBox} onPress={() => Alert.alert('Coming soon', 'Image upload will be available soon.')}>
+            <TouchableOpacity style={styles.uploadBox} onPress={() => chooseImage('logo')}>
               <Ionicons name="image-outline" size={26} color={colors.textMuted} />
               <Text style={styles.uploadText}>Blog Logo · Tap to upload</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.uploadBox, { height: 100 }]} onPress={() => Alert.alert('Coming soon', 'Image upload will be available soon.')}>
+            <TouchableOpacity style={[styles.uploadBox, { height: 100 }]} onPress={() => chooseImage('cover')}>
               <Ionicons name="image-outline" size={26} color={colors.textMuted} />
               <Text style={styles.uploadText}>Blog Cover Image · Tap to upload</Text>
             </TouchableOpacity>

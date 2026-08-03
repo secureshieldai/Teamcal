@@ -65,6 +65,10 @@ export const challengesService = {
     const { data } = await apiClient.post<{ success: boolean; challenge: Challenge }>('/challenges', payload);
     return data.challenge;
   },
+  async update(id: string, payload: Record<string, unknown>) {
+    const { data } = await apiClient.patch<{ success: boolean; challenge: Challenge }>(`/challenges/${id}`, payload);
+    return data.challenge;
+  },
 
   async getMembers(id: string) {
     const { data } = await apiClient.get<{ success: boolean; members: ChallengeMember[] }>(`/challenges/${id}/members`);

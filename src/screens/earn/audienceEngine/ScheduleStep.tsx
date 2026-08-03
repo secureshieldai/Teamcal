@@ -13,6 +13,7 @@ const SCHEDULING_OPTIONS: { key: SchedulingOption; label: string; description: s
 ];
 
 type Props = {
+  accounts:{key:string;label:string;accounts:number;color:string;icon:string}[];
   selectedAccounts: string[];
   toggleAccount: (key: string) => void;
   schedulingOption: SchedulingOption;
@@ -22,7 +23,7 @@ type Props = {
   onBack: () => void;
 };
 
-export default function ScheduleStep({ selectedAccounts, toggleAccount, schedulingOption, setSchedulingOption, onSchedule, onSaveDraft, onBack }: Props) {
+export default function ScheduleStep({ accounts,selectedAccounts, toggleAccount, schedulingOption, setSchedulingOption, onSchedule, onSaveDraft, onBack }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Schedule Your Posts</Text>
@@ -30,12 +31,12 @@ export default function ScheduleStep({ selectedAccounts, toggleAccount, scheduli
 
       <Text style={styles.fieldLabel}>A. Select Platforms & Accounts</Text>
       <View style={[styles.card, shadow.soft]}>
-        {audienceEngineConnectedAccounts.map((account, i) => {
+        {accounts.map((account, i) => {
           const active = selectedAccounts.includes(account.key);
           return (
             <TouchableOpacity
               key={account.key}
-              style={[styles.accountRow, i === audienceEngineConnectedAccounts.length - 1 && { borderBottomWidth: 0 }]}
+              style={[styles.accountRow, i === accounts.length - 1 && { borderBottomWidth: 0 }]}
               onPress={() => toggleAccount(account.key)}
             >
               <View style={[styles.checkbox, active && styles.checkboxActive]}>{active && <Ionicons name="checkmark" size={12} color={colors.white} />}</View>

@@ -33,9 +33,9 @@ export default function ExploreScreen() {
       case 'supplement-tracker': navigation.navigate('QuickLogEntry', { kind: 'supplement' }); return;
       case 'mood-journal': navigation.navigate('QuickLogEntry', { kind: 'mood' }); return;
       case 'my-goals': navigation.navigate('Goals'); return;
-      case 'recipe-library': comingSoon('Recipe Library'); return;
-      case 'my-recipes': comingSoon('My Recipes'); return;
-      case 'period-tracker': comingSoon('Period Tracker'); return;
+      case 'recipe-library': navigation.navigate('PersonalTool',{kind:'recipe-library'}); return;
+      case 'my-recipes': navigation.navigate('PersonalTool',{kind:'my-recipes'}); return;
+      case 'period-tracker': navigation.navigate('PersonalTool',{kind:'period-tracker'}); return;
     }
   };
 

@@ -25,7 +25,7 @@ export default function ChallengesScreen() {
           <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.pageTitle}>Challenges</Text>
-        <TouchableOpacity onPress={() => Alert.alert('Coming soon', "Advanced filters aren't available yet.")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity onPress={() => setTab('Find Challenges')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="options-outline" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>

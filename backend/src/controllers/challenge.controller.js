@@ -170,6 +170,23 @@ async function createChallenge(req, res, next) {
   }
 }
 
+async function updateChallenge(req, res, next) {
+  try {
+    const b = req.body;
+    const fields = { title:b.title, description:b.description, photo:b.photo, icon:b.icon, icon_color:b.iconColor,
+      duration_days:b.durationDays == null ? undefined : Number(b.durationDays), total_days:b.totalDays == null ? undefined : Number(b.totalDays),
+      is_public:b.isPublic, starts_at:b.startsAt, ends_at:b.endsAt, challenge_type:b.challengeType,
+      goal_target:b.goalTarget == null ? undefined : Number(b.goalTarget), goal_unit:b.goalUnit,
+      max_participants:b.maxParticipants == null ? undefined : Number(b.maxParticipants), rules:b.rules };
+    const patch = Object.fromEntries(Object.entries(fields).filter(([,value]) => value !== undefined));
+    if (!Object.keys(patch).length) return res.status(400).json({success:false,message:"No valid fields to update"});
+    const {data:challenge,error}=await supabase.from("challenges").update(patch).eq("id",req.params.id).eq("created_by",req.user.id).select().maybeSingle();
+    if(error)throw error;
+    if(!challenge)return res.status(404).json({success:false,message:"Challenge not found or you are not its creator"});
+    res.json({success:true,challenge});
+  } catch(err){next(err);}
+}
+
 /** POST /api/challenges/:id/join */
 async function joinChallenge(req, res, next) {
   try {
@@ -286,6 +303,6 @@ async function getChallengeMembers(req, res, next) {
 
 module.exports = {
   getChallenges, getFeatured, getChallenge,
-  createChallenge, joinChallenge, leaveChallenge, updateProgress,
+  createChallenge, updateChallenge, joinChallenge, leaveChallenge, updateProgress,
   getChallengeMembers,
 };

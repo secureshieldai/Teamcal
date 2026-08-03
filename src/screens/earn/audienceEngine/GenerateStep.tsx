@@ -2,18 +2,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing } from '../../../theme';
-import { audienceEngineGeneratedPosts } from '../../../data/earnData';
+import type {GeneratedAudiencePost} from '../../../services/api/coach.service';
 
 type Props = {
   onNext: () => void;
   onBack: () => void;
+  posts: GeneratedAudiencePost[];
+  generate: () => Promise<void>;
 };
 
-export default function GenerateStep({ onNext, onBack }: Props) {
+export default function GenerateStep({ onNext, onBack, posts, generate }: Props) {
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    generate().catch(()=>{});
     timerRef.current = setInterval(() => {
       setProgress((p) => {
         if (p >= 100) {
@@ -28,8 +31,8 @@ export default function GenerateStep({ onNext, onBack }: Props) {
     };
   }, []);
 
-  const revealedCount = Math.floor((progress / 100) * audienceEngineGeneratedPosts.length);
-  const done = progress >= 100;
+  const revealedCount = Math.floor((progress / 100) * posts.length);
+  const done = progress >= 100 && posts.length>0;
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -60,7 +63,7 @@ export default function GenerateStep({ onNext, onBack }: Props) {
 
       <Text style={styles.sectionTitle}>Live Generation Preview</Text>
       <View style={styles.previewGrid}>
-        {audienceEngineGeneratedPosts.map((post, i) => (
+        {posts.map((post, i) => (
           <View key={post.id} style={styles.previewItem}>
             {i < revealedCount ? (
               <Image source={{ uri: post.thumbnail }} style={styles.previewImage} />

@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const rateLimit = require("express-rate-limit");
 const { lookupUsdaBarcode } = require("../services/foodDataCentral.service");
 
-const AI_ENABLED = Boolean(process.env.GEMINI_API_KEY);
+const AI_ENABLED = Boolean(process.env.GEMINI_API_KEY && !/^your_|placeholder|change-me/i.test(process.env.GEMINI_API_KEY));
 let genAI, model;
 
 if (AI_ENABLED) {
@@ -146,6 +146,8 @@ async function lookupBarcode(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function generateAudience(req,res,next){try{const b=req.body||{};const count=Math.min(Math.max(Number(b.count)||6,1),12);let captions=[];if(AI_ENABLED){const prompt=`Return ONLY a JSON array of ${count} concise social media captions. Topic: ${b.topic||'healthy living'}. Instructions: ${b.instructions||'educational and actionable'}. Tone: ${b.tone||'educational'}.`;const result=await model.generateContent(prompt);try{captions=JSON.parse(result.response.text().replace(/```json|```/g,'').trim())}catch{captions=[]}}if(!Array.isArray(captions)||!captions.length)captions=Array.from({length:count},(_,i)=>`${b.topic||'Healthy living'} tip ${i+1}: ${b.instructions||'Take one practical step today and track your progress.'}`);const posts=captions.slice(0,count).map((caption,i)=>({id:`generated-${Date.now()}-${i}`,caption:String(caption),format:(b.formats||['text'])[i%(b.formats||['text']).length],thumbnail:`https://picsum.photos/seed/audience-${Date.now()}-${i}/300/200`,status:'Needs Review'}));res.json({success:true,posts});}catch(e){next(e);}}
+
 // ── Helpers ───────────────────────────────────────────────────────
 
 function ruleBasedReply(input, ctx) {
@@ -183,4 +185,4 @@ function buildSuggestions(message) {
   return [];
 }
 
-module.exports = { chat, scanMeal, lookupBarcode, aiRateLimit };
+module.exports = { chat, scanMeal, lookupBarcode, generateAudience, aiRateLimit };

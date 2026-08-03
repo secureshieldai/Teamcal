@@ -1,6 +1,6 @@
 const express = require("express");
 const { protect } = require("../middleware/auth");
-const { getFeed, searchUsers, getProfile, getLeaderboard, toggleFriend, getFriends, getFriendsProgress, toggleFollow, getCreators, getSocialBlogs, getSocialBlog, getSocialVideos, getStories } = require("../controllers/social.controller");
+const { getFeed, searchUsers, getProfile, getLeaderboard, toggleFriend, getFriends, getFriendsProgress, toggleFollow, getCreators, getSocialBlogs, getSocialBlog, getSocialVideos, getStories, articleEngagement, toggleArticleLike, addArticleComment, deleteArticleComment, toggleBlogFollow } = require("../controllers/social.controller");
 const { listConversations, listRequests, getMessages, sendMessage, actOnRequest } = require('../controllers/message.controller');
 
 const router = express.Router();
@@ -10,6 +10,11 @@ router.use(protect);
 router.get("/feed", getFeed);
 router.get('/content/blogs',getSocialBlogs);
 router.get('/content/blogs/:id',getSocialBlog);
+router.get('/content/blogs/:id/engagement',articleEngagement);
+router.post('/content/blogs/:id/like',toggleArticleLike);
+router.post('/content/blogs/:id/comments',addArticleComment);
+router.delete('/content/blogs/:id/comments/:commentId',deleteArticleComment);
+router.post('/content/blogs/:blogId/follow',toggleBlogFollow);
 router.get('/content/videos',getSocialVideos);
 router.get('/stories',getStories);
 router.get('/messages/conversations',listConversations);

@@ -29,7 +29,7 @@ export type RootStackParamList = {
   MealEditor: { date: string; meal?: { id: string; name: string; mealType: string; kcal: number; protein: number; carbs: number; fats: number } };
   WorkoutSession: { workout: { id?: string; title: string; duration?: number; exercises: { id: string; name: string; detail: string }[] } };
   Comments: { postId: string };
-  CreateChallenge: undefined;
+  CreateChallenge: { challengeId?: string } | undefined;
   ProfileCollection: { kind: 'measurements' | 'photos' | 'achievements' };
   MarketplaceDetail: { productId: string };
   MarketplaceOrders: undefined;
@@ -46,6 +46,10 @@ export type RootStackParamList = {
   Goals: undefined;
   ChallengeDetail: { challengeId: string };
   ChallengeInvite: { challengeId: string };
+  PersonalTool: { kind: 'recipe-library'|'my-recipes'|'period-tracker' };
+  ArticleEditor: { blogId:string; articleId?:string };
+  AudienceAccounts: undefined;
+  BlogSettings: {blogId:string};
 };
 
 export type NoParamRoute = {

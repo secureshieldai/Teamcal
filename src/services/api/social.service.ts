@@ -13,7 +13,8 @@ export type CreatorUser = LeaderboardUser & { bio?: string; following: boolean }
 export type SocialConversation={id:string;user:{id:string;name:string;avatar:string|null};summary:string;unreadCount:number;updatedAt:string};
 export type MessageRequest={id:string;user:{id:string;name:string;avatar:string|null};summary:string;createdAt:string};
 export type DirectMessage={id:string;conversationId:string;senderId:string;recipientId:string;text:string;status:string;read:boolean;createdAt:string;ts:number};
-export type SocialBlog={id:string;title:string;cover?:string;body:string;category?:string;read_minutes:number;views:number;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
+export type SocialBlog={id:string;blog_id:string;title:string;cover?:string;body:string;category?:string;read_minutes:number;views:number;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
+export type ArticleComment={id:string;name:string;avatar:string;time:string;text:string;likes:number;userId:string};
 export type SocialVideo={id:string;title:string;description?:string;image?:string;subtype?:string;metrics?:Record<string,number>;metadata?:Record<string,unknown>;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
 export type SocialStory={id:string;image:string;created_at:string;user:{id:string;name:string;avatar:string|null}};
 
@@ -25,6 +26,11 @@ export const socialService = {
   async actOnMessageRequest(userId:string,action:'accept'|'decline'|'block'){const {data}=await apiClient.post<{success:boolean;status:string}>(`/social/messages/requests/${userId}`,{action});return data.status;},
   async getSocialBlogs(){const {data}=await apiClient.get<{success:boolean;blogs:SocialBlog[]}>('/social/content/blogs');return data.blogs;},
   async getSocialBlog(id:string){const {data}=await apiClient.get<{success:boolean;blog:SocialBlog}>(`/social/content/blogs/${id}`);return data.blog;},
+  async getArticleEngagement(id:string){const {data}=await apiClient.get<{success:boolean;likes:number;liked:boolean;comments:ArticleComment[]}>(`/social/content/blogs/${id}/engagement`);return data;},
+  async toggleArticleLike(id:string){const {data}=await apiClient.post<{success:boolean;likes:number;liked:boolean}>(`/social/content/blogs/${id}/like`);return data;},
+  async addArticleComment(id:string,text:string){const {data}=await apiClient.post<{success:boolean;comment:ArticleComment}>(`/social/content/blogs/${id}/comments`,{text});return data.comment;},
+  async deleteArticleComment(id:string,commentId:string){await apiClient.delete(`/social/content/blogs/${id}/comments/${commentId}`);},
+  async toggleBlogFollow(blogId:string){const {data}=await apiClient.post<{success:boolean;following:boolean}>(`/social/content/blogs/${blogId}/follow`);return data.following;},
   async getSocialVideos(){const {data}=await apiClient.get<{success:boolean;videos:SocialVideo[]}>('/social/content/videos');return data.videos;},
   async getStories(){const {data}=await apiClient.get<{success:boolean;stories:SocialStory[]}>('/social/stories');return data.stories;},
   /**

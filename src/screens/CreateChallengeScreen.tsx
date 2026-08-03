@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import WizardStepIndicator from '../components/WizardStepIndicator';
 import CreateBasicsStep from './challenges/CreateBasicsStep';
@@ -19,6 +19,8 @@ const STEP_TITLES = ['Create Challenge', 'Challenge Details', 'Challenge Setting
 
 export default function CreateChallengeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'CreateChallenge'>>();
+  const editingId=route.params?.challengeId;
   const [step, setStep] = useState(1);
   const [created, setCreated] = useState<Challenge | null>(null);
   const [creating, setCreating] = useState(false);
@@ -34,11 +36,13 @@ export default function CreateChallengeScreen() {
   const [maxParticipants, setMaxParticipants] = useState('');
   const [rules, setRules] = useState('');
 
+  useEffect(()=>{if(!editingId)return;challengesService.get(editingId).then(({challenge:c})=>{setName(c.title);setDescription(c.description||'');setPhoto(c.photo||'');setChallengeType(c.challenge_type||challengeTypes[0].id);setDurationDays(c.duration_days||7);setGoalTarget(String(c.goal_target||''));setIsPublic(c.is_public);setMaxParticipants(c.max_participants?String(c.max_participants):'');setRules(c.rules||'');}).catch(e=>Alert.alert('Unable to load challenge',e.message));},[editingId]);
+
   const handleCreate = async () => {
     setCreating(true);
     try {
       const type = challengeTypes.find((t) => t.id === challengeType) ?? challengeTypes[0];
-      const challenge = await challengesService.create({
+      const payload = {
         title: name.trim(),
         description: description.trim(),
         durationDays,
@@ -53,7 +57,9 @@ export default function CreateChallengeScreen() {
         maxParticipants: maxParticipants ? Number(maxParticipants) : undefined,
         endsAt: Date.now() + durationDays * 86_400_000,
         rules: rules.trim() || undefined,
-      });
+      };
+      const challenge = editingId ? await challengesService.update(editingId,payload) : await challengesService.create(payload);
+      if(editingId){Alert.alert('Challenge updated','Your changes were saved.',[{text:'Done',onPress:()=>navigation.goBack()}]);return;}
       setCreated(challenge);
     } catch (error) {
       Alert.alert('Could not create challenge', (error as Error).message);
@@ -91,7 +97,7 @@ export default function CreateChallengeScreen() {
         <TouchableOpacity onPress={() => (step === 1 ? closeWizard() : setStep((s) => s - 1))} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name={step === 1 ? 'close' : 'chevron-back'} size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{STEP_TITLES[step - 1]}</Text>
+        <Text style={styles.headerTitle}>{editingId ? `Edit: ${STEP_TITLES[step - 1]}` : STEP_TITLES[step - 1]}</Text>
         <View style={{ width: 22 }} />
       </View>
 

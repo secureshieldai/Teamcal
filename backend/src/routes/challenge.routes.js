@@ -2,7 +2,7 @@ const express = require("express");
 const { protect } = require("../middleware/auth");
 const {
   getChallenges, getFeatured, getChallenge,
-  createChallenge, joinChallenge, leaveChallenge, updateProgress,
+  createChallenge, updateChallenge, joinChallenge, leaveChallenge, updateProgress,
   getChallengeMembers,
 } = require("../controllers/challenge.controller");
 
@@ -15,6 +15,7 @@ router.get("/featured", getFeatured);
 router.get("/:id", getChallenge);
 router.get("/:id/members", getChallengeMembers);
 router.post("/", createChallenge);
+router.patch("/:id", updateChallenge);
 router.post("/:id/join", joinChallenge);
 router.delete("/:id/join", leaveChallenge);
 router.patch("/:id/progress", updateProgress);

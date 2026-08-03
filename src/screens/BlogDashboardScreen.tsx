@@ -36,7 +36,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
   const [blog,setBlog]=useState(showcaseBlog ?? {...blogs[0],id:blogId,name:'My Blog',description:'',category:'',url:'',cover:'',status:'Draft' as const,posts:0,views:0,earned:0,followers:0});
   const [posts,setPosts]=useState(showcaseBlog ? blogPosts.filter(p=>p.blogId===blogId) : []);
   const [tab, setTab] = useState(DASHBOARD_TABS[0]);
-  useEffect(()=>{if(showcaseBlog)return;Promise.all([blogsService.sites(),blogsService.articles(blogId)]).then(([sites,articles])=>{const site=sites.find(x=>x.id===blogId);if(!site)return;setBlog({...blog,id:site.id,name:site.name,url:`${site.slug}.teamcal.blog`,category:site.category||'',cover:site.cover||'',status:'Draft',posts:articles.length,views:articles.reduce((n,x)=>n+Number(x.views||0),0),earned:articles.reduce((n,x)=>n+Number(x.earned||0),0),followers:0,updated:new Date(site.created_at).toLocaleDateString(),description:site.description||''});setPosts(articles.map(x=>({id:x.id,blogId:x.blog_id,title:x.title,status:(x.status.charAt(0).toUpperCase()+x.status.slice(1)) as 'Published'|'Draft'|'Scheduled',views:Number(x.views||0),readTime:`${x.read_minutes||1}m`,earned:Number(x.earned||0),date:new Date(x.created_at).toLocaleDateString(),thumbnail:x.cover||''})));}).catch(e=>Alert.alert('Unable to load blog',e.message));},[blogId]);
+  useEffect(()=>{if(showcaseBlog)return;Promise.all([blogsService.sites(),blogsService.articles(blogId),blogsService.analytics(blogId)]).then(([sites,articles,analytics])=>{const site=sites.find(x=>x.id===blogId);if(!site)return;setBlog({...blog,id:site.id,name:site.name,url:`${site.slug}.teamcal.blog`,category:site.category||'',cover:site.cover||'',status:'Draft',posts:analytics.posts,views:analytics.views,earned:analytics.earned,followers:analytics.followers,updated:new Date(site.created_at).toLocaleDateString(),description:site.description||''});setPosts(articles.map(x=>({id:x.id,blogId:x.blog_id,title:x.title,status:(x.status.charAt(0).toUpperCase()+x.status.slice(1)) as 'Published'|'Draft'|'Scheduled',views:Number(x.views||0),readTime:`${x.read_minutes||1}m`,earned:Number(x.earned||0),date:new Date(x.created_at).toLocaleDateString(),thumbnail:x.cover||''})));}).catch(e=>Alert.alert('Unable to load blog',e.message));},[blogId]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -84,7 +84,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
 
         {tab === 'Dashboard' && (
           <>
-            <TouchableOpacity style={styles.createCard} onPress={() => comingSoon('Post editor')} activeOpacity={0.9}>
+            <TouchableOpacity style={styles.createCard} onPress={() => navigation.navigate('ArticleEditor',{blogId})} activeOpacity={0.9}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.createTitle}>Create New Post</Text>
                 <Text style={styles.createSubtitle}>Write, record, or generate a post in minutes.</Text>
@@ -139,7 +139,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
             <Text style={styles.sectionTitle}>Quick Links</Text>
             <View style={[styles.card, shadow.card]}>
               {QUICK_LINKS.map((link, i) => (
-                <TouchableOpacity key={link.key} style={[styles.linkRow, i === QUICK_LINKS.length - 1 && { borderBottomWidth: 0 }]} onPress={() => comingSoon(link.label)}>
+              <TouchableOpacity key={link.key} style={[styles.linkRow, i === QUICK_LINKS.length - 1 && { borderBottomWidth: 0 }]} onPress={() => link.key==='blog-settings'&&!showcaseBlog?navigation.navigate('BlogSettings',{blogId}):comingSoon(link.label)}>
                   <Ionicons name={link.icon as keyof typeof Ionicons.glyphMap} size={17} color={colors.primary} />
                   <Text style={styles.linkLabel}>{link.label}</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -168,7 +168,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
         {tab === 'Posts' && (
           <View style={[styles.card, shadow.card, { marginTop: spacing.lg, marginBottom: spacing.xxl }]}>
             {posts.map((post, i) => (
-              <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => comingSoon('Post editor')}>
+              <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => showcaseBlog ? comingSoon('Showcase post editor') : navigation.navigate('ArticleEditor',{blogId,articleId:post.id})}>
                 <Image source={{ uri: post.thumbnail }} style={styles.postThumb} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.postTitle} numberOfLines={1}>

@@ -43,6 +43,10 @@ import DirectMessageScreen from '../screens/DirectMessageScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import ChallengeDetailScreen from '../screens/ChallengeDetailScreen';
 import ChallengeInviteScreen from '../screens/ChallengeInviteScreen';
+import PersonalToolScreen from '../screens/PersonalToolScreen';
+import ArticleEditorScreen from '../screens/ArticleEditorScreen';
+import AudienceAccountsScreen from '../screens/AudienceAccountsScreen';
+import BlogSettingsScreen from '../screens/BlogSettingsScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -100,6 +104,10 @@ export default function RootNavigator() {
       <Stack.Screen name="Goals" component={GoalsScreen} />
       <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <Stack.Screen name="ChallengeInvite" component={ChallengeInviteScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="PersonalTool" component={PersonalToolScreen} />
+      <Stack.Screen name="ArticleEditor" component={ArticleEditorScreen} options={{presentation:'modal'}} />
+      <Stack.Screen name="AudienceAccounts" component={AudienceAccountsScreen} />
+      <Stack.Screen name="BlogSettings" component={BlogSettingsScreen} />
     </Stack.Navigator>
   );
 }

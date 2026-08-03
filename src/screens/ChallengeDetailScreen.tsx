@@ -225,7 +225,7 @@ export default function ChallengeDetailScreen() {
       <Modal visible={menuOpen} transparent animationType="slide" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setMenuOpen(false)}>
           <View style={styles.sheet}>
-            <MenuRow icon="create-outline" title="Edit Challenge" subtitle="Update challenge details" onPress={() => { setMenuOpen(false); Alert.alert('Coming soon', "Editing challenges isn't available yet."); }} />
+            <MenuRow icon="create-outline" title="Edit Challenge" subtitle="Update challenge details" onPress={() => { setMenuOpen(false); navigation.navigate('CreateChallenge',{challengeId}); }} />
             <MenuRow icon="share-social-outline" title="Share Challenge" subtitle="Share with more people" onPress={() => { setMenuOpen(false); share(); }} />
             <MenuRow icon="people-outline" title="Invite Friends" subtitle="Invite more participants" onPress={() => { setMenuOpen(false); navigation.navigate('ChallengeInvite', { challengeId }); }} />
             <MenuRow

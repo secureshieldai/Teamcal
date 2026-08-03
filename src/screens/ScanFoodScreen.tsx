@@ -8,6 +8,8 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, radii, spacing } from '../theme';
 import { mealsService, type ScanResult } from '../services/api/meals.service';
+import { coachService } from '../services/api/coach.service';
+import { personalService } from '../services/api/personal.service';
 import type { RootStackParamList } from '../navigation/types';
 
 type Mode = 'food' | 'barcode' | 'cook';
@@ -36,19 +38,18 @@ export default function ScanFoodScreen() {
   const [barcodeLocked, setBarcodeLocked] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [recipe, setRecipe] = useState('');
 
   const analyze = async (asset: { uri: string; mimeType?: string | null; fileName?: string | null }) => {
     setPhoto(asset.uri); setBusy(true); setResult(null);
-    try { setResult(await mealsService.scanImage(asset)); }
+    try { const scanned=await mealsService.scanImage(asset);setResult(scanned);if(mode==='cook'){const generated=await coachService.sendMessage(`Create one concise healthy recipe using: ${scanned.items.map(i=>i.name).join(', ')}. Include ingredients and numbered cooking steps.`);setRecipe(generated.reply);} }
     catch (error) { Alert.alert('AI Vision failed', (error as Error).message); setPhoto(null); }
     finally { setBusy(false); }
   };
   const capture = async () => {
-    if (mode === 'cook') { Alert.alert('Coming soon', 'Recipe suggestions from scanned ingredients are coming soon.'); return; }
     const shot = await camera.current?.takePictureAsync({ quality: .75 }); if (shot) analyze({ uri: shot.uri, fileName: 'meal.jpg', mimeType: 'image/jpeg' });
   };
   const gallery = async () => {
-    if (mode === 'cook') { Alert.alert('Coming soon', 'Recipe suggestions from scanned ingredients are coming soon.'); return; }
     const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: .8 }); if (!picked.canceled) analyze(picked.assets[0]);
   };
   const scanned = async ({ data }: BarcodeScanningResult) => {
@@ -57,10 +58,11 @@ export default function ScanFoodScreen() {
     catch (error) { Alert.alert('Barcode lookup', (error as Error).message, [{ text: 'Try again', onPress: () => setBarcodeLocked(false) }]); }
     finally { setBusy(false); }
   };
-  const reset = () => { setResult(null); setPhoto(null); setBarcodeLocked(false); };
+  const reset = () => { setResult(null); setRecipe(''); setPhoto(null); setBarcodeLocked(false); };
   const changeMode = (next: Mode) => { setMode(next); reset(); };
   const log = async () => {
     if (!result) return; setBusy(true);
+    if(mode==='cook'){try{await personalService.create('recipe',{title:`Recipe with ${result.items.map(i=>i.name).join(', ')}`,details:recipe,date:new Date().toISOString()});Alert.alert('Recipe saved','Find it under My Recipes.',[{text:'Done',onPress:()=>navigation.goBack()}]);}catch(error){Alert.alert('Could not save recipe',(error as Error).message);}finally{setBusy(false);}return;}
     try { await mealsService.logScanResult(result.items, { kcal: result.totals.kcal, protein: result.totals.p, carbs: result.totals.c, fats: result.totals.f }); Alert.alert('Meal logged', 'Nutrition was added to today’s progress.', [{ text: 'Done', onPress: () => navigation.goBack() }]); }
     catch (error) { Alert.alert('Could not log meal', (error as Error).message); }
     finally { setBusy(false); }
@@ -140,7 +142,8 @@ export default function ScanFoodScreen() {
               <Text style={styles.itemKcal}>{Math.round(item.kcal)} kcal</Text>
             </View>
           )}
-          <TouchableOpacity style={styles.primary} disabled={busy} onPress={log}><Text style={styles.primaryText}>{busy?'Logging…':'Log Food'}</Text></TouchableOpacity>
+          {mode==='cook'&&<Text style={styles.itemMeta}>{recipe||'Generating recipe…'}</Text>}
+          <TouchableOpacity style={styles.primary} disabled={busy||(mode==='cook'&&!recipe)} onPress={log}><Text style={styles.primaryText}>{busy?'Saving…':mode==='cook'?'Save Recipe':'Log Food'}</Text></TouchableOpacity>
           <TouchableOpacity onPress={reset}><Text style={styles.rescan}>Scan Again</Text></TouchableOpacity>
         </ScrollView>
       ) : (
