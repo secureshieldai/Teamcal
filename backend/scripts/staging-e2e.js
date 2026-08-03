@@ -18,9 +18,8 @@ function assert(condition, message) {
 }
 
 async function main() {
-  server = app.listen(0);
-  await new Promise((resolve) => server.once("listening", resolve));
-  const baseUrl = `http://127.0.0.1:${server.address().port}/api`;
+  let baseUrl=process.env.E2E_BASE_URL?.replace(/\/$/,"");
+  if(!baseUrl){server = app.listen(0);await new Promise((resolve) => server.once("listening", resolve));baseUrl = `http://127.0.0.1:${server.address().port}/api`;}
 
   async function api(method, path, body, token, expectedStatus = 200) {
     const response = await fetch(`${baseUrl}${path}`, {
