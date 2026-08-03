@@ -13,7 +13,7 @@ export type RootStackParamList = {
   MealPlanner: undefined;
   Workouts: undefined;
   Progress: undefined;
-  PowerSquad: undefined;
+  PowerSquad: { groupId?: string } | undefined;
   Marketplace: undefined;
   Rewards: undefined;
   InviteFriends: undefined;
@@ -42,6 +42,7 @@ export type RootStackParamList = {
   BlogDashboard: { blogId: string };
   CreateBlog: undefined;
   AudienceEngine: { sourceLabel?: string } | undefined;
+  DirectMessage: { userId: string; name: string; avatar?: string | null };
   Goals: undefined;
   ChallengeDetail: { challengeId: string };
   ChallengeInvite: { challengeId: string };

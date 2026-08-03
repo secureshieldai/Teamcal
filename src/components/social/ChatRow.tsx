@@ -3,18 +3,15 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, radii, shadow, spacing } from '../../theme';
-import type { MockConversation } from '../../data/socialMockData';
+import type { SocialConversation } from '../../services/api/social.service';
 
-export default function ChatRow({ conversation, onPress }: { conversation: MockConversation; onPress?: () => void }) {
+export default function ChatRow({ conversation, onPress }: { conversation: SocialConversation; onPress?: () => void }) {
   return (
     <TouchableOpacity style={[styles.card, shadow.card]} activeOpacity={0.85} onPress={onPress}>
-      <Avatar uri={conversation.avatar} size={52} online={conversation.online} />
+      <Avatar uri={conversation.user.avatar||''} size={52} />
       <View style={styles.info}>
         <View style={styles.nameRow}>
-          <Text style={styles.name}>{conversation.name}</Text>
-          <View style={styles.streakPill}>
-            <Text style={styles.streakText}>{'\u{1F525}'} {conversation.streakDays} days</Text>
-          </View>
+          <Text style={styles.name}>{conversation.user.name}</Text>
         </View>
         <Text style={styles.summary}>{conversation.summary}</Text>
       </View>

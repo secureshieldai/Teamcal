@@ -3,10 +3,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, radii, shadow, spacing } from '../../theme';
-import type { MockMessageRequest } from '../../data/socialMockData';
+import type { MessageRequest } from '../../services/api/social.service';
 
 type Props = {
-  request: MockMessageRequest;
+  request: MessageRequest;
   onAccept?: () => void;
   onDecline?: () => void;
   onBlock?: () => void;
@@ -15,10 +15,10 @@ type Props = {
 export default function RequestRow({ request, onAccept, onDecline, onBlock }: Props) {
   return (
     <View style={[styles.card, shadow.card]}>
-      <Avatar uri={request.avatar} size={44} />
+      <Avatar uri={request.user.avatar||''} size={44} />
       <View style={styles.info}>
-        <Text style={styles.name}>{request.name}</Text>
-        <Text style={styles.meta}>{request.handle} {'\u{00B7}'} wants to message you</Text>
+        <Text style={styles.name}>{request.user.name}</Text>
+        <Text style={styles.meta} numberOfLines={1}>{request.summary}</Text>
       </View>
       <TouchableOpacity style={styles.acceptButton} onPress={onAccept} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <Ionicons name="checkmark" size={18} color={colors.white} />

@@ -136,6 +136,8 @@ export interface Post {
   text: string;
   image: string | null;
   likes: number;
+  liked?: boolean;
+  comments_count?: number;
   liked_by: string[];
   community: string | null;
   created_at: string;

@@ -4,6 +4,7 @@ import type { Post } from '../../types/api';
 export type PostComment = { id: string; ts: number; meta: { postId: string; text: string }; user: { id: string; name: string; avatar: string | null } };
 
 export const postsService = {
+  async uploadImage(uri:string){const form=new FormData();const file=await fetch(uri).then(r=>r.blob());form.append('image',file,'social-image.jpg');const {data}=await apiClient.post<{success:boolean;url:string}>('/posts/image',form,{headers:{'Content-Type':'multipart/form-data'}});return data.url;},
   /**
    * GET /api/posts/feed?limit=20&skip=0
    * Returns { posts } with user relation joined

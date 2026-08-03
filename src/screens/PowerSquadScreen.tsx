@@ -1,15 +1,28 @@
-import React from 'react';
-import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React,{useState} from 'react';
+import { Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {RouteProp} from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import SectionHeader from '../components/SectionHeader';
 import { colors, radii, shadow, spacing } from '../theme';
 import { powerSquad, groupActions, groupActivity } from '../data/powerSquadData';
+import type {RootStackParamList} from '../navigation/types';
+import {useApiQuery} from '../hooks/useApiQuery';
+import {groupsService} from '../services/api/groups.service';
+import {postsService} from '../services/api/posts.service';
 
 export default function PowerSquadScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route=useRoute<RouteProp<RootStackParamList,'PowerSquad'>>();const groupId=route.params?.groupId;
+  const detail=useApiQuery(()=>groupId?groupsService.get(groupId):Promise.resolve(null),null,[groupId]);
+  const activity=useApiQuery(()=>groupId?groupsService.getActivity(groupId):Promise.resolve([]),[],[groupId]);
+  const real=detail.data;
+  const display=real?{cover:real.group.cover||'',name:real.group.name,description:real.group.description,memberCount:real.group.member_count,members:real.members.map(x=>x.user.avatar||'').filter(Boolean)}:powerSquad;
+  const activities=real?activity.data.map(post=>({id:post.id,avatar:post.user?.avatar||'',name:post.user?.name||'Member',time:new Date(post.created_at).toLocaleString(),caption:post.text,likes:post.likes,comments:0})):groupActivity;
+  const [draft,setDraft]=useState('');const publish=async()=>{if(!groupId||!draft.trim())return;try{await postsService.create({text:draft.trim(),community:groupId});setDraft('');await activity.refetch();}catch(e){Alert.alert('Unable to post',(e as Error).message);}};
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -19,32 +32,33 @@ export default function PowerSquadScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.pageTitle}>Power Squad</Text>
+        <Text style={styles.pageTitle}>{display.name}</Text>
         <Ionicons name="ellipsis-horizontal" size={20} color={colors.textPrimary} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: powerSquad.cover }} style={styles.cover} />
+        <Image source={{ uri: display.cover }} style={styles.cover} />
 
         <View style={styles.body}>
           <View style={styles.avatarStack}>
-            {powerSquad.members.map((uri, i) => (
+            {display.members.slice(0,4).map((uri, i) => (
               <View key={uri} style={[styles.avatarStackItem, { marginLeft: i === 0 ? 0 : -14 }]}>
                 <Avatar uri={uri} size={40} />
               </View>
             ))}
             <View style={[styles.avatarStackMore, { marginLeft: -14 }]}>
-              <Text style={styles.avatarStackMoreText}>+{powerSquad.memberCount - powerSquad.members.length}</Text>
+              <Text style={styles.avatarStackMoreText}>+{Math.max(0,display.memberCount - Math.min(4,display.members.length))}</Text>
             </View>
           </View>
 
-          <Text style={styles.groupName}>{powerSquad.name}</Text>
-          <Text style={styles.groupMeta}>Private Group • {powerSquad.memberCount} Members</Text>
-          <Text style={styles.groupDescription}>{powerSquad.description}</Text>
+          <Text style={styles.groupName}>{display.name}</Text>
+          <Text style={styles.groupMeta}>{real?.group.is_private?'Private':'Public'} Group • {display.memberCount} Members</Text>
+          <Text style={styles.groupDescription}>{display.description}</Text>
+          {groupId?<TouchableOpacity style={styles.membershipButton} onPress={async()=>{try{if(real?.myRole)await groupsService.leave(groupId);else await groupsService.join(groupId);await detail.refetch();}catch(e){Alert.alert('Unable to update membership',(e as Error).message);}}}><Text style={styles.membershipButtonText}>{real?.myRole?'Leave Community':'Join Community'}</Text></TouchableOpacity>:null}
 
           <View style={styles.actionsRow}>
             {groupActions.map((action) => (
-              <TouchableOpacity key={action.id} style={styles.actionItem} activeOpacity={0.75}>
+              <TouchableOpacity key={action.id} style={styles.actionItem} activeOpacity={0.75} onPress={()=>{if(action.id==='workouts')navigation.navigate('Workouts');if(action.id==='challenges')navigation.navigate('Challenges');if(action.id==='leaderboards')navigation.navigate('Leaderboards');}}>
                 <View style={styles.actionIcon}>
                   <Ionicons name={action.icon} size={18} color={colors.primary} />
                 </View>
@@ -53,8 +67,10 @@ export default function PowerSquadScreen() {
             ))}
           </View>
 
+          {groupId&&real?.myRole?<View style={styles.composer}><TextInput style={styles.composerInput} value={draft} onChangeText={setDraft} placeholder="Share with this community…"/><TouchableOpacity style={styles.composerButton} onPress={publish}><Text style={styles.composerButtonText}>Post</Text></TouchableOpacity></View>:null}
+
           <SectionHeader title="Group Activity" style={{ marginTop: spacing.xl }} />
-          {groupActivity.map((activity) => (
+          {activities.map((activity) => (
             <View key={activity.id} style={[styles.activityCard, shadow.card]}>
               <View style={styles.activityHeader}>
                 <Avatar uri={activity.avatar} size={36} />
@@ -170,6 +186,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  membershipButton:{alignSelf:'flex-start',backgroundColor:colors.primary,borderRadius:radii.pill,paddingHorizontal:spacing.lg,paddingVertical:spacing.sm,marginTop:spacing.md},membershipButtonText:{color:colors.white,fontWeight:'800'},
+  composer:{flexDirection:'row',gap:spacing.sm,marginTop:spacing.lg,backgroundColor:colors.card,borderRadius:radii.xl,padding:spacing.sm},
+  composerInput:{flex:1,paddingHorizontal:spacing.sm,color:colors.textPrimary},
+  composerButton:{backgroundColor:colors.primary,borderRadius:radii.pill,paddingHorizontal:spacing.lg,justifyContent:'center'},
+  composerButtonText:{color:colors.white,fontWeight:'800'},
   actionLabel: {
     fontSize: 11,
     fontWeight: '600',

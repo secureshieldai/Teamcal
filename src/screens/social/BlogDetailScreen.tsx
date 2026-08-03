@@ -9,6 +9,7 @@ import { mockBlogPosts, type MockBlogComment } from '../../data/socialMockData';
 import { useProfile } from '../../hooks/useProfile';
 import type { RootStackParamList } from '../../navigation/types';
 import { personalService } from '../../services/api/personal.service';
+import {socialService} from '../../services/api/social.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BlogDetail'>;
 
@@ -16,7 +17,7 @@ const VISIBLE_COMMENTS = 3;
 
 export default function BlogDetailScreen({ route, navigation }: Props) {
   const { blogId } = route.params;
-  const post = mockBlogPosts.find((p) => p.id === blogId) ?? mockBlogPosts[0];
+  const [post,setPost]=useState(mockBlogPosts.find((p) => p.id === blogId) ?? mockBlogPosts[0]);
   const { profileUser } = useProfile();
 
   const [liked, setLiked] = useState(false);
@@ -25,6 +26,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
   const [comments, setComments] = useState<MockBlogComment[]>(post.comments);
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState('');
+  useEffect(()=>{socialService.getSocialBlog(blogId).then(item=>{const mapped={id:item.id,image:item.cover||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:item.user?.verified,date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,likes:0,commentCount:0,body:[{type:'paragraph' as const,text:item.body||''}],comments:[]};setPost(mapped);setLikeCount(0);setComments([]);}).catch(()=>{});},[blogId]);
   useEffect(() => {
     Promise.all([personalService.list('saved-blog'),personalService.list<MockBlogComment & {blogId:string}>('blog-comment'),personalService.list('liked-blog')]).then(([savedRows,commentRows,likedRows])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(likedRows.some(r=>r.external_key===post.id));const mine=commentRows.filter(r=>r.data.blogId===post.id).map(r=>({...r.data,id:r.id}));setComments([...post.comments,...mine]);}).catch(()=>{});
   }, [post.id]);

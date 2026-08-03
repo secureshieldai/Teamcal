@@ -16,11 +16,12 @@ export type Post = {
   badge?: string;
   likes: number;
   comments: number;
+  liked?: boolean;
 };
 
-export default function PostCard({ post, onComment }: { post: Post; onComment?: (id: string) => void }) {
+export default function PostCard({ post, onComment, onDelete }: { post: Post; onComment?: (id: string) => void;onDelete?: (id:string)=>void }) {
   const [likes, setLikes] = useState(post.likes);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
   useEffect(() => { personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {}); }, [post.id]);
   const toggleLike = async () => { const previous = { likes, liked }; setLiked(!liked); setLikes(Math.max(0, likes + (liked ? -1 : 1))); try { const result = await postsService.toggleLike(post.id); setLikes(result.likes); setLiked(result.liked); } catch (e) { setLikes(previous.likes); setLiked(previous.liked); Alert.alert('Unable to like post', (e as Error).message); } };
@@ -33,7 +34,7 @@ export default function PostCard({ post, onComment }: { post: Post; onComment?: 
           <Text style={styles.name}>{post.authorName}</Text>
           <Text style={styles.time}>{post.time}</Text>
         </View>
-        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={()=>onDelete&&Alert.alert('Delete post','This cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:()=>onDelete(post.id)}])}>
           <Ionicons name="ellipsis-horizontal" size={18} color={colors.textMuted} />
         </TouchableOpacity>
       </View>

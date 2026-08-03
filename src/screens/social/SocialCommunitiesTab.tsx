@@ -11,6 +11,8 @@ import { useDiscoverGroups, useGroups } from '../../hooks/useCommunity';
 import { useChallenges } from '../../hooks/useChallenges';
 import { challengesService } from '../../services/api/challenges.service';
 import type { RootStackParamList } from '../../navigation/types';
+import {groupsService} from '../../services/api/groups.service';
+import CreateGroupModal from '../../components/social/CreateGroupModal';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -19,8 +21,9 @@ type Props = {
 export default function SocialCommunitiesTab({ navigation }: Props) {
   const [subTab, setSubTab] = useState(communitiesSubTabs[0]);
   const [query, setQuery] = useState('');
-  const { groups: myGroups } = useGroups();
-  const { groups: discoverGroups, loading: discoverLoading, error: discoverError } = useDiscoverGroups();
+  const [createOpen,setCreateOpen]=useState(false);
+  const { groups: myGroups,refetch:refetchMine } = useGroups();
+  const { groups: discoverGroups, loading: discoverLoading, error: discoverError,refetch:refetchDiscover } = useDiscoverGroups();
   const { challenges, loading: challengesLoading } = useChallenges('discover');
 
   const filteredDiscover = useMemo(
@@ -80,7 +83,7 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
             <TouchableOpacity
               style={[styles.groupCard, shadow.card]}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate('PowerSquad')}
+              onPress={() => navigation.navigate('PowerSquad',{groupId:item.id})}
             >
               <Avatar uri={item.avatar || ''} size={44} />
               <View style={styles.groupInfo}>
@@ -111,7 +114,7 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
               <TouchableOpacity
                 style={styles.createRow}
                 activeOpacity={0.85}
-                onPress={() => Alert.alert('Create a community', 'Coming soon.')}
+                onPress={() => setCreateOpen(true)}
               >
                 <View style={styles.createIcon}>
                   <Text style={styles.createIconText}>+</Text>
@@ -127,19 +130,18 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
           }
           ListEmptyComponent={<Text style={styles.empty}>{discoverLoading ? 'Loading communities…' : discoverError ? `Unable to load: ${discoverError}` : 'No new communities to discover right now.'}</Text>}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.groupCard, shadow.card]} activeOpacity={0.85} onPress={() => navigation.navigate('PowerSquad')}>
+            <TouchableOpacity style={[styles.groupCard, shadow.card]} activeOpacity={0.85} onPress={() => navigation.navigate('PowerSquad',{groupId:item.id})}>
               <Avatar uri={item.avatar || item.cover || ''} size={44} />
               <View style={styles.groupInfo}>
                 <Text style={styles.groupName}>{item.name}</Text>
                 <Text style={styles.groupMeta}>{item.member_count} members · Free</Text>
               </View>
-              <View style={styles.openButton}>
-                <Text style={styles.openButtonText}>Open</Text>
-              </View>
+              <TouchableOpacity style={styles.openButton} onPress={async(e)=>{e.stopPropagation();try{await groupsService.join(item.id);await Promise.all([refetchMine(),refetchDiscover()]);}catch(error){Alert.alert('Unable to join',(error as Error).message);}}}><Text style={styles.openButtonText}>Join</Text></TouchableOpacity>
             </TouchableOpacity>
           )}
         />
       )}
+      <CreateGroupModal visible={createOpen} onClose={()=>setCreateOpen(false)} onCreated={()=>Promise.all([refetchMine(),refetchDiscover()]).then(()=>{})}/>
     </View>
   );
 }

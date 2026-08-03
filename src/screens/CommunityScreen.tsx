@@ -54,7 +54,7 @@ export default function CommunityScreen() {
       </View>
 
       {tab === 'Chats' ? (
-        <SocialChatsTab />
+        <SocialChatsTab navigation={navigation} />
       ) : tab === 'Communities' ? (
         <SocialCommunitiesTab navigation={navigation} />
       ) : tab === 'Me' ? (

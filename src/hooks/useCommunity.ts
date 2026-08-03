@@ -14,7 +14,8 @@ function mapPosts(posts: Post[]) {
     caption: p.text,
     photos: p.image ? [p.image] : [],
     likes: p.likes,
-    comments: 0,
+    comments: p.comments_count||0,
+    liked: Boolean(p.liked),
   }));
 }
 

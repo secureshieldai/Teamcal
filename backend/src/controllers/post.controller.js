@@ -2,6 +2,8 @@ const { supabase } = require("../config/supabase");
 const { notifySafely } = require("../services/notification.service");
 const { uploadPublicImage } = require("../services/storage.service");
 
+async function enrichPosts(posts,userId){const ids=(posts||[]).map(x=>x.id);if(!ids.length)return posts||[];const [{data:comments},{data:likes}]=await Promise.all([supabase.from('post_comments').select('post_id').in('post_id',ids),supabase.from('post_likes').select('post_id,user_id').in('post_id',ids)]);const commentCounts={};const likeCounts={};(comments||[]).forEach(x=>commentCounts[x.post_id]=(commentCounts[x.post_id]||0)+1);(likes||[]).forEach(x=>likeCounts[x.post_id]=(likeCounts[x.post_id]||0)+1);return posts.map(x=>({...x,likes:likeCounts[x.id]||0,comments_count:commentCounts[x.id]||0,liked:(likes||[]).some(l=>l.post_id===x.id&&l.user_id===userId)}));}
+
 /** POST /api/posts */
 async function createPost(req, res, next) {
   try {
@@ -53,13 +55,13 @@ async function myPosts(req, res, next) {
   try {
     const { data: posts, error } = await supabase
       .from("posts")
-      .select("*")
+      .select("*, user:user_id (id, name, avatar, verified)")
       .eq("user_id", req.user.id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    res.json({ success: true, posts });
+    res.json({ success: true, posts:await enrichPosts(posts,req.user.id) });
   } catch (err) {
     next(err);
   }
@@ -84,7 +86,7 @@ async function getFeed(req, res, next) {
       .range(skip, skip + limit - 1);
 
     if (error) throw error;
-    res.json({ success: true, posts });
+    res.json({ success: true, posts:await enrichPosts(posts,req.user.id) });
   } catch (err) {
     next(err);
   }

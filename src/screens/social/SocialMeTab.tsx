@@ -10,6 +10,7 @@ import { useFeed, useMyPosts } from '../../hooks/useCommunity';
 import { useProfile } from '../../hooks/useProfile';
 import type { RootStackParamList } from '../../navigation/types';
 import { personalService } from '../../services/api/personal.service';
+import {postsService} from '../../services/api/posts.service';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -36,15 +37,16 @@ function useSavedPosts(candidates: Post[]) {
 export default function SocialMeTab({ navigation }: Props) {
   const [subTab, setSubTab] = useState(meSubTabs[0]);
   const { profileUser, profileStats } = useProfile();
-  const { posts: myPosts, loading: myPostsLoading, error: myPostsError } = useMyPosts();
+  const { posts: myPosts, loading: myPostsLoading, error: myPostsError,refetch } = useMyPosts();
   const { posts: feedPosts } = useFeed();
   const candidates = useMemo(() => [...myPosts, ...feedPosts], [myPosts, feedPosts]);
   const savedPosts = useSavedPosts(candidates);
+  const taggedPosts=useMemo(()=>{const tags=[profileUser.handle,`@${(profileUser.name||'').replace(/\s+/g,'')}`].filter(Boolean).map(x=>x.toLowerCase());return feedPosts.filter(post=>tags.some(tag=>post.caption.toLowerCase().includes(tag)));},[feedPosts,profileUser.handle,profileUser.name]);
 
   const following = profileStats.find((s) => s.label === 'Following')?.value ?? '0';
   const followers = profileStats.find((s) => s.label === 'Followers')?.value ?? '0';
 
-  const data = subTab === 'Saved' ? savedPosts : subTab === 'Posts' ? myPosts : [];
+  const data = subTab === 'Saved' ? savedPosts : subTab === 'Posts' ? myPosts : taggedPosts;
   const emptyText =
     subTab === 'Tagged'
       ? "No tagged posts yet."
@@ -95,7 +97,7 @@ export default function SocialMeTab({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         ListEmptyComponent={<Text style={styles.empty}>{emptyText}</Text>}
-        renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} />}
+        renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onDelete={async id=>{await postsService.delete(id);await refetch();}} />}
       />
     </View>
   );

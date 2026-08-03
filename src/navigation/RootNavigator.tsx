@@ -39,6 +39,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import BlogDashboardScreen from '../screens/BlogDashboardScreen';
 import CreateBlogScreen from '../screens/CreateBlogScreen';
 import AudienceEngineScreen from '../screens/AudienceEngineScreen';
+import DirectMessageScreen from '../screens/DirectMessageScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import ChallengeDetailScreen from '../screens/ChallengeDetailScreen';
 import ChallengeInviteScreen from '../screens/ChallengeInviteScreen';
@@ -95,6 +96,7 @@ export default function RootNavigator() {
       <Stack.Screen name="BlogDashboard" component={BlogDashboardScreen} />
       <Stack.Screen name="CreateBlog" component={CreateBlogScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="AudienceEngine" component={AudienceEngineScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="DirectMessage" component={DirectMessageScreen} />
       <Stack.Screen name="Goals" component={GoalsScreen} />
       <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <Stack.Screen name="ChallengeInvite" component={ChallengeInviteScreen} options={{ presentation: 'modal' }} />
