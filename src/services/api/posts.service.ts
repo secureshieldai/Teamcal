@@ -4,7 +4,25 @@ import type { Post } from '../../types/api';
 export type PostComment = { id: string; ts: number; meta: { postId: string; text: string }; user: { id: string; name: string; avatar: string | null } };
 
 export const postsService = {
-  async uploadImage(uri:string){const form=new FormData();const file=await fetch(uri).then(r=>r.blob());form.append('image',file,'social-image.jpg');const {data}=await apiClient.post<{success:boolean;url:string}>('/posts/image',form,{headers:{'Content-Type':'multipart/form-data'}});return data.url;},
+  async uploadImage(input: string | { uri: string; mimeType?: string | null; fileName?: string | null }) {
+    const asset = typeof input === 'string' ? { uri: input } : input;
+    const form = new FormData();
+    if (asset.uri.startsWith('data:')) {
+      const blob = await (await fetch(asset.uri)).blob();
+      form.append('image', blob, asset.fileName || 'social-image.jpg');
+    } else {
+      form.append('image', {
+        uri: asset.uri,
+        type: asset.mimeType || 'image/jpeg',
+        name: asset.fileName || 'social-image.jpg',
+      } as never);
+    }
+    const { data } = await apiClient.post<{ success: boolean; url: string }>('/posts/image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30_000,
+    });
+    return data.url;
+  },
   /**
    * GET /api/posts/feed?limit=20&skip=0
    * Returns { posts } with user relation joined

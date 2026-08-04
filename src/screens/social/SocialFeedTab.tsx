@@ -37,7 +37,7 @@ export default function SocialFeedTab({ navigation }: Props) {
   const displayedVideos=[...videoCards,...mockVideos];
   const displayedPosts=[...posts,...showcasePosts];
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.user?.avatar||item.image}));
-  const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const url=await postsService.uploadImage(result.assets[0].uri);await postsService.create({text:'Shared a story',image:url});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
+  const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType,fileName:asset.fileName});await postsService.create({text:'Shared a story',image:url});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
 
   const publish = async () => {
     if (!draft.trim()) return;
