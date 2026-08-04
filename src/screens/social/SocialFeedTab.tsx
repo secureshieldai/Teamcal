@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import StoriesRow from '../../components/StoriesRow';
 import PostCard from '../../components/PostCard';
 import SegmentedControl from '../../components/SegmentedControl';
 import BlogCard from '../../components/social/BlogCard';
 import VideoCard from '../../components/social/VideoCard';
 import { colors, radii, spacing } from '../../theme';
-import { feedSubTabs, posts as showcasePosts } from '../../data/communityData';
+import { feedSubTabs } from '../../data/communityData';
 import {mockBlogPosts, mockVideos} from '../../data/socialMockData';
 import { currentUser } from '../../data/homeData';
 import { useCreatePost, useFeed } from '../../hooks/useCommunity';
@@ -35,9 +36,12 @@ export default function SocialFeedTab({ navigation }: Props) {
   const videoCards=socialVideos.data.map((item,index)=>({id:item.id,thumbnail:item.image||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',time:new Date(item.created_at).toLocaleDateString(),duration:String(item.metadata?.duration||'0:00'),views:String(item.metrics?.views||0),likes:item.metrics?.likes||0,comments:item.metrics?.comments||0,caption:item.description||item.title,hero:index===0}));
   const displayedBlogs=[...blogCards,...mockBlogPosts];
   const displayedVideos=[...videoCards,...mockVideos];
-  const displayedPosts=[...posts,...showcasePosts];
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.user?.avatar||item.image}));
   const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType,fileName:asset.fileName});await postsService.create({text:'Shared a story',image:url});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
+
+  useFocusEffect(useCallback(() => {
+    refetch();
+  }, [refetch]));
 
   const publish = async () => {
     if (!draft.trim()) return;
@@ -80,7 +84,7 @@ export default function SocialFeedTab({ navigation }: Props) {
         />
       ) : (
         <FlatList
-          data={displayedPosts}
+          data={posts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} />}
           contentContainerStyle={styles.list}
