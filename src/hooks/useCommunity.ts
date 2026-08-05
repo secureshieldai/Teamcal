@@ -3,9 +3,10 @@ import { useApiQuery } from './useApiQuery';
 import { postsService } from '../services/api/posts.service';
 import { groupsService } from '../services/api/groups.service';
 import type { Post, Group } from '../types/api';
+import type { Post as PostCardItem } from '../components/PostCard';
 
 // Map backend post shape → PostCard shape
-function mapPosts(posts: Post[]) {
+function mapPosts(posts: Post[]):PostCardItem[] {
   return posts.map((p) => ({
     id: p.id,
     authorName: p.user?.name ?? 'Unknown',

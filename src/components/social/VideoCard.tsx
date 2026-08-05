@@ -3,9 +3,10 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, radii, spacing } from '../../theme';
-import type { MockVideo } from '../../data/socialMockData';
 
-export default function VideoCard({ video }: { video: MockVideo }) {
+export type VideoCardItem = {id:string;thumbnail:string;title:string;author:string;authorAvatar:string;time:string;duration:string;views:string;likes:number;comments:number;caption:string;hero?:boolean};
+
+export default function VideoCard({ video }: { video: VideoCardItem }) {
   if (video.hero) {
     return (
       <View style={[styles.heroCard]}>

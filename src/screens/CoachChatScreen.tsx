@@ -55,7 +55,7 @@ function ProgressCardBubble({ time }: { time: string }) {
       <View style={[styles.progressCard, shadow.card]}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressTitle}>Today's Progress</Text>
-          <View style={styles.progressRingMock}>
+          <View style={styles.progressRing}>
             <Text style={styles.progressRingValue}>1,620</Text>
           </View>
         </View>
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  progressRingMock: {
+  progressRing: {
     width: 44,
     height: 44,
     borderRadius: 22,

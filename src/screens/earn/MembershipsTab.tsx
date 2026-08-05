@@ -6,7 +6,7 @@ import StatCard from './components/StatCard';
 import DateRangeDropdown from './components/DateRangeDropdown';
 import StatusBadge from './components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
-import { memberships, membershipActivity, type DateRangeKey } from '../../data/earnData';
+import { type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
 import { useEarnAssets } from '../../hooks/useEarnAssets';
 import CreateAssetModal from './components/CreateAssetModal';
@@ -29,13 +29,13 @@ export default function MembershipsTab({ navigation }: Props) {
 
   const totals = useMemo(
     () => ({
-      communities: memberships.length,
-      members: memberships.reduce((s, m) => s + m.members, 0),
-      paying: memberships.reduce((s, m) => s + m.paying, 0),
-      mrr: memberships.reduce((s, m) => s + m.mrr, 0),
-      earnings: memberships.reduce((s, m) => s + m.earned, 0),
+      communities: userAssets.assets.length,
+      members: userAssets.assets.reduce((s, m) => s + Number(m.metrics?.members || 0), 0),
+      paying: userAssets.assets.reduce((s, m) => s + Number(m.metrics?.paying || 0), 0),
+      mrr: userAssets.assets.reduce((s, m) => s + Number(m.metrics?.mrr || 0), 0),
+      earnings: userAssets.assets.reduce((s, m) => s + Number(m.metrics?.earned || 0), 0),
     }),
-    []
+    [userAssets.assets]
   );
 
   return (
@@ -57,7 +57,7 @@ export default function MembershipsTab({ navigation }: Props) {
         <StatCard label="Paid Members" value={totals.paying.toLocaleString()} icon="card-outline" />
         <StatCard label="Monthly Recurring Revenue" value={`$${totals.mrr.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="repeat-outline" />
         <StatCard label="Lifetime Earnings" value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="cash-outline" />
-        <StatCard label="Renewal Rate" value="78.4%" icon="trending-up-outline" />
+        <StatCard label="Renewal Rate" value={`${totals.members ? (totals.paying / totals.members * 100).toFixed(1) : '0.0'}%`} icon="trending-up-outline" />
       </View>
 
       <View style={{ marginTop: spacing.lg }}>
@@ -79,51 +79,8 @@ export default function MembershipsTab({ navigation }: Props) {
       <Text style={styles.sectionTitle}>Your Communities</Text>
       {userAssets.error?<Text style={styles.itemMeta}>Could not load your communities: {userAssets.error}</Text>:null}
       <View style={{gap:spacing.md}}>{userAssets.assets.map(membership=><TouchableOpacity key={membership.id} style={[styles.itemCard,shadow.soft]} onPress={async()=>{try{await userAssets.update(membership.id,{status:membership.status==='published'?'draft':'published'});}catch(e){Alert.alert('Unable to update',(e as Error).message);}}}><Image source={{uri:membership.image||`https://picsum.photos/seed/${membership.id}/200/200`}} style={styles.communityImage}/><View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{membership.title}</Text><StatusBadge status={membership.status}/></View><Text style={styles.itemMeta}>{membership.subtype}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{membership.metrics?.members||0} Members</Text><Text style={styles.itemStat}>{membership.metrics?.paying||0} Paying</Text><Text style={styles.itemStat}>${membership.metrics?.mrr||0} MRR</Text></View></View></TouchableOpacity>)}{!userAssets.loading&&!userAssets.assets.length?<Text style={styles.itemMeta}>No personal communities yet. Create one above.</Text>:null}</View>
-      <Text style={styles.sectionTitle}>Showcase Communities</Text>
-      <View style={{ gap: spacing.md }}>
-        {memberships.map((membership) => (
-          <TouchableOpacity key={membership.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase membership','This example is separate from your saved memberships.')}>
-            <Image source={{ uri: membership.image }} style={styles.communityImage} />
-            <View style={{ flex: 1 }}>
-              <View style={styles.itemTopRow}>
-                <Text style={styles.itemName} numberOfLines={1}>
-                  {membership.name}
-                </Text>
-                <StatusBadge status={membership.status} />
-              </View>
-              <Text style={styles.itemMeta} numberOfLines={1}>
-                {membership.category}
-              </Text>
-              <View style={styles.itemStatsRow}>
-                <Text style={styles.itemStat}>{membership.members.toLocaleString()} Members</Text>
-                <Text style={styles.itemStat}>{membership.paying.toLocaleString()} Paying</Text>
-                <Text style={styles.itemStat}>${membership.mrr.toLocaleString()} MRR</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
       <CreateAssetModal visible={Boolean(createOption)} heading="Create Membership" subtype={createOption?.label||''} onClose={()=>setCreateOption(null)} onSubmit={value=>userAssets.create({kind:'membership',subtype:createOption?.key||'create',...value}).then(()=>{})}/>
 
-      <Text style={styles.sectionTitle}>Recent Membership Activity</Text>
-      <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>
-        {membershipActivity.map((activity, i) => (
-          <View key={activity.id} style={[styles.activityRow, i === membershipActivity.length - 1 && { borderBottomWidth: 0 }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.activityText} numberOfLines={1}>
-                <Text style={{ fontWeight: '800' }}>{activity.name}</Text> {activity.action}
-              </Text>
-              <Text style={styles.activityMeta}>
-                {activity.community} · {activity.date}
-              </Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <StatusBadge status={activity.status} />
-              {'amount' in activity && activity.amount ? <Text style={styles.activityAmount}>+${activity.amount.toFixed(2)}</Text> : null}
-            </View>
-          </View>
-        ))}
-      </View>
     </ScrollView>
   );
 }

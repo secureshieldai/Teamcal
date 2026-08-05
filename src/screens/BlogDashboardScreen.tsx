@@ -6,7 +6,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import SegmentedControl from '../components/SegmentedControl';
 import StatusBadge from './earn/components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../theme';
-import { blogs, blogPosts } from '../data/earnData';
 import type { RootStackParamList } from '../navigation/types';
 import { blogsService } from '../services/api/blogs.service';
 
@@ -16,11 +15,8 @@ const DASHBOARD_TABS = ['Dashboard', 'Posts', 'Drafts', 'Scheduled', 'Comments',
 
 const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
-const RECENT_ACTIVITY = [
-  { id: 'act-1', text: 'New post published: "10 Morning Habits for a Healthy Life"', time: '10:24 AM' },
-  { id: 'act-2', text: 'New follower: Sarah Johnson started following your blog', time: '09:45 AM' },
-  { id: 'act-3', text: 'New comment on "How to Stay Motivated Every Day"', time: 'Yesterday, 08:30 PM' },
-];
+type BlogView={id:string;name:string;description:string;category:string;url:string;cover:string;status:string;posts:number;views:number;earned:number;followers:number;updated:string};
+type PostView={id:string;blogId:string;title:string;status:'Published'|'Draft'|'Scheduled';views:number;readTime:string;earned:number;date:string;thumbnail:string};
 
 const QUICK_LINKS = [
   { key: 'blog-settings', label: 'Blog Settings', icon: 'settings-outline' },
@@ -32,11 +28,10 @@ const QUICK_LINKS = [
 
 export default function BlogDashboardScreen({ route, navigation }: Props) {
   const { blogId } = route.params;
-  const showcaseBlog = blogs.find((b) => b.id === blogId);
-  const [blog,setBlog]=useState(showcaseBlog ?? {...blogs[0],id:blogId,name:'My Blog',description:'',category:'',url:'',cover:'',status:'Draft' as const,posts:0,views:0,earned:0,followers:0});
-  const [posts,setPosts]=useState(showcaseBlog ? blogPosts.filter(p=>p.blogId===blogId) : []);
+  const [blog,setBlog]=useState<BlogView>({id:blogId,name:'',description:'',category:'',url:'',cover:'',status:'Draft',posts:0,views:0,earned:0,followers:0,updated:''});
+  const [posts,setPosts]=useState<PostView[]>([]);
   const [tab, setTab] = useState(DASHBOARD_TABS[0]);
-  useEffect(()=>{if(showcaseBlog)return;Promise.all([blogsService.sites(),blogsService.articles(blogId),blogsService.analytics(blogId)]).then(([sites,articles,analytics])=>{const site=sites.find(x=>x.id===blogId);if(!site)return;setBlog({...blog,id:site.id,name:site.name,url:`${site.slug}.teamcal.blog`,category:site.category||'',cover:site.cover||'',status:'Draft',posts:analytics.posts,views:analytics.views,earned:analytics.earned,followers:analytics.followers,updated:new Date(site.created_at).toLocaleDateString(),description:site.description||''});setPosts(articles.map(x=>({id:x.id,blogId:x.blog_id,title:x.title,status:(x.status.charAt(0).toUpperCase()+x.status.slice(1)) as 'Published'|'Draft'|'Scheduled',views:Number(x.views||0),readTime:`${x.read_minutes||1}m`,earned:Number(x.earned||0),date:new Date(x.created_at).toLocaleDateString(),thumbnail:x.cover||''})));}).catch(e=>Alert.alert('Unable to load blog',e.message));},[blogId]);
+  useEffect(()=>{const load=()=>Promise.all([blogsService.sites(),blogsService.articles(blogId),blogsService.analytics(blogId)]).then(([sites,articles,analytics])=>{const site=sites.find(x=>x.id===blogId);if(!site)throw new Error('Blog not found');setBlog({id:site.id,name:site.name,url:`${site.slug}.teamcal.blog`,category:site.category||'',cover:site.cover||'',status:site.status||'Draft',posts:analytics.posts,views:analytics.views,earned:analytics.earned,followers:analytics.followers,updated:new Date(site.created_at).toLocaleDateString(),description:site.description||''});setPosts(articles.map(x=>({id:x.id,blogId:x.blog_id,title:x.title,status:(x.status.charAt(0).toUpperCase()+x.status.slice(1)) as 'Published'|'Draft'|'Scheduled',views:Number(x.views||0),readTime:`${x.read_minutes||1}m`,earned:Number(x.earned||0),date:new Date(x.created_at).toLocaleDateString(),thumbnail:x.cover||''})));}).catch(e=>Alert.alert('Unable to load blog',e.message));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -125,21 +120,22 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
 
             <Text style={styles.sectionTitle}>Recent Activity</Text>
             <View style={[styles.card, shadow.card]}>
-              {RECENT_ACTIVITY.map((activity, i) => (
-                <View key={activity.id} style={[styles.activityRow, i === RECENT_ACTIVITY.length - 1 && { borderBottomWidth: 0 }]}>
+              {posts.slice(0,3).map((post, i) => (
+                <View key={post.id} style={[styles.activityRow, i === Math.min(posts.length,3) - 1 && { borderBottomWidth: 0 }]}>
                   <Ionicons name="ellipse" size={6} color={colors.primary} style={{ marginTop: 6 }} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.activityText}>{activity.text}</Text>
-                    <Text style={styles.activityTime}>{activity.time}</Text>
+                    <Text style={styles.activityText}>{post.title}</Text>
+                    <Text style={styles.activityTime}>{post.date}</Text>
                   </View>
                 </View>
               ))}
+              {!posts.length?<Text style={styles.activityTime}>No recent activity.</Text>:null}
             </View>
 
             <Text style={styles.sectionTitle}>Quick Links</Text>
             <View style={[styles.card, shadow.card]}>
               {QUICK_LINKS.map((link, i) => (
-              <TouchableOpacity key={link.key} style={[styles.linkRow, i === QUICK_LINKS.length - 1 && { borderBottomWidth: 0 }]} onPress={() => link.key==='blog-settings'&&!showcaseBlog?navigation.navigate('BlogSettings',{blogId}):comingSoon(link.label)}>
+              <TouchableOpacity key={link.key} style={[styles.linkRow, i === QUICK_LINKS.length - 1 && { borderBottomWidth: 0 }]} onPress={() => link.key==='blog-settings'?navigation.navigate('BlogSettings',{blogId}):comingSoon(link.label)}>
                   <Ionicons name={link.icon as keyof typeof Ionicons.glyphMap} size={17} color={colors.primary} />
                   <Text style={styles.linkLabel}>{link.label}</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -168,7 +164,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
         {tab === 'Posts' && (
           <View style={[styles.card, shadow.card, { marginTop: spacing.lg, marginBottom: spacing.xxl }]}>
             {posts.map((post, i) => (
-              <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => showcaseBlog ? comingSoon('Showcase post editor') : navigation.navigate('ArticleEditor',{blogId,articleId:post.id})}>
+              <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ArticleEditor',{blogId,articleId:post.id})}>
                 <Image source={{ uri: post.thumbnail }} style={styles.postThumb} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.postTitle} numberOfLines={1}>

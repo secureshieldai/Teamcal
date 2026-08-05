@@ -6,7 +6,7 @@ import StatCard from './components/StatCard';
 import DateRangeDropdown from './components/DateRangeDropdown';
 import StatusBadge from './components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
-import { videos, type DateRangeKey } from '../../data/earnData';
+import { type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
 import { useEarnAssets } from '../../hooks/useEarnAssets';
 import CreateAssetModal from './components/CreateAssetModal';
@@ -29,12 +29,14 @@ export default function VideosTab({ navigation }: Props) {
 
   const totals = useMemo(
     () => ({
-      count: videos.length,
-      views: videos.reduce((s, v) => s + v.views, 0),
-      qualifiedViews: videos.reduce((s, v) => s + v.qualifiedViews, 0),
-      earnings: videos.reduce((s, v) => s + v.earned, 0),
+      count: userAssets.assets.length,
+      views: userAssets.assets.reduce((s, v) => s + Number(v.metrics?.views || 0), 0),
+      qualifiedViews: userAssets.assets.reduce((s, v) => s + Number(v.metrics?.qualifiedViews || 0), 0),
+      earnings: userAssets.assets.reduce((s, v) => s + Number(v.metrics?.earned || 0), 0),
+      subscribers: userAssets.assets.reduce((s, v) => s + Number(v.metrics?.subscribers || 0), 0),
+      completion: userAssets.assets.length ? userAssets.assets.reduce((s, v) => s + Number(v.metrics?.completion || 0), 0) / userAssets.assets.length : 0,
     }),
-    []
+    [userAssets.assets]
   );
 
   return (
@@ -55,8 +57,8 @@ export default function VideosTab({ navigation }: Props) {
         <StatCard label="Total Views" value={totals.views.toLocaleString()} icon="eye-outline" />
         <StatCard label="Qualified Views" value={totals.qualifiedViews.toLocaleString()} icon="checkmark-circle-outline" />
         <StatCard label="Total Earnings" value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="cash-outline" />
-        <StatCard label="Total Subscribers" value="3,680" icon="people-outline" />
-        <StatCard label="Avg. Completion" value="62.4%" icon="stats-chart-outline" />
+        <StatCard label="Total Subscribers" value={totals.subscribers.toLocaleString()} icon="people-outline" />
+        <StatCard label="Avg. Completion" value={`${totals.completion.toFixed(1)}%`} icon="stats-chart-outline" />
       </View>
 
       <View style={{ marginTop: spacing.lg }}>
@@ -78,30 +80,6 @@ export default function VideosTab({ navigation }: Props) {
       <Text style={styles.sectionTitle}>Your Videos & Series</Text>
       {userAssets.error?<Text style={styles.itemMeta}>Could not load your videos: {userAssets.error}</Text>:null}
       <View style={{gap:spacing.md}}>{userAssets.assets.map(video=><TouchableOpacity key={video.id} style={[styles.itemCard,shadow.soft]} onPress={async()=>{try{await userAssets.update(video.id,{status:video.status==='published'?'draft':'published'});}catch(e){Alert.alert('Unable to update',(e as Error).message);}}}><Image source={{uri:video.image||`https://picsum.photos/seed/${video.id}/300/400`}} style={styles.videoThumb}/><View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{video.title}</Text><StatusBadge status={video.status}/></View><Text style={styles.itemMeta}>{video.subtype} · ${Number(video.price).toFixed(2)}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{video.metrics?.views||0} Views</Text><Text style={styles.itemStat}>{video.metrics?.completion||0}% Completion</Text><Text style={styles.itemStat}>${video.metrics?.earned||0} Earned</Text></View></View></TouchableOpacity>)}{!userAssets.loading&&!userAssets.assets.length?<Text style={styles.itemMeta}>No personal videos yet. Create one above.</Text>:null}</View>
-      <Text style={styles.sectionTitle}>Showcase Videos & Series</Text>
-      <View style={{ gap: spacing.md, marginBottom: spacing.xxl }}>
-        {videos.map((video) => (
-          <TouchableOpacity key={video.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase video','This example is separate from your saved videos.')}>
-            <Image source={{ uri: video.thumbnail }} style={styles.videoThumb} />
-            <View style={{ flex: 1 }}>
-              <View style={styles.itemTopRow}>
-                <Text style={styles.itemName} numberOfLines={1}>
-                  {video.title}
-                </Text>
-                <StatusBadge status={video.status} />
-              </View>
-              <Text style={styles.itemMeta} numberOfLines={1}>
-                {video.subtitle} · {video.monetization}
-              </Text>
-              <View style={styles.itemStatsRow}>
-                <Text style={styles.itemStat}>{video.views.toLocaleString()} Views</Text>
-                <Text style={styles.itemStat}>{video.completion}% Completion</Text>
-                <Text style={styles.itemStat}>${video.earned.toLocaleString()} Earned</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
       <CreateAssetModal visible={Boolean(createOption)} heading="Create Video" subtype={createOption?.label||''} onClose={()=>setCreateOption(null)} onSubmit={value=>userAssets.create({kind:'video',subtype:createOption?.key||'upload',...value}).then(()=>{})}/>
     </ScrollView>
   );

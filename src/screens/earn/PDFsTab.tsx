@@ -6,7 +6,7 @@ import StatCard from './components/StatCard';
 import DateRangeDropdown from './components/DateRangeDropdown';
 import StatusBadge from './components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
-import { pdfs, type DateRangeKey } from '../../data/earnData';
+import { type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
 import { useEarnAssets } from '../../hooks/useEarnAssets';
 import CreateAssetModal from './components/CreateAssetModal';
@@ -29,13 +29,15 @@ export default function PDFsTab({ navigation }: Props) {
 
   const totals = useMemo(
     () => ({
-      count: pdfs.length,
-      previewViews: pdfs.reduce((s, p) => s + p.previewViews, 0),
-      purchases: pdfs.reduce((s, p) => s + p.purchases, 0),
-      earnings: pdfs.reduce((s, p) => s + p.earned, 0),
-      conversion: pdfs.reduce((s, p) => s + p.conversionRate, 0) / pdfs.length,
+      count: userAssets.assets.length,
+      previewViews: userAssets.assets.reduce((s, p) => s + Number(p.metrics?.views || 0), 0),
+      purchases: userAssets.assets.reduce((s, p) => s + Number(p.metrics?.purchases || 0), 0),
+      earnings: userAssets.assets.reduce((s, p) => s + Number(p.metrics?.earned || 0), 0),
+      conversion: userAssets.assets.reduce((s, p) => s + Number(p.metrics?.views || 0), 0)
+        ? userAssets.assets.reduce((s, p) => s + Number(p.metrics?.purchases || 0), 0) / userAssets.assets.reduce((s, p) => s + Number(p.metrics?.views || 0), 0) * 100
+        : 0,
     }),
-    []
+    [userAssets.assets]
   );
 
   return (
@@ -57,7 +59,7 @@ export default function PDFsTab({ navigation }: Props) {
         <StatCard label="Full Purchases" value={totals.purchases.toLocaleString()} icon="cart-outline" />
         <StatCard label="Total Earnings" value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="cash-outline" />
         <StatCard label="Conversion Rate" value={`${totals.conversion.toFixed(2)}%`} icon="trending-up-outline" />
-        <StatCard label="Total Readers" value="3,980" icon="people-outline" />
+        <StatCard label="Total Readers" value={totals.purchases.toLocaleString()} icon="people-outline" />
       </View>
 
       <View style={{ marginTop: spacing.lg }}>
@@ -83,30 +85,6 @@ export default function PDFsTab({ navigation }: Props) {
       <View style={{ gap: spacing.md }}>
         {userAssets.assets.map((pdf)=><TouchableOpacity key={pdf.id} style={[styles.itemCard,shadow.soft]} onPress={async()=>{try{await userAssets.update(pdf.id,{status:pdf.status==='published'?'draft':'published'});}catch(e){Alert.alert('Unable to update',(e as Error).message);}}}><Image source={{uri:pdf.image||`https://picsum.photos/seed/${pdf.id}/300/400`}} style={styles.pdfCover}/><View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{pdf.title}</Text><StatusBadge status={pdf.status}/></View><Text style={styles.itemMeta}>{pdf.subtype} · ${Number(pdf.price).toFixed(2)}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{pdf.metrics?.views||0} Views</Text><Text style={styles.itemStat}>{pdf.metrics?.purchases||0} Purchases</Text><Text style={styles.itemStat}>${pdf.metrics?.earned||0} Earned</Text></View></View></TouchableOpacity>)}
         {!userAssets.loading&&!userAssets.assets.length?<Text style={styles.itemMeta}>No personal PDFs yet. Create one above.</Text>:null}
-      </View>
-      <Text style={styles.sectionTitle}>Showcase PDFs</Text>
-      <View style={{ gap: spacing.md, marginBottom: spacing.xxl }}>
-        {pdfs.map((pdf) => (
-          <TouchableOpacity key={pdf.id} style={[styles.itemCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase PDF','This example is separate from your saved PDFs.')}>
-            <Image source={{ uri: pdf.cover }} style={styles.pdfCover} />
-            <View style={{ flex: 1 }}>
-              <View style={styles.itemTopRow}>
-                <Text style={styles.itemName} numberOfLines={1}>
-                  {pdf.title}
-                </Text>
-                <StatusBadge status={pdf.status} />
-              </View>
-              <Text style={styles.itemMeta}>
-                {pdf.category} · ${pdf.price.toFixed(2)}
-              </Text>
-              <View style={styles.itemStatsRow}>
-                <Text style={styles.itemStat}>{pdf.previewViews.toLocaleString()} Views</Text>
-                <Text style={styles.itemStat}>{pdf.purchases} Purchases</Text>
-                <Text style={styles.itemStat}>${pdf.earned.toLocaleString()} Earned</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
       </View>
       <CreateAssetModal visible={Boolean(createOption)} heading="Create PDF" subtype={createOption?.label||''} onClose={()=>setCreateOption(null)} onSubmit={value=>userAssets.create({kind:'pdf',subtype:createOption?.key||'upload',...value}).then(()=>{})}/>
     </ScrollView>

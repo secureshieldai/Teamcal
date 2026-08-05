@@ -9,8 +9,6 @@ import BlogCard from '../../components/social/BlogCard';
 import VideoCard from '../../components/social/VideoCard';
 import { colors, radii, spacing } from '../../theme';
 import { feedSubTabs } from '../../data/communityData';
-import {mockBlogPosts, mockVideos} from '../../data/socialMockData';
-import { currentUser } from '../../data/homeData';
 import { useCreatePost, useFeed } from '../../hooks/useCommunity';
 import type { RootStackParamList } from '../../navigation/types';
 import {useApiQuery} from '../../hooks/useApiQuery';
@@ -34,8 +32,6 @@ export default function SocialFeedTab({ navigation }: Props) {
   const socialStories=useApiQuery(()=>socialService.getStories(),[],[]);
   const blogCards=socialBlogs.data.map((item,index)=>({id:item.id,image:item.cover||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:item.user?.verified,date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,likes:0,commentCount:0,featured:index===0,body:[],comments:[]}));
   const videoCards=socialVideos.data.map((item,index)=>({id:item.id,thumbnail:item.image||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',time:new Date(item.created_at).toLocaleDateString(),duration:String(item.metadata?.duration||'0:00'),views:String(item.metrics?.views||0),likes:item.metrics?.likes||0,comments:item.metrics?.comments||0,caption:item.description||item.title,hero:index===0}));
-  const displayedBlogs=[...blogCards,...mockBlogPosts];
-  const displayedVideos=[...videoCards,...mockVideos];
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.user?.avatar||item.image}));
   const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType,fileName:asset.fileName});await postsService.create({text:'Shared a story',image:url});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
 
@@ -57,7 +53,7 @@ export default function SocialFeedTab({ navigation }: Props) {
   return (
     <View style={styles.flex}>
       <View style={styles.storiesWrap}>
-        <StoriesRow currentUserAvatar={user?.avatar||currentUser.avatar} stories={storyCards} onAddStory={addStory} onPressStory={(id)=>{const story=socialStories.data.find(x=>x.id===id);if(story)Alert.alert(story.user?.name||'Story',story.image);}} />
+        <StoriesRow currentUserAvatar={user?.avatar||''} stories={storyCards} onAddStory={addStory} onPressStory={(id)=>{const story=socialStories.data.find(x=>x.id===id);if(story)Alert.alert(story.user?.name||'Story',story.image);}} />
       </View>
 
       <View style={styles.subTabsWrap}>
@@ -66,7 +62,7 @@ export default function SocialFeedTab({ navigation }: Props) {
 
       {subTab === 'Blogs' ? (
         <FlatList
-          data={displayedBlogs}
+          data={blogCards}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -76,7 +72,7 @@ export default function SocialFeedTab({ navigation }: Props) {
         />
       ) : subTab === 'Videos' ? (
         <FlatList
-          data={displayedVideos}
+          data={videoCards}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}

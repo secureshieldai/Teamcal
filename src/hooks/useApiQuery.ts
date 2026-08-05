@@ -26,7 +26,7 @@ export function useApiQuery<T>(
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   const run = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, error: null }));
     try {
       const result = await fetcher();
       if (mounted.current) setState({ data: result, loading: false, error: null });
@@ -41,7 +41,11 @@ export function useApiQuery<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
-  useEffect(() => { run(); }, [run]);
+  useEffect(() => {
+    run();
+    const timer = setInterval(run, 15_000);
+    return () => clearInterval(timer);
+  }, [run]);
 
   return { ...state, refetch: run };
 }

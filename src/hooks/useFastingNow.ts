@@ -28,6 +28,8 @@ export function useFastingNow() {
 
   useEffect(() => {
     refetch();
+    const timer=setInterval(refetch,15_000);
+    return()=>clearInterval(timer);
   }, [refetch]);
 
   // A fresh fast always starts unpaused, even if `active` is later updated in place (e.g. by extend()).

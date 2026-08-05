@@ -6,12 +6,11 @@ import StatCard from './components/StatCard';
 import DateRangeDropdown from './components/DateRangeDropdown';
 import SortDropdown from './components/SortDropdown';
 import StatusBadge from './components/StatusBadge';
-import MiniLineChart from '../../components/charts/MiniLineChart';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
-import { blogs, blogPosts, blogPerformanceTrend, type DateRangeKey } from '../../data/earnData';
+import { type DateRangeKey } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
 import { useFocusEffect } from '@react-navigation/native';
-import { blogsService, type BlogSite } from '../../services/api/blogs.service';
+import { blogsService, type BlogArticle, type BlogSite } from '../../services/api/blogs.service';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
@@ -23,28 +22,21 @@ export default function BlogsTab({ navigation }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
   const [sort, setSort] = useState(SORT_OPTIONS[0]);
   const [userBlogs,setUserBlogs]=useState<BlogSite[]>([]);
+  const [articles,setArticles]=useState<BlogArticle[]>([]);
+  const [analytics,setAnalytics]=useState({posts:0,published:0,views:0,earned:0,averageReadMinutes:0,followers:0,comments:0});
   const [loadError,setLoadError]=useState('');
-  useFocusEffect(useCallback(()=>{let active=true;blogsService.sites().then(data=>{if(active){setUserBlogs(data);setLoadError('');}}).catch(e=>active&&setLoadError((e as Error).message));return()=>{active=false};},[]));
+  useFocusEffect(useCallback(()=>{let active=true;const load=async()=>{try{const sites=await blogsService.sites();const [stats,posts]=await Promise.all([Promise.all(sites.map(x=>blogsService.analytics(x.id))),Promise.all(sites.map(x=>blogsService.articles(x.id)))]);if(!active)return;setUserBlogs(sites);setArticles(posts.flat());setAnalytics(stats.reduce((a,x)=>({posts:a.posts+x.posts,published:a.published+x.published,views:a.views+x.views,earned:a.earned+x.earned,averageReadMinutes:a.averageReadMinutes+x.averageReadMinutes,followers:a.followers+x.followers,comments:a.comments+x.comments}),{posts:0,published:0,views:0,earned:0,averageReadMinutes:0,followers:0,comments:0}));setLoadError('');}catch(e){if(active)setLoadError((e as Error).message)}};load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)};},[]));
 
   const totals = useMemo(
     () => ({
-      blogCount: blogs.length,
-      posts: blogs.reduce((s, b) => s + b.posts, 0),
-      views: blogs.reduce((s, b) => s + b.views, 0),
-      earnings: blogs.reduce((s, b) => s + b.earned, 0),
-      followers: blogs.reduce((s, b) => s + b.followers, 0),
+      blogCount: userBlogs.length,
+      posts: analytics.published,
+      views: analytics.views,
+      earnings: analytics.earned,
+      followers: analytics.followers,
     }),
-    []
+    [analytics, userBlogs.length]
   );
-
-  const sortedBlogs = useMemo(() => {
-    const copy = [...blogs];
-    if (sort === 'Oldest') return copy.reverse();
-    if (sort === 'Highest Earning') return copy.sort((a, b) => b.earned - a.earned);
-    if (sort === 'Most Viewed') return copy.sort((a, b) => b.views - a.views);
-    if (sort === 'Most Followers') return copy.sort((a, b) => b.followers - a.followers);
-    return copy;
-  }, [sort]);
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -65,7 +57,7 @@ export default function BlogsTab({ navigation }: Props) {
         <StatCard label="Total Views" value={totals.views.toLocaleString()} icon="eye-outline" />
         <StatCard label="Total Earnings" value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="cash-outline" />
         <StatCard label="Total Followers" value={totals.followers.toLocaleString()} icon="people-outline" />
-        <StatCard label="Avg. Reading Time" value="4m 38s" icon="time-outline" />
+        <StatCard label="Avg. Reading Time" value={`${analytics.averageReadMinutes.toFixed(1)}m`} icon="time-outline" />
       </View>
 
       <View style={{ marginTop: spacing.lg }}>
@@ -98,53 +90,6 @@ export default function BlogsTab({ navigation }: Props) {
         {!loadError&&!userBlogs.length?<Text style={styles.blogUrl}>No personal blogs yet. Create one above.</Text>:null}
       </View>
 
-      <Text style={styles.sectionTitle}>Showcase Blogs</Text>
-      <View style={{ gap: spacing.md }}>
-        {sortedBlogs.map((blog) => (
-          <TouchableOpacity key={blog.id} style={[styles.blogCard, shadow.soft]} activeOpacity={0.85} onPress={() => Alert.alert('Showcase blog','This example demonstrates how your own saved blog will appear.')}>
-            <Image source={{ uri: blog.cover }} style={styles.blogCover} />
-            <View style={styles.blogInfo}>
-              <View style={styles.blogTopRow}>
-                <Text style={styles.blogName} numberOfLines={1}>
-                  {blog.name}
-                </Text>
-                <StatusBadge status={blog.status} />
-              </View>
-              <Text style={styles.blogUrl} numberOfLines={1}>
-                {blog.url}
-              </Text>
-              <View style={styles.categoryPill}>
-                <Text style={styles.categoryPillText}>{blog.category}</Text>
-              </View>
-              <View style={styles.blogStatsRow}>
-                <Text style={styles.blogStat}>{blog.posts} Posts</Text>
-                <Text style={styles.blogStat}>{blog.views.toLocaleString()} Views</Text>
-                <Text style={styles.blogStat}>${blog.earned.toLocaleString()} Earned</Text>
-                <Text style={styles.blogStat}>{blog.followers.toLocaleString()} Followers</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity style={styles.seeAllBtn} onPress={() => comingSoon('More blogs')}>
-        <Text style={styles.seeAllText}>See All Blogs</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.sectionTitle}>Blog Performance Overview</Text>
-      <View style={[styles.card, shadow.card]}>
-        <View style={styles.perfRow}>
-          <View style={styles.perfCol}>
-            <Text style={styles.perfLabel}>Views</Text>
-            <MiniLineChart values={blogPerformanceTrend.views} labels={blogPerformanceTrend.labels} width={250} height={70} />
-          </View>
-        </View>
-        <TouchableOpacity onPress={() => comingSoon('Full analytics')}>
-          <Text style={[styles.seeAllText, { textAlign: 'center', marginTop: spacing.sm }]}>View all analytics</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.sectionHeaderRow}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
       </View>
@@ -173,15 +118,15 @@ export default function BlogsTab({ navigation }: Props) {
         </TouchableOpacity>
       </View>
       <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>
-        {blogPosts.map((post, i) => (
-          <TouchableOpacity key={post.id} style={[styles.postRow, i === blogPosts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => comingSoon('Post editor')}>
-            <Image source={{ uri: post.thumbnail }} style={styles.postThumb} />
+        {articles.slice(0, 10).map((post, i) => (
+          <TouchableOpacity key={post.id} style={[styles.postRow, i === articles.slice(0,10).length - 1 && { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ArticleEditor',{blogId:post.blog_id,articleId:post.id})}>
+            <Image source={{ uri: post.cover||`https://picsum.photos/seed/${post.id}/200/200` }} style={styles.postThumb} />
             <View style={{ flex: 1 }}>
               <Text style={styles.postTitle} numberOfLines={1}>
                 {post.title}
               </Text>
               <Text style={styles.postMeta}>
-                {post.views.toLocaleString()} views · {post.readTime}
+                {post.views.toLocaleString()} views · {post.read_minutes || 0} min read
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
@@ -190,6 +135,7 @@ export default function BlogsTab({ navigation }: Props) {
             </View>
           </TouchableOpacity>
         ))}
+        {!articles.length?<Text style={styles.blogUrl}>No blog posts yet.</Text>:null}
       </View>
     </ScrollView>
   );

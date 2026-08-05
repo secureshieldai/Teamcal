@@ -2,16 +2,17 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing, typography } from '../../../theme';
-import { contentSourceOptions, audienceEngineConnectedAccounts, topPerformingContent } from '../../../data/earnData';
+import { contentSourceOptions } from '../../../data/earnData';
 
 type Props = {
   selectedKey: string;
   onSelect: (key: string) => void;
   onNext: () => void;
+  accounts:{key:string;label:string;accounts:number;color:string;icon:string}[];
 };
 
-export default function SelectContentStep({ selectedKey, onSelect, onNext }: Props) {
-  const preview = topPerformingContent[0];
+export default function SelectContentStep({ selectedKey, onSelect, onNext, accounts }: Props) {
+  const preview = contentSourceOptions.find(x=>x.key===selectedKey);
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -34,9 +35,9 @@ export default function SelectContentStep({ selectedKey, onSelect, onNext }: Pro
           <View style={styles.previewThumb} />
           <View style={{ flex: 1 }}>
             <Text style={styles.previewTitle} numberOfLines={1}>
-              {preview.title}
+              {preview?.label}
             </Text>
-            <Text style={styles.previewMeta}>{preview.type} · Published · {preview.date}</Text>
+            <Text style={styles.previewMeta}>Uses your current backend content</Text>
           </View>
           <TouchableOpacity>
             <Text style={styles.changeText}>Change</Text>
@@ -46,7 +47,7 @@ export default function SelectContentStep({ selectedKey, onSelect, onNext }: Pro
 
       <Text style={styles.sectionTitle}>Connected Accounts</Text>
       <View style={[styles.accountsCard, shadow.soft]}>
-        {audienceEngineConnectedAccounts.map((account) => (
+        {accounts.map((account) => (
           <View key={account.key} style={styles.accountItem}>
             <View style={[styles.accountIcon, { backgroundColor: account.color }]}>
               <Ionicons name={account.icon as keyof typeof Ionicons.glyphMap} size={16} color={colors.white} />
@@ -55,6 +56,7 @@ export default function SelectContentStep({ selectedKey, onSelect, onNext }: Pro
             <Text style={styles.accountLabel}>{account.label}</Text>
           </View>
         ))}
+        {!accounts.length?<Text style={styles.accountLabel}>No connected accounts</Text>:null}
       </View>
 
       <TouchableOpacity style={[styles.primaryBtn, !selectedKey && styles.primaryBtnDisabled]} disabled={!selectedKey} onPress={onNext} activeOpacity={0.85}>

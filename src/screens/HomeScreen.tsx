@@ -14,9 +14,6 @@ import QuickLogRow from '../components/QuickLogRow';
 import SectionHeader from '../components/SectionHeader';
 import { colors, spacing } from '../theme';
 import {
-  currentUser,
-  stories,
-  coach,
   quickLogItems,
   quickActionItems,
 } from '../data/homeData';
@@ -25,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import type { RootStackParamList } from '../navigation/types';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { notificationsService } from '../services/api/notifications.service';
+import { socialService } from '../services/api/social.service';
 
 const QUICK_ACTION_KINDS: Record<string, string> = {
   'log-meal': 'meal',
@@ -37,6 +35,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { todayProgress, statTiles, friendsProgress, refetch } = useHomeSummary();
   const notifications = useApiQuery(() => notificationsService.getNotifications(), { success: true, notifications: [], unreadCount: 0 }, []);
+  const stories = useApiQuery(() => socialService.getStories(), [], []);
 
   useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
   useEffect(() => {
@@ -44,10 +43,8 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [refetch]);
 
-  const currentUserDisplay = {
-    ...currentUser,
-    avatar: user?.avatar ?? currentUser.avatar,
-  };
+  const currentAvatar=user?.avatar||'';
+  const storyCards=stories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.user?.avatar||item.image}));
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -59,13 +56,13 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <HomeHeader
-          avatarUri={currentUserDisplay.avatar}
+          avatarUri={currentAvatar}
           hasNotification={notifications.data.unreadCount > 0}
           onPressNotifications={() => navigation.navigate('NotificationsInbox')}
           onPressAvatar={() => navigation.navigate('Profile')}
         />
 
-        <StoriesRow currentUserAvatar={currentUserDisplay.avatar} stories={stories} />
+        <StoriesRow currentUserAvatar={currentAvatar} stories={storyCards} />
 
         <TodayProgressCard
           calories={todayProgress.calories}
@@ -80,14 +77,14 @@ export default function HomeScreen() {
         <FriendsProgressRow friends={friendsProgress} onSeeAll={() => navigation.navigate('Leaderboards')} />
 
         <CoachChatCard
-          avatar={coach.avatar}
-          name={coach.name}
-          online={coach.online}
-          verified={coach.verified}
-          myLastMessage={coach.myLastMessage}
-          time={coach.time}
-          coachReply={coach.lastMessage.text}
-          unreadCount={coach.unreadCount}
+          avatar=""
+          name="TeamCal AI Coach"
+          online={true}
+          verified={true}
+          myLastMessage=""
+          time=""
+          coachReply="Open your private coaching conversation"
+          unreadCount={0}
           onOpenChat={() => navigation.navigate('CoachChat')}
         />
 

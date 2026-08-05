@@ -17,7 +17,7 @@ export function useMarketplace() {
     []
   );
 
-  // Map to UI shape, fallback to mock
+  // Map backend records to the card shape.
   const featuredProducts = featured.data.length > 0
     ? featured.data.map((p) => ({
         id: p.id,

@@ -38,6 +38,8 @@ export function useStepsToday() {
 
   useEffect(() => {
     refetch();
+    const timer=setInterval(refetch,15_000);
+    return()=>clearInterval(timer);
   }, [refetch]);
 
   useEffect(() => {

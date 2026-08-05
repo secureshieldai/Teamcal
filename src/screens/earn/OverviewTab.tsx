@@ -1,23 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import StatCard from './components/StatCard';
 import DateRangeDropdown from './components/DateRangeDropdown';
 import StatusBadge from './components/StatusBadge';
-import SegmentedControl from '../../components/SegmentedControl';
 import DonutChart from '../../components/charts/DonutChart';
 import MiniLineChart from '../../components/charts/MiniLineChart';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
 import {
   earningsBySource,
-  earningsTrend,
-  topPerformingContent,
-  recentTransactions,
   withdrawSettings,
   earnQuickActions,
   type DateRangeKey,
-  type TopContentType,
 } from '../../data/earnData';
 import type { RootStackParamList } from '../../navigation/types';
 import { earnService, type EarnSummary, type StripePayout } from '../../services/api/earn.service';
@@ -30,42 +26,25 @@ type Props = {
   onNavigateTab: (tab: EarnTab) => void;
 };
 
-const TRANSACTION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  'Blog Earnings': 'document-text-outline',
-  'PDF Purchase': 'book-outline',
-  'Video Purchase': 'videocam-outline',
-  'Store Order': 'bag-outline',
-  'Membership Payment': 'ribbon-outline',
-  'Referral Commission': 'people-outline',
-  Withdrawal: 'arrow-down-circle-outline',
-};
-
-const CONTENT_FILTERS: ('All' | TopContentType)[] = ['All', 'Blog', 'PDF', 'Video', 'Product', 'Membership'];
-
 const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
 export default function OverviewTab({ navigation, onNavigateTab }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
-  const [metric, setMetric] = useState<keyof typeof earningsTrend.metrics>('Earnings');
-  const [contentFilter, setContentFilter] = useState<'All' | TopContentType>('All');
   const [stripePayout,setStripePayout]=useState<StripePayout|null>(null);
   const [withdrawAmount,setWithdrawAmount]=useState('');
   const [payoutBusy,setPayoutBusy]=useState(false);
   const [summary,setSummary]=useState<EarnSummary>({balance:0,lifetimeEarnings:0,last30Days:0,availableBalance:0,pendingEarnings:0,totalWithdrawn:0,sourceTotals:{},counts:{assets:0,blogs:0,products:0,referrals:0}});
   const [entries,setEntries]=useState<EarnEntry[]>([]);
   const [loadError,setLoadError]=useState('');
-  const refreshPayout=()=>earnService.payoutStatus().then(x=>{setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message));
-  const refreshSummary=()=>earnService.getSummary().then(x=>{setSummary(x.summary);setEntries(x.entries);setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message));
-  useEffect(()=>{refreshSummary();refreshPayout();},[]);
+  const refreshPayout=useCallback(()=>earnService.payoutStatus().then(x=>{setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message)),[]);
+  const refreshSummary=useCallback(()=>earnService.getSummary().then(x=>{setSummary(x.summary);setEntries(x.entries);setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message)),[]);
+  useFocusEffect(useCallback(()=>{refreshSummary();refreshPayout();const timer=setInterval(()=>{refreshSummary();refreshPayout()},15000);return()=>clearInterval(timer);},[refreshPayout,refreshSummary]));
   const connectStripe=async()=>{try{setPayoutBusy(true);if(stripePayout?.connected){await Linking.openURL(await earnService.payoutLoginLink());}else{const result=await earnService.connectStripe();await Linking.openURL(result.onboardingUrl);}}catch(error){Alert.alert('Unable to open Stripe',(error as Error).message);}finally{setPayoutBusy(false);}};
   const withdraw=async()=>{const amount=Number(withdrawAmount);if(!amount)return;try{setPayoutBusy(true);await earnService.withdraw(amount);setWithdrawAmount('');await refreshPayout();Alert.alert('Withdrawal requested','Stripe is processing your payout.');}catch(error){Alert.alert('Unable to withdraw',(error as Error).message);}finally{setPayoutBusy(false);}};
 
   const personalSources=useMemo(()=>earningsBySource.map(source=>({...source,value:Number(summary.sourceTotals[source.key]||0)})),[summary.sourceTotals]);
   const totalSource = useMemo(() => Math.max(1,personalSources.reduce((s, e) => s + e.value, 0)), [personalSources]);
-  const filteredContent = useMemo(
-    () => (contentFilter === 'All' ? topPerformingContent : topPerformingContent.filter((c) => c.type === contentFilter)),
-    [contentFilter]
-  );
+  const trend=useMemo(()=>{const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(6-i));return d});return{labels:days.map(d=>d.toLocaleDateString(undefined,{weekday:'short'})),values:days.map(d=>entries.filter(e=>new Date(e.created_at).toDateString()===d.toDateString()).reduce((n,e)=>n+Number(e.amount||0),0))}},[entries]);
 
   const handleQuickAction = (key: string) => {
     if (key === 'audience-engine') navigation.navigate('AudienceEngine', undefined);
@@ -129,49 +108,9 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle}>Earnings Analytics</Text>
         </View>
-        <View style={styles.metricRow}>
-          <SegmentedControl
-            options={Object.keys(earningsTrend.metrics)}
-            value={metric}
-            onChange={(v) => setMetric(v as keyof typeof earningsTrend.metrics)}
-            variant="pill"
-          />
-        </View>
         <View style={{ marginTop: spacing.md, alignItems: 'center' }}>
-          <MiniLineChart values={earningsTrend.metrics[metric]} labels={earningsTrend.labels} width={280} />
+          <MiniLineChart values={trend.values} labels={trend.labels} width={280} />
         </View>
-      </View>
-
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Showcase Top-Performing Content</Text>
-        <TouchableOpacity onPress={() => comingSoon('Full analytics')}>
-          <Text style={styles.seeAll}>See all analytics</Text>
-        </TouchableOpacity>
-      </View>
-      <SegmentedControl options={CONTENT_FILTERS} value={contentFilter} onChange={(v) => setContentFilter(v as typeof contentFilter)} variant="pill" />
-      <View style={{ marginTop: spacing.md, gap: spacing.md }}>
-        {filteredContent.map((item) => (
-          <View key={item.id} style={[styles.contentCard, shadow.soft]}>
-            <View style={styles.contentThumb} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.contentTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.contentMeta}>
-                {item.type} · {item.views.toLocaleString()} views · {item.sales} sales
-              </Text>
-              <Text style={styles.contentEarned}>${item.earned.toFixed(2)} earned</Text>
-              <View style={styles.contentActions}>
-                <TouchableOpacity style={styles.ghostBtn} onPress={() => comingSoon('Analytics')}>
-                  <Text style={styles.ghostBtnText}>View Analytics</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.ghostBtn} onPress={() => comingSoon('Promote again')}>
-                  <Text style={styles.ghostBtnText}>Promote Again</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        ))}
       </View>
 
       <View style={styles.sectionHeaderRow}>
@@ -185,28 +124,6 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
         {!entries.length?<Text style={styles.txMeta}>No personal reward activity yet.</Text>:null}
       </View>
 
-      <Text style={styles.sectionTitle}>Showcase Transactions</Text>
-      <View style={[styles.card, shadow.card]}>
-        {recentTransactions.map((tx, i) => (
-          <View key={tx.id} style={[styles.txRow, i === recentTransactions.length - 1 && { borderBottomWidth: 0 }]}>
-            <View style={styles.txIcon}>
-              <Ionicons name={TRANSACTION_ICONS[tx.type] ?? 'cash-outline'} size={16} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.txTitle} numberOfLines={1}>
-                {tx.title}
-              </Text>
-              <Text style={styles.txMeta} numberOfLines={1}>
-                {tx.source} · {tx.date}
-              </Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.txAmount}>+${tx.amount.toFixed(2)}</Text>
-              <StatusBadge status={tx.status} />
-            </View>
-          </View>
-        ))}
-      </View>
 
       <Text style={styles.sectionTitle}>Payout Method</Text>
       <View style={[styles.card, shadow.card]}>

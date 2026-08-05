@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useApiQuery } from './useApiQuery';
 import { mealsService, type MealEntry } from '../services/api/meals.service';
-import { meals as mockMeals } from '../data/mealPlannerData';
 
 export function useMealPlanner() {
   // GET /api/meals/today
@@ -11,8 +10,7 @@ export function useMealPlanner() {
     []
   );
 
-  // Map tracker_entries to the shape MealRow expects, fallback to mock
-  const meals = data && data.entries.length > 0
+  const meals = data
     ? data.entries.map((e: MealEntry) => ({
         id: e.id,
         mealType: (e.meta?.mealType as string) ?? 'Meal',
@@ -20,7 +18,7 @@ export function useMealPlanner() {
         kcal: e.value,
         photo: (e.meta?.photo as string | undefined) ?? undefined,
       }))
-    : mockMeals;
+    : [];
 
   return { meals, totals: data?.totals ?? null, loading, refetch };
 }

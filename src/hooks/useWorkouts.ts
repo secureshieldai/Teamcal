@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useApiQuery } from './useApiQuery';
 import { workoutsService } from '../services/api/workouts.service';
-import { todayWorkout as mockWorkout } from '../data/workoutsData';
 import type { Workout } from '../types/api';
+
+type DisplayWorkout = { title:string; subtitle:string; exercises:{id:string;name:string;detail:string}[] };
 
 export function useTodayWorkout() {
   const { data: workout, loading, refetch } = useApiQuery(
@@ -11,14 +12,13 @@ export function useTodayWorkout() {
     []
   );
 
-  // Map to the shape WorkoutsScreen expects, fallback to mock
   const displayWorkout = workout
     ? {
         title: workout.title,
         subtitle: workout.subtitle || `Today • ${workout.duration} min • ${workout.difficulty}`,
         exercises: workout.exercises.map((e) => ({ id: e.id, name: e.name, detail: e.detail })),
       }
-    : mockWorkout;
+    : null;
 
   return { workout: displayWorkout, loading, refetch };
 }
@@ -36,7 +36,7 @@ export function useLogWorkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const logWorkout = async (workout: typeof mockWorkout) => {
+  const logWorkout = async (workout: DisplayWorkout) => {
     setLoading(true);
     setError(null);
     try {

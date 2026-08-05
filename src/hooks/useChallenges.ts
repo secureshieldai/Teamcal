@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useApiQuery } from './useApiQuery';
 import { challengesService } from '../services/api/challenges.service';
-import { featuredChallenge as mockFeatured, trendingChallenges as mockTrending } from '../data/challengesData';
 import type { Challenge } from '../types/api';
 
 export function useChallenges(tab: 'discover' | 'my' | 'completed' = 'discover') {
@@ -17,18 +16,16 @@ export function useChallenges(tab: 'discover' | 'my' | 'completed' = 'discover')
     []
   );
 
-  // Map real featured challenge to UI shape, fallback to mock
   const featuredChallenge = featured.data
     ? {
-        photo: featured.data.photo ?? mockFeatured.photo,
+        photo: featured.data.photo ?? '',
         title: featured.data.title,
         joinedCount: featured.data.joined_count.toLocaleString(),
         day: featured.data.duration_days,
         totalDays: featured.data.total_days,
       }
-    : mockFeatured;
+    : null;
 
-  // Map real discover list to trending shape, fallback to mock
   const trendingChallenges =
     tab === 'discover' && challenges.length > 0
       ? challenges.slice(0, 3).map((c) => ({
@@ -41,7 +38,7 @@ export function useChallenges(tab: 'discover' | 'my' | 'completed' = 'discover')
             ? `${(c.joined_count / 1000).toFixed(1)}K`
             : c.joined_count.toString(),
         }))
-      : mockTrending;
+      : [];
 
   return { challenges, featuredChallenge, trendingChallenges, loading, error, refetch };
 }

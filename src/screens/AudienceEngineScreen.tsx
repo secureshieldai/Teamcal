@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,15 +14,14 @@ import ScheduleStep from './earn/audienceEngine/ScheduleStep';
 import MiniLineChart from '../components/charts/MiniLineChart';
 import { colors, radii, shadow, spacing, typography } from '../theme';
 import {
-  audienceEngineConnectedAccounts,
   audienceEngineTemplates,
-  audienceEngineCampaigns,
 } from '../data/earnData';
 import type { RootStackParamList } from '../navigation/types';
 import { personalService } from '../services/api/personal.service';
 import {coachService,type GeneratedAudiencePost} from '../services/api/coach.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AudienceEngine'>;
+type AudienceCampaign={id:string;title:string;contentType:string;posts:number;status:string;date:string};
 
 const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
@@ -40,13 +40,13 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const [formats, setFormats] = useState<string[]>(['text', 'carousel']);
   const [objective, setObjective] = useState('views');
   const [approvals, setApprovals] = useState<Record<string, 'Approved' | 'Needs Review'>>({});
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(audienceEngineConnectedAccounts.map((a) => a.key));
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [schedulingOption, setSchedulingOption] = useState<'smart' | 'custom' | 'queue'>('smart');
-  const [personalCampaigns, setPersonalCampaigns] = useState<typeof audienceEngineCampaigns>([]);
+  const [personalCampaigns, setPersonalCampaigns] = useState<AudienceCampaign[]>([]);
   const [generatedPosts,setGeneratedPosts]=useState<GeneratedAudiencePost[]>([]);
   const [connectedAccounts,setConnectedAccounts]=useState<{key:string;label:string;accounts:number;color:string;icon:string}[]>([]);
   const generatePosts=async()=>setGeneratedPosts(await coachService.generateAudience({topic:contentKey||sourceLabel||'Healthy living',instructions,tone,formats,count:Math.min(postsCount,12)}));
-  useEffect(() => { Promise.all([personalService.list<Omit<(typeof audienceEngineCampaigns)[number], 'id'>>('audience-campaign'),personalService.list<{platform:string;handle:string}>('audience-account')]).then(([campaigns,accounts])=>{setPersonalCampaigns(campaigns.map(r => ({ id:r.id, ...r.data })));const mapped=accounts.map(r=>({key:r.id,label:`${r.data.platform} ${r.data.handle}`,accounts:1,color:colors.primary,icon:'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(mapped.map(x=>x.key));}).catch(() => {}); }, []);
+  useFocusEffect(useCallback(() => { let active=true;const load=()=>Promise.all([personalService.list<Omit<AudienceCampaign, 'id'>>('audience-campaign'),personalService.list<{platform:string;handle:string}>('audience-account')]).then(([campaigns,accounts])=>{if(!active)return;setPersonalCampaigns(campaigns.map(r => ({ id:r.id, ...r.data })));const mapped=accounts.map(r=>({key:r.id,label:`${r.data.platform} ${r.data.handle}`,accounts:1,color:colors.primary,icon:'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(current=>current.filter(id=>mapped.some(x=>x.key===id)).concat(mapped.filter(x=>!current.includes(x.key)).map(x=>x.key)));}).catch(() => {});load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)}; }, []));
 
   const toggleKeyPoint = (v: string) => setKeyPoints((prev) => (prev.includes(v) ? prev.filter((k) => k !== v) : [...prev, v]));
   const toggleFormat = (key: string) => setFormats((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -105,7 +105,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           </View>
           <View style={[styles.accountsCard, shadow.soft]}>
-            {audienceEngineConnectedAccounts.map((account) => (
+            {connectedAccounts.map((account) => (
               <View key={account.key} style={styles.accountItem}>
                 <View style={[styles.accountIcon, { backgroundColor: account.color }]}>
                   <Ionicons name={account.icon as keyof typeof Ionicons.glyphMap} size={16} color={colors.white} />
@@ -114,6 +114,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
                 <Text style={styles.accountLabel}>{account.label}</Text>
               </View>
             ))}
+            {!connectedAccounts.length?<Text style={styles.accountLabel}>No accounts connected</Text>:null}
           </View>
 
           <Text style={styles.sectionTitle}>Quick Start Templates</Text>
@@ -129,7 +130,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
 
           <Text style={styles.sectionTitle}>Recent Campaigns</Text>
           <View style={{ gap: spacing.sm }}>
-            {[...personalCampaigns, ...audienceEngineCampaigns].map((campaign) => (
+            {personalCampaigns.map((campaign) => (
               <TouchableOpacity key={campaign.id} style={[styles.campaignRow, shadow.soft]} onPress={() => comingSoon('Campaign details')}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.campaignTitle}>{campaign.title}</Text>
@@ -143,6 +144,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
                 </View>
               </TouchableOpacity>
             ))}
+            {!personalCampaigns.length?<Text style={styles.campaignMeta}>No campaigns yet.</Text>:null}
           </View>
 
           <TouchableOpacity style={styles.startCard} onPress={startCampaign} activeOpacity={0.9}>
@@ -169,7 +171,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
         </ScrollView>
       )}
 
-      {mode === 'wizard' && step === 1 && <SelectContentStep selectedKey={contentKey} onSelect={setContentKey} onNext={() => setStep(2)} />}
+      {mode === 'wizard' && step === 1 && <SelectContentStep selectedKey={contentKey} onSelect={setContentKey} onNext={() => setStep(2)} accounts={connectedAccounts} />}
       {mode === 'wizard' && step === 2 && (
         <InstructionsStep
           instructions={instructions}

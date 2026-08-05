@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { earnService, type EarnAsset, type EarnAssetKind } from '../services/api/earn.service';
 
 export function useEarnAssets(kind: EarnAssetKind) {
@@ -10,7 +11,11 @@ export function useEarnAssets(kind: EarnAssetKind) {
     catch (err) { setError((err as Error).message); }
     finally { setLoading(false); }
   }, [kind]);
-  useEffect(() => { refresh(); }, [refresh]);
+  useFocusEffect(useCallback(() => {
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    return () => clearInterval(timer);
+  }, [refresh]));
   const create = useCallback(async (value: Parameters<typeof earnService.createAsset>[0]) => {
     const asset = await earnService.createAsset(value);
     setAssets((current) => [asset, ...current]);

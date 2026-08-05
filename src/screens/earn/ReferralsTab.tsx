@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Alert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import StatCard from './components/StatCard';
 import DateRangeDropdown from './components/DateRangeDropdown';
 import StatusBadge from './components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
-import { referralList, referralProgramDetails, type DateRangeKey } from '../../data/earnData';
+import { referralProgramDetails, type DateRangeKey } from '../../data/earnData';
 import { earnService, type Referral } from '../../services/api/earn.service';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,7 +32,7 @@ export default function ReferralsTab() {
   const [realReferrals,setRealReferrals]=useState<Referral[]>([]);
   const [loadError,setLoadError]=useState('');
   const {user}=useAuth();
-  useEffect(()=>{earnService.getReferrals().then(setRealReferrals).catch(e=>setLoadError((e as Error).message));},[]);
+  useFocusEffect(useCallback(()=>{let active=true;const load=()=>earnService.getReferrals().then(rows=>{if(active){setRealReferrals(rows);setLoadError('')}}).catch(e=>active&&setLoadError((e as Error).message));load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)};},[]));
   const realEarnings=useMemo(()=>realReferrals.reduce((sum,item)=>sum+Number(item.reward||0),0),[realReferrals]);
   const converted=realReferrals.filter(item=>item.status==='joined'||item.status==='converted').length;
   const referralCode=user?.referral_code||'';
@@ -99,22 +100,6 @@ export default function ReferralsTab() {
         {loadError?<Text style={styles.refMeta}>Could not load referrals: {loadError}</Text>:null}
         {realReferrals.map((ref,i)=><View key={ref.id} style={[styles.refRow,i===realReferrals.length-1&&{borderBottomWidth:0}]}><View style={{flex:1}}><Text style={styles.refName}>{ref.name}</Text><Text style={styles.refMeta}>Invited {new Date(ref.created_at).toLocaleDateString()}</Text></View><StatusBadge status={ref.status}/></View>)}
         {!loadError&&!realReferrals.length?<Text style={styles.refMeta}>No personal referrals yet. Share your code to invite someone.</Text>:null}
-      </View>
-
-      <Text style={styles.sectionTitle}>Showcase Referrals</Text>
-      <View style={[styles.card, shadow.card]}>
-        {referralList.map((ref, i) => (
-          <View key={ref.id} style={[styles.refRow, i === referralList.length - 1 && { borderBottomWidth: 0 }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.refName}>{ref.name}</Text>
-              <Text style={styles.refMeta}>
-                Invited {ref.dateInvited}
-                {ref.dateJoined ? ` · Joined ${ref.dateJoined}` : ''}
-              </Text>
-            </View>
-            <StatusBadge status={ref.status} />
-          </View>
-        ))}
       </View>
 
       <Text style={styles.sectionTitle}>Referral Program Details</Text>

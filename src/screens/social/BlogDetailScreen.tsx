@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Avatar from '../../components/Avatar';
 import { colors, radii, spacing, typography } from '../../theme';
-import { mockBlogPosts, type MockBlogComment } from '../../data/socialMockData';
 import type { RootStackParamList } from '../../navigation/types';
 import { personalService } from '../../services/api/personal.service';
-import {socialService} from '../../services/api/social.service';
+import {socialService,type ArticleComment} from '../../services/api/social.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BlogDetail'>;
 
@@ -16,19 +15,20 @@ const VISIBLE_COMMENTS = 3;
 
 export default function BlogDetailScreen({ route, navigation }: Props) {
   const { blogId } = route.params;
-  const [post,setPost]=useState(mockBlogPosts.find((p) => p.id === blogId) ?? mockBlogPosts[0]);
+  const [post,setPost]=useState({id:blogId,image:'',title:'',category:'',author:'',authorAvatar:'',authorVerified:false,date:'',readMinutes:0,body:[] as {type:'paragraph';text:string}[]});
+  const [loading,setLoading]=useState(true);const [loadError,setLoadError]=useState('');
 
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes);
+  const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
-  const [comments, setComments] = useState<MockBlogComment[]>(post.comments);
+  const [comments, setComments] = useState<(ArticleComment&{verified?:boolean})[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState('');
   const [siteId,setSiteId]=useState('');const [following,setFollowing]=useState(false);
-  useEffect(()=>{socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);const mapped={id:item.id,image:item.cover||`https://picsum.photos/seed/${item.id}/600/400`,title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:item.user?.verified,date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,likes:0,commentCount:0,body:[{type:'paragraph' as const,text:item.body||''}],comments:[]};setPost(mapped);setLikeCount(0);setComments([]);}).catch(()=>{});},[blogId]);
+  useEffect(()=>{const load=()=>socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);setPost({id:item.id,image:item.cover||'',title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:Boolean(item.user?.verified),date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,body:[{type:'paragraph' as const,text:item.body||''}]});setLoadError('');}).catch(e=>setLoadError((e as Error).message)).finally(()=>setLoading(false));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
   useEffect(() => {
-    Promise.all([personalService.list('saved-blog'),socialService.getArticleEngagement(post.id)]).then(([savedRows,engagement])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(engagement.liked);setLikeCount(engagement.likes);setComments([...post.comments,...engagement.comments]);}).catch(()=>{});
-  }, [post.id]);
+    if(!post.title)return;const load=()=>Promise.all([personalService.list('saved-blog'),socialService.getArticleEngagement(post.id)]).then(([savedRows,engagement])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(engagement.liked);setLikeCount(engagement.likes);setComments(engagement.comments);}).catch(()=>{});load();const timer=setInterval(load,15000);return()=>clearInterval(timer);
+  }, [post.id, post.title]);
 
   const toggleLike = async () => {
     const previous=liked;setLiked(!liked);setLikeCount(v=>Math.max(0,v+(liked?-1:1)));
@@ -62,7 +62,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      {loading?<ActivityIndicator color={colors.primary} style={{marginTop:40}}/>:loadError?<Text style={{padding:spacing.lg,color:colors.macroProtein}}>Unable to load article: {loadError}</Text>:<ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <Image source={{ uri: post.image }} style={styles.hero} />
 
         <View style={styles.body}>
@@ -92,46 +92,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
             onShare={() => Share.share({ message: `${post.title} — ${post.author}` })}
           />
 
-          {post.body.map((block, i) => {
-            if (block.type === 'heading') {
-              return <Text key={i} style={styles.heading}>{block.text}</Text>;
-            }
-            if (block.type === 'paragraph') {
-              return <Text key={i} style={styles.paragraph}>{block.text}</Text>;
-            }
-            if (block.type === 'list') {
-              return (
-                <View key={i} style={styles.list}>
-                  {block.items.map((item) => (
-                    <View key={item} style={styles.listRow}>
-                      <View style={styles.listDot} />
-                      <Text style={styles.listText}>{item}</Text>
-                    </View>
-                  ))}
-                </View>
-              );
-            }
-            if (block.type === 'image') {
-              return <Image key={i} source={{ uri: block.uri }} style={styles.bodyImage} />;
-            }
-            if (block.type === 'tip') {
-              return (
-                <View key={i} style={styles.tipRow}>
-                  <Image source={{ uri: block.image }} style={styles.tipImage} />
-                  <View style={styles.tipInfo}>
-                    <Text style={styles.tipQuestion}>{block.question}</Text>
-                    <Text style={styles.tipAnswer}>{block.answer}</Text>
-                  </View>
-                </View>
-              );
-            }
-            return (
-              <View key={i} style={styles.quoteBox}>
-                <Text style={styles.quoteText}>{'\u{201C}'} {block.text}</Text>
-                <Ionicons name="heart-outline" size={16} color={colors.primary} style={styles.quoteHeart} />
-              </View>
-            );
-          })}
+          {post.body.map((block, i) => <Text key={i} style={styles.paragraph}>{block.text}</Text>)}
 
           <ActionRow
             liked={liked}
@@ -176,7 +137,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           )}
         </View>
-      </ScrollView>
+      </ScrollView>}
 
       <View style={styles.composer}>
         <TextInput

@@ -8,7 +8,7 @@ import type {RouteProp} from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import SectionHeader from '../components/SectionHeader';
 import { colors, radii, shadow, spacing } from '../theme';
-import { powerSquad, groupActions, groupActivity } from '../data/powerSquadData';
+import { groupActions } from '../data/powerSquadData';
 import type {RootStackParamList} from '../navigation/types';
 import {useApiQuery} from '../hooks/useApiQuery';
 import {groupsService} from '../services/api/groups.service';
@@ -20,8 +20,8 @@ export default function PowerSquadScreen() {
   const detail=useApiQuery(()=>groupId?groupsService.get(groupId):Promise.resolve(null),null,[groupId]);
   const activity=useApiQuery(()=>groupId?groupsService.getActivity(groupId):Promise.resolve([]),[],[groupId]);
   const real=detail.data;
-  const display=real?{cover:real.group.cover||'',name:real.group.name,description:real.group.description,memberCount:real.group.member_count,members:real.members.map(x=>x.user.avatar||'').filter(Boolean)}:powerSquad;
-  const activities=real?activity.data.map(post=>({id:post.id,avatar:post.user?.avatar||'',name:post.user?.name||'Member',time:new Date(post.created_at).toLocaleString(),caption:post.text,likes:post.likes,comments:0})):groupActivity;
+  const display=real?{cover:real.group.cover||'',name:real.group.name,description:real.group.description,memberCount:real.group.member_count,members:real.members.map(x=>x.user.avatar||'').filter(Boolean)}:{cover:'',name:'Community',description:'Select a community to view its details.',memberCount:0,members:[] as string[]};
+  const activities=real?activity.data.map(post=>({id:post.id,avatar:post.user?.avatar||'',name:post.user?.name||'Member',time:new Date(post.created_at).toLocaleString(),caption:post.text,likes:post.likes,comments:0})):[];
   const [draft,setDraft]=useState('');const publish=async()=>{if(!groupId||!draft.trim())return;try{await postsService.create({text:draft.trim(),community:groupId});setDraft('');await activity.refetch();}catch(e){Alert.alert('Unable to post',(e as Error).message);}};
 
   return (

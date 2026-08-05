@@ -1,10 +1,11 @@
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, radii, shadow, spacing } from '../../theme';
-import type { MockBlogPost } from '../../data/socialMockData';
+
+export type BlogCardPost = { id:string; image:string; title:string; author:string; readMinutes:number; featured?:boolean };
 
 type Props = {
-  post: MockBlogPost;
+  post: BlogCardPost;
   onPressSeeAll?: () => void;
 };
 
