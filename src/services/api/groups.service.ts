@@ -42,4 +42,6 @@ export const groupsService = {
     );
     return data.posts;
   },
+  async setMemberRole(id:string,userId:string,role:'member'|'admin'){const {data}=await apiClient.patch(`/groups/${id}/members/${userId}`,{role});return data;},
+  async removeMember(id:string,userId:string){await apiClient.delete(`/groups/${id}/members/${userId}`);},
 };

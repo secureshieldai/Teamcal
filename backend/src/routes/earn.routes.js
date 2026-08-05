@@ -4,7 +4,9 @@ const {
   getEarnEntries, getReferrals, inviteReferral,
   getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
   getSummary, getAssets, createAsset, updateAsset, deleteAsset,
+  getAsset, uploadPdfFile, uploadVideoFile,
 } = require("../controllers/earn.controller");
+const { pdfUpload, videoUpload } = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -13,7 +15,10 @@ router.use(protect);
 router.get("/entries", getEarnEntries);
 router.get("/summary", getSummary);
 router.get("/assets", getAssets);
+router.get("/assets/:id", getAsset);
 router.post("/assets", createAsset);
+router.post("/pdfs/upload", pdfUpload.single("pdf"), uploadPdfFile);
+router.post("/videos/upload", videoUpload.single("file"), uploadVideoFile);
 router.patch("/assets/:id", updateAsset);
 router.delete("/assets/:id", deleteAsset);
 router.get("/referrals", getReferrals);

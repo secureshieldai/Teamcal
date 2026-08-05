@@ -3,9 +3,10 @@ const { randomUUID } = require("node:crypto");
 const { notifySafely } = require("../services/notification.service");
 const { getStripe } = require("../config/stripe");
 const { updateConnectedAccount } = require("./stripe.controller");
+const { uploadPublicFile } = require("../services/storage.service");
 
 const ASSET_KINDS = new Set(["pdf", "video", "store", "membership", "campaign"]);
-const ASSET_STATUSES = new Set(["draft", "processing", "published", "paused", "scheduled", "under-review"]);
+const ASSET_STATUSES = new Set(["draft", "uploading", "processing", "published", "paused", "scheduled", "under-review", "monetization-review", "restricted", "rejected", "archived"]);
 
 async function getAssets(req, res, next) {
   try {
@@ -18,6 +19,32 @@ async function getAssets(req, res, next) {
     if (error) throw error;
     const assets = (data || []).map((record) => ({ id: record.id, kind: record.kind.slice(5), status: record.status, created_at: record.created_at, updated_at: record.updated_at, ...record.data }));
     res.json({ success: true, assets });
+  } catch (err) { next(err); }
+}
+
+async function getAsset(req, res, next) {
+  try {
+    const { data, error } = await supabase.from("user_records").select("*").eq("id", req.params.id).eq("user_id", req.user.id).like("kind", "earn-%").maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ success: false, message: "Creator asset not found" });
+    res.json({ success: true, asset: { id: data.id, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
+  } catch (err) { next(err); }
+}
+
+async function uploadPdfFile(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: "Select a PDF file" });
+    const fileUrl = await uploadPublicFile("pdfs", req.user.id, req.file);
+    res.status(201).json({ success: true, fileUrl, fileName: req.file.originalname, fileSize: req.file.size });
+  } catch (err) { next(err); }
+}
+
+async function uploadVideoFile(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: "Select a video, captions or transcript file" });
+    const isVideo = req.file.mimetype.startsWith("video/");
+    const fileUrl = await uploadPublicFile(isVideo ? "videos" : "video-text", req.user.id, req.file);
+    res.status(201).json({ success: true, fileUrl, fileName: req.file.originalname, fileSize: req.file.size, processingStatus: isVideo ? "uploaded" : "ready" });
   } catch (err) { next(err); }
 }
 
@@ -313,5 +340,5 @@ async function handleReferralJoin(referralCode, newUserId) {
 module.exports = {
   getEarnEntries, getReferrals, inviteReferral, handleReferralJoin,
   getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
-  getSummary, getAssets, createAsset, updateAsset, deleteAsset,
+  getSummary, getAssets, getAsset, createAsset, updateAsset, deleteAsset, uploadPdfFile, uploadVideoFile,
 };

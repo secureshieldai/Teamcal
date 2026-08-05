@@ -3,6 +3,7 @@ const { protect } = require("../middleware/auth");
 const {
   getMyGroups, discoverGroups, getGroup, createGroup, updateGroup,
   joinGroup, leaveGroup, getGroupActivity,
+  updateGroupMember, removeGroupMember,
 } = require("../controllers/group.controller");
 
 const router = express.Router();
@@ -17,5 +18,7 @@ router.patch("/:id", updateGroup);
 router.post("/:id/join", joinGroup);
 router.delete("/:id/join", leaveGroup);
 router.get("/:id/activity", getGroupActivity);
+router.patch("/:id/members/:userId", updateGroupMember);
+router.delete("/:id/members/:userId", removeGroupMember);
 
 module.exports = router;

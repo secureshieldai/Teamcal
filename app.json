@@ -50,6 +50,12 @@
       ],
       "expo-font"
       ,
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true
+        }
+      ],
       "expo-background-task",
       "react-native-health-connect",
       [

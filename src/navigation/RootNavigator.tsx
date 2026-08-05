@@ -47,6 +47,18 @@ import PersonalToolScreen from '../screens/PersonalToolScreen';
 import ArticleEditorScreen from '../screens/ArticleEditorScreen';
 import AudienceAccountsScreen from '../screens/AudienceAccountsScreen';
 import BlogSettingsScreen from '../screens/BlogSettingsScreen';
+import PdfEditorScreen from '../screens/PdfEditorScreen';
+import PdfDashboardScreen from '../screens/PdfDashboardScreen';
+import PdfReaderScreen from '../screens/PdfReaderScreen';
+import PdfReviewsScreen from '../screens/PdfReviewsScreen';
+import VideoEditorScreen from '../screens/VideoEditorScreen';
+import VideoDashboardScreen from '../screens/VideoDashboardScreen';
+import VideoPlayerScreen from '../screens/VideoPlayerScreen';
+import VideoRecorderScreen from '../screens/VideoRecorderScreen';
+import MembershipEditorScreen from '../screens/MembershipEditorScreen';
+import MembershipDashboardScreen from '../screens/MembershipDashboardScreen';
+import MembershipPublicScreen from '../screens/MembershipPublicScreen';
+import MembershipCheckoutScreen from '../screens/MembershipCheckoutScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -108,6 +120,18 @@ export default function RootNavigator() {
       <Stack.Screen name="ArticleEditor" component={ArticleEditorScreen} options={{presentation:'modal'}} />
       <Stack.Screen name="AudienceAccounts" component={AudienceAccountsScreen} />
       <Stack.Screen name="BlogSettings" component={BlogSettingsScreen} />
+      <Stack.Screen name="PdfEditor" component={PdfEditorScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="PdfDashboard" component={PdfDashboardScreen} />
+      <Stack.Screen name="PdfReader" component={PdfReaderScreen} />
+      <Stack.Screen name="PdfReviews" component={PdfReviewsScreen} />
+      <Stack.Screen name="VideoEditor" component={VideoEditorScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="VideoDashboard" component={VideoDashboardScreen} />
+      <Stack.Screen name="VideoPlayer" component={VideoPlayerScreen} />
+      <Stack.Screen name="VideoRecorder" component={VideoRecorderScreen} options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="MembershipEditor" component={MembershipEditorScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="MembershipDashboard" component={MembershipDashboardScreen} />
+      <Stack.Screen name="MembershipPublic" component={MembershipPublicScreen} />
+      <Stack.Screen name="MembershipCheckout" component={MembershipCheckoutScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }

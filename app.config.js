@@ -1,9 +1,7 @@
-const { expo } = require('./app.json');
-
-module.exports = {
-  ...expo,
+module.exports = ({ config }) => ({
+  ...config,
   plugins: [
-    ...(expo.plugins || []),
+    ...(config.plugins || []),
     [
       'expo-build-properties',
       {
@@ -14,8 +12,8 @@ module.exports = {
     ],
   ],
   android: {
-    ...expo.android,
+    ...config.android,
     googleServicesFile:
-      process.env.GOOGLE_SERVICES_JSON || expo.android.googleServicesFile,
+      process.env.GOOGLE_SERVICES_JSON || config.android.googleServicesFile,
   },
-};
+});

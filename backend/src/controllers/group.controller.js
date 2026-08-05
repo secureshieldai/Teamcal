@@ -246,7 +246,11 @@ async function getGroupActivity(req, res, next) {
   }
 }
 
+async function updateGroupMember(req,res,next){try{const {data:actor}=await supabase.from("group_members").select("role").eq("group_id",req.params.id).eq("user_id",req.user.id).maybeSingle();if(!actor||!["owner","admin"].includes(actor.role))return res.status(403).json({success:false,message:"Not authorized"});const role=req.body.role;if(!["member","admin"].includes(role))return res.status(400).json({success:false,message:"Invalid member role"});const {data,error}=await supabase.from("group_members").update({role}).eq("group_id",req.params.id).eq("user_id",req.params.userId).select().maybeSingle();if(error)throw error;if(!data)return res.status(404).json({success:false,message:"Member not found"});res.json({success:true,membership:data});}catch(e){next(e)}}
+async function removeGroupMember(req,res,next){try{const {data:actor}=await supabase.from("group_members").select("role").eq("group_id",req.params.id).eq("user_id",req.user.id).maybeSingle();if(!actor||!["owner","admin"].includes(actor.role))return res.status(403).json({success:false,message:"Not authorized"});const {data:target}=await supabase.from("group_members").select("role").eq("group_id",req.params.id).eq("user_id",req.params.userId).maybeSingle();if(target?.role==="owner")return res.status(400).json({success:false,message:"Owner cannot be removed"});const {error}=await supabase.from("group_members").delete().eq("group_id",req.params.id).eq("user_id",req.params.userId);if(error)throw error;const {data:group}=await supabase.from("groups").select("member_count").eq("id",req.params.id).single();if(group)await supabase.from("groups").update({member_count:Math.max(1,(group.member_count||1)-1)}).eq("id",req.params.id);res.json({success:true});}catch(e){next(e)}}
+
 module.exports = {
   getMyGroups, discoverGroups, getGroup, createGroup, updateGroup,
   joinGroup, leaveGroup, getGroupActivity,
+  updateGroupMember, removeGroupMember,
 };

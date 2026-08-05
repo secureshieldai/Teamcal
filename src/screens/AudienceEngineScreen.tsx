@@ -27,6 +27,9 @@ const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} i
 
 export default function AudienceEngineScreen({ route, navigation }: Props) {
   const sourceLabel = route.params?.sourceLabel;
+  const pdfId = route.params?.pdfId;
+  const videoId = route.params?.videoId;
+  const membershipId = route.params?.membershipId;
   const [mode, setMode] = useState<'dashboard' | 'wizard'>('dashboard');
   const [step, setStep] = useState(1);
 
@@ -45,7 +48,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const [personalCampaigns, setPersonalCampaigns] = useState<AudienceCampaign[]>([]);
   const [generatedPosts,setGeneratedPosts]=useState<GeneratedAudiencePost[]>([]);
   const [connectedAccounts,setConnectedAccounts]=useState<{key:string;label:string;accounts:number;color:string;icon:string}[]>([]);
-  const generatePosts=async()=>setGeneratedPosts(await coachService.generateAudience({topic:contentKey||sourceLabel||'Healthy living',instructions,tone,formats,count:Math.min(postsCount,12)}));
+  const generatePosts=async()=>setGeneratedPosts(await coachService.generateAudience({topic:contentKey||sourceLabel||'Healthy living',instructions:`${instructions}${pdfId?` Include a natural call to action and the links: preview teamcal://pdf/${pdfId}?preview=1, purchase teamcal://pdf/${pdfId}?buy=1, app deep link teamcal://pdf/${pdfId}. Reveal enough to create interest without giving away the complete PDF.`:''}${videoId?` Analyse the video title, description, transcript, captions and key moments. Create hooks, teasers, clip suggestions and watch-now posts. Include video teamcal://video/${videoId}, preview teamcal://video/${videoId}?preview=1, purchase teamcal://video/${videoId}?buy=1, subscription and app deep links.`:''}${membershipId?` Use the community benefits, tiers, trial offer, events, resources, testimonials and FAQs. Create educational, launch and free-trial posts without sounding salesy. Include community teamcal://membership/${membershipId}, tier, trial, event, browser and app deep links.`:''}`,tone,formats,count:Math.min(postsCount,12)}));
   useFocusEffect(useCallback(() => { let active=true;const load=()=>Promise.all([personalService.list<Omit<AudienceCampaign, 'id'>>('audience-campaign'),personalService.list<{platform:string;handle:string}>('audience-account')]).then(([campaigns,accounts])=>{if(!active)return;setPersonalCampaigns(campaigns.map(r => ({ id:r.id, ...r.data })));const mapped=accounts.map(r=>({key:r.id,label:`${r.data.platform} ${r.data.handle}`,accounts:1,color:colors.primary,icon:'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(current=>current.filter(id=>mapped.some(x=>x.key===id)).concat(mapped.filter(x=>!current.includes(x.key)).map(x=>x.key)));}).catch(() => {});load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)}; }, []));
 
   const toggleKeyPoint = (v: string) => setKeyPoints((prev) => (prev.includes(v) ? prev.filter((k) => k !== v) : [...prev, v]));

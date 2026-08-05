@@ -1,7 +1,7 @@
-export type DateRangeKey = '7d'|'30d'|'90d'|'6m'|'1y'|'lifetime';
+export type DateRangeKey = '7d'|'30d'|'90d'|'6m'|'1y'|'lifetime'|'custom';
 export const dateRangeOptions:{key:DateRangeKey;label:string}[]=[
   {key:'7d',label:'Last 7 Days'},{key:'30d',label:'Last 30 Days'},{key:'90d',label:'Last 90 Days'},
-  {key:'6m',label:'Last 6 Months'},{key:'1y',label:'Last 1 Year'},{key:'lifetime',label:'Lifetime'},
+  {key:'6m',label:'Last 6 Months'},{key:'1y',label:'Last 1 Year'},{key:'lifetime',label:'Lifetime'},{key:'custom',label:'Custom Date Range'},
 ];
 export type EarningSource={key:string;label:string;value:number;color:string};
 export const earningsBySource:EarningSource[]=[
