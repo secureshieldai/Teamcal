@@ -1,12 +1,19 @@
-const baseConfig = require('./app.json');
-
-module.exports = () => ({
-  ...baseConfig.expo,
+module.exports = ({ config }) => ({
+  ...config,
+  plugins: [
+    ...(config.plugins || []),
+    [
+      'expo-build-properties',
+      {
+        android: {
+          minSdkVersion: 26,
+        },
+      },
+    ],
+  ],
   android: {
-    ...baseConfig.expo.android,
-    // EAS file secrets resolve to a temporary path on the remote builder.
-    // Keep the local file as the fallback for development builds.
+    ...config.android,
     googleServicesFile:
-      process.env.GOOGLE_SERVICES_JSON || baseConfig.expo.android.googleServicesFile,
+      process.env.GOOGLE_SERVICES_JSON || config.android.googleServicesFile,
   },
 });
