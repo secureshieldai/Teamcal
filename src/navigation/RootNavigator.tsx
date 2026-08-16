@@ -34,19 +34,32 @@ import NotificationsInboxScreen from '../screens/NotificationsInboxScreen';
 import BlogDetailScreen from '../screens/social/BlogDetailScreen';
 import WaterScreen from '../screens/WaterScreen';
 import StepsScreen from '../screens/StepsScreen';
+import WeightScreen from '../screens/WeightScreen';
+import SleepScreen from '../screens/SleepScreen';
 import FastingScreen from '../screens/FastingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BlogDashboardScreen from '../screens/BlogDashboardScreen';
 import CreateBlogScreen from '../screens/CreateBlogScreen';
+import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import AudienceEngineScreen from '../screens/AudienceEngineScreen';
 import DirectMessageScreen from '../screens/DirectMessageScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import ChallengeDetailScreen from '../screens/ChallengeDetailScreen';
 import ChallengeInviteScreen from '../screens/ChallengeInviteScreen';
-import PersonalToolScreen from '../screens/PersonalToolScreen';
+import MyRecipesScreen from '../screens/MyRecipesScreen';
+import PeriodTrackerScreen from '../screens/PeriodTrackerScreen';
+import SupplementTrackerScreen from '../screens/SupplementTrackerScreen';
+import MoodJournalScreen from '../screens/MoodJournalScreen';
+import LiveJournalCallScreen from '../screens/LiveJournalCallScreen';
+import RecipeLibraryScreen from '../screens/RecipeLibraryScreen';
+import CookModeScreen from '../screens/CookModeScreen';
 import ArticleEditorScreen from '../screens/ArticleEditorScreen';
+import SelectCategoryScreen from '../screens/SelectCategoryScreen';
+import AddTagsScreen from '../screens/AddTagsScreen';
+import AIHelperScreen from '../screens/AIHelperScreen';
 import AudienceAccountsScreen from '../screens/AudienceAccountsScreen';
 import BlogSettingsScreen from '../screens/BlogSettingsScreen';
+import LegalDocumentScreen from '../screens/LegalDocumentScreen';
 import PdfEditorScreen from '../screens/PdfEditorScreen';
 import PdfDashboardScreen from '../screens/PdfDashboardScreen';
 import PdfReaderScreen from '../screens/PdfReaderScreen';
@@ -55,6 +68,14 @@ import VideoEditorScreen from '../screens/VideoEditorScreen';
 import VideoDashboardScreen from '../screens/VideoDashboardScreen';
 import VideoPlayerScreen from '../screens/VideoPlayerScreen';
 import VideoRecorderScreen from '../screens/VideoRecorderScreen';
+import UploadVideoScreen from '../screens/UploadVideoScreen';
+import UploadMultipleScreen from '../screens/UploadMultipleScreen';
+import CreateSeriesScreen from '../screens/CreateSeriesScreen';
+import CreateCourseScreen from '../screens/CreateCourseScreen';
+import ImportFromCloudScreen from '../screens/ImportFromCloudScreen';
+import UploadPdfScreen from '../screens/UploadPdfScreen';
+import CreatePdfScreen from '../screens/CreatePdfScreen';
+import AiGeneratePdfScreen from '../screens/AiGeneratePdfScreen';
 import MembershipEditorScreen from '../screens/MembershipEditorScreen';
 import MembershipDashboardScreen from '../screens/MembershipDashboardScreen';
 import MembershipPublicScreen from '../screens/MembershipPublicScreen';
@@ -93,6 +114,7 @@ export default function RootNavigator() {
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+      <Stack.Screen name="LegalDocument" component={LegalDocumentScreen} />
       <Stack.Screen name="QuickLogEntry" component={QuickLogEntryScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="GroceryList" component={GroceryListScreen} />
       <Stack.Screen name="GlobalSearch" component={GlobalSearchScreen} />
@@ -107,17 +129,29 @@ export default function RootNavigator() {
       <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
       <Stack.Screen name="Water" component={WaterScreen} />
       <Stack.Screen name="Steps" component={StepsScreen} />
+      <Stack.Screen name="Weight" component={WeightScreen} />
+      <Stack.Screen name="Sleep" component={SleepScreen} />
       <Stack.Screen name="Fasting" component={FastingScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="BlogDashboard" component={BlogDashboardScreen} />
       <Stack.Screen name="CreateBlog" component={CreateBlogScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="CreateCommunity" component={CreateCommunityScreen} />
       <Stack.Screen name="AudienceEngine" component={AudienceEngineScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="DirectMessage" component={DirectMessageScreen} />
       <Stack.Screen name="Goals" component={GoalsScreen} />
       <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <Stack.Screen name="ChallengeInvite" component={ChallengeInviteScreen} options={{ presentation: 'modal' }} />
-      <Stack.Screen name="PersonalTool" component={PersonalToolScreen} />
+      <Stack.Screen name="MyRecipes" component={MyRecipesScreen} />
+      <Stack.Screen name="PeriodTracker" component={PeriodTrackerScreen} />
+      <Stack.Screen name="SupplementTracker" component={SupplementTrackerScreen} />
+      <Stack.Screen name="MoodJournal" component={MoodJournalScreen} />
+      <Stack.Screen name="LiveJournalCall" component={LiveJournalCallScreen} options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="RecipeLibrary" component={RecipeLibraryScreen} />
+      <Stack.Screen name="CookMode" component={CookModeScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="ArticleEditor" component={ArticleEditorScreen} options={{presentation:'modal'}} />
+      <Stack.Screen name="SelectCategory" component={SelectCategoryScreen} options={{presentation:'modal'}} />
+      <Stack.Screen name="AddTags" component={AddTagsScreen} options={{presentation:'modal'}} />
+      <Stack.Screen name="AIHelper" component={AIHelperScreen} options={{presentation:'fullScreenModal'}} />
       <Stack.Screen name="AudienceAccounts" component={AudienceAccountsScreen} />
       <Stack.Screen name="BlogSettings" component={BlogSettingsScreen} />
       <Stack.Screen name="PdfEditor" component={PdfEditorScreen} options={{ presentation: 'modal' }} />
@@ -128,6 +162,14 @@ export default function RootNavigator() {
       <Stack.Screen name="VideoDashboard" component={VideoDashboardScreen} />
       <Stack.Screen name="VideoPlayer" component={VideoPlayerScreen} />
       <Stack.Screen name="VideoRecorder" component={VideoRecorderScreen} options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="UploadVideo" component={UploadVideoScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="UploadMultiple" component={UploadMultipleScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="CreateSeries" component={CreateSeriesScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="CreateCourse" component={CreateCourseScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="ImportFromCloud" component={ImportFromCloudScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="UploadPdf" component={UploadPdfScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="CreatePdf" component={CreatePdfScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="AiGeneratePdf" component={AiGeneratePdfScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="MembershipEditor" component={MembershipEditorScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="MembershipDashboard" component={MembershipDashboardScreen} />
       <Stack.Screen name="MembershipPublic" component={MembershipPublicScreen} />

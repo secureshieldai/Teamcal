@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,12 +7,22 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchBar from '../components/SearchBar';
 import SectionHeader from '../components/SectionHeader';
 import { colors, radii, shadow, spacing, typography } from '../theme';
-import { useMarketplace } from '../hooks/useMarketplace';
+import { useMarketplace, useMarketplaceSearch } from '../hooks/useMarketplace';
+import { marketplaceService } from '../services/api/marketplace.service';
+import type { Product } from '../types/api';
 import type { RootStackParamList } from '../navigation/types';
 
 export default function MarketplaceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { featuredProducts, topCategories } = useMarketplace();
+  const search = useMarketplaceSearch();
+  const [query, setQuery] = useState('');
+  const [categoryResults, setCategoryResults] = useState<Product[]>([]);
+  const results = query.trim() ? search.results : categoryResults;
+  const chooseCategory = async (category: string) => {
+    setQuery('');
+    setCategoryResults(await marketplaceService.getProducts({ category }));
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -27,7 +37,14 @@ export default function MarketplaceScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SearchBar placeholder="Search products, programs, services..." />
+        <SearchBar placeholder="Search products, programs, services..." value={query} onChangeText={setQuery} onSubmit={() => search.search(query)} />
+
+        {results.length ? <View style={styles.searchResults}>
+          {results.map(product => <TouchableOpacity key={product.id} style={[styles.resultCard, shadow.soft]} onPress={() => navigation.navigate('MarketplaceDetail', { productId: product.id })}>
+            <Image source={{ uri: product.photo || '' }} style={styles.resultImage} />
+            <View style={{ flex: 1 }}><Text style={styles.productTitle}>{product.title}</Text><Text style={styles.resultPrice}>{product.price_display}</Text></View>
+          </TouchableOpacity>)}
+        </View> : null}
 
         <SectionHeader title="Featured" actionLabel="See All" style={styles.sectionSpacing} />
         <View style={styles.featuredRow}>
@@ -47,7 +64,7 @@ export default function MarketplaceScreen() {
         <SectionHeader title="Top Categories" style={styles.sectionSpacing} />
         <View style={styles.categoryGrid}>
           {topCategories.map((category) => (
-            <TouchableOpacity key={category.id} style={styles.categoryItem} activeOpacity={0.75}>
+            <TouchableOpacity key={category.id} style={styles.categoryItem} activeOpacity={0.75} onPress={() => chooseCategory(category.id)}>
               <View style={styles.categoryIcon}>
                 <Ionicons name={category.icon} size={20} color={colors.primary} />
               </View>
@@ -83,6 +100,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl,
   },
+  searchResults: { marginTop: spacing.md, gap: spacing.sm },
+  resultCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.card, padding: spacing.md, borderRadius: radii.lg },
+  resultImage: { width: 54, height: 54, borderRadius: radii.md, backgroundColor: colors.border },
+  resultPrice: { color: colors.primary, fontWeight: '800', marginTop: 4 },
   sectionSpacing: {
     marginTop: spacing.xl,
   },

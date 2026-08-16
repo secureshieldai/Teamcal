@@ -1,15 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, shadow, spacing } from '../../theme';
-import { trackerService } from '../../services/api/tracker.service';
-import { coachService } from '../../services/api/coach.service';
-
-interface Insight {
-  title: string;
-  message: string;
-}
+import { useWaterToday } from '../../hooks/useWaterToday';
+import { buildHydrationInsights } from '../../data/hydrationInsights';
 
 const INSIGHT_STYLES: { icon: keyof typeof Ionicons.glyphMap; bg: string; color: string }[] = [
   { icon: 'water-outline', bg: '#FFEDE3', color: colors.primary },
@@ -17,45 +12,14 @@ const INSIGHT_STYLES: { icon: keyof typeof Ionicons.glyphMap; bg: string; color:
   { icon: 'flash-outline', bg: '#EDEDF5', color: colors.navy },
 ];
 
-function parseInsights(reply: string): Insight[] {
-  try {
-    const cleaned = reply.replace(/```json|```/g, '').trim();
-    const match = cleaned.match(/\[[\s\S]*\]/);
-    const parsed = JSON.parse(match ? match[0] : cleaned);
-    if (Array.isArray(parsed) && parsed.length && parsed.every((p) => p && typeof p.title === 'string' && typeof p.message === 'string')) {
-      return parsed;
-    }
-  } catch {
-    // fall through to single-card fallback below
-  }
-  return [{ title: 'Hydration Insight', message: reply }];
-}
-
 export default function WaterAITab() {
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { sum, effectiveGoal, streak, weatherOn, workoutOn, entries, loading } = useWaterToday();
+  const [refreshTick, setRefreshTick] = useState(0);
 
-  const generate = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const today = await trackerService.getToday('water');
-      const { reply } = await coachService.sendMessage(
-        'Based on my hydration data today, give me 2 to 3 short, distinct, practical hydration insights. Respond with ONLY a JSON array, no markdown, no extra text — each item shaped like {"title": "max 4 words", "message": "1-2 sentence practical tip"}.',
-        { hydrationMl: today.sum }
-      );
-      setInsights(parseInsights(reply));
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    generate();
-  }, [generate]);
+  const insights = useMemo(
+    () => buildHydrationInsights({ sum, goal: effectiveGoal, streak, weatherOn, workoutOn, entries }),
+    [sum, effectiveGoal, streak, weatherOn, workoutOn, entries, refreshTick]
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -67,17 +31,13 @@ export default function WaterAITab() {
           <Text style={styles.headerTitle}>Hydration coach</Text>
           <Text style={styles.headerSubtitle}>Adapts to your day</Text>
         </View>
-        <TouchableOpacity onPress={generate} disabled={loading} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity onPress={() => setRefreshTick((t) => t + 1)} disabled={loading} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="refresh" size={18} color={colors.primary} />
         </TouchableOpacity>
       </LinearGradient>
 
       {loading ? (
         <ActivityIndicator color={colors.primary} style={styles.spinner} />
-      ) : error ? (
-        <View style={[styles.card, shadow.card]}>
-          <Text style={styles.error}>Unable to generate insights: {error}</Text>
-        </View>
       ) : (
         insights.map((insight, i) => {
           const style = INSIGHT_STYLES[i % INSIGHT_STYLES.length];
@@ -163,9 +123,5 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.textSecondary,
     marginTop: 4,
-  },
-  error: {
-    fontSize: 13,
-    color: colors.textMuted,
   },
 });

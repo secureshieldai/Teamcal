@@ -69,6 +69,17 @@ async function getGroup(req, res, next) {
       return res.status(404).json({ success: false, message: "Group not found" });
     }
 
+    const { data: callerMembership, error: callerError } = await supabase
+      .from("group_members")
+      .select("role")
+      .eq("group_id", req.params.id)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+    if (callerError) throw callerError;
+    if (group.is_private && !callerMembership) {
+      return res.status(403).json({ success: false, message: "This group is private" });
+    }
+
     // Fetch members with user info (avatar, name)
     const { data: members } = await supabase
       .from("group_members")
@@ -77,10 +88,7 @@ async function getGroup(req, res, next) {
       .order("joined_at", { ascending: true })
       .limit(50);
 
-    // Check caller's membership
-    const myMembership = members?.find((m) => m.user?.id === req.user.id) || null;
-
-    res.json({ success: true, group, members: members || [], myRole: myMembership?.role || null });
+    res.json({ success: true, group, members: members || [], myRole: callerMembership?.role || null });
   } catch (err) {
     next(err);
   }
@@ -89,15 +97,19 @@ async function getGroup(req, res, next) {
 /** POST /api/groups */
 async function createGroup(req, res, next) {
   try {
-    const { name, description, cover, isPrivate } = req.body;
-    if (!name) return res.status(400).json({ success: false, message: "name is required" });
+    const { name, description, cover, isPrivate, meta = {} } = req.body;
+    const cleanName = String(name || "").trim();
+    if (!cleanName) return res.status(400).json({ success: false, message: "name is required" });
+    if (cleanName.length > 120) return res.status(400).json({ success: false, message: "name is too long" });
+    if (!meta || typeof meta !== "object" || Array.isArray(meta)) return res.status(400).json({ success: false, message: "meta must be an object" });
 
     const { data: group, error } = await supabase
       .from("groups")
       .insert({
-        name,
-        description: description || "",
+        name: cleanName,
+        description: String(description || "").trim(),
         cover: cover || null,
+        metadata: meta,
         is_private: Boolean(isPrivate),
         created_by: req.user.id,
         member_count: 1,
@@ -107,11 +119,15 @@ async function createGroup(req, res, next) {
     if (error) throw error;
 
     // Add creator as owner
-    await supabase.from("group_members").insert({
+    const { error: memberError } = await supabase.from("group_members").insert({
       group_id: group.id,
       user_id: req.user.id,
       role: "owner",
     });
+    if (memberError) {
+      await supabase.from("groups").delete().eq("id", group.id);
+      throw memberError;
+    }
 
     res.status(201).json({ success: true, group });
   } catch (err) {
@@ -134,9 +150,16 @@ async function updateGroup(req, res, next) {
       return res.status(403).json({ success: false, message: "Not authorized" });
     }
 
-    const allowed = ["name", "description", "cover", "is_private"];
+    const allowed = ["name", "description", "cover", "is_private", "metadata"];
     const patch = {};
     allowed.forEach((k) => { if (req.body[k] !== undefined) patch[k] = req.body[k]; });
+    if (patch.name !== undefined) {
+      patch.name = String(patch.name).trim();
+      if (!patch.name || patch.name.length > 120) return res.status(400).json({ success: false, message: "Invalid group name" });
+    }
+    if (patch.metadata !== undefined && (!patch.metadata || typeof patch.metadata !== "object" || Array.isArray(patch.metadata))) {
+      return res.status(400).json({ success: false, message: "metadata must be an object" });
+    }
 
     const { data: group, error } = await supabase
       .from("groups")
@@ -168,9 +191,19 @@ async function joinGroup(req, res, next) {
       return res.status(403).json({ success: false, message: "This group is private" });
     }
 
-    await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("group_members")
-      .upsert({ group_id: group.id, user_id: req.user.id, role: "member" }, { onConflict: "group_id,user_id" });
+      .select("role")
+      .eq("group_id", group.id)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+    if (existingError) throw existingError;
+    if (existing) return res.json({ success: true, message: "Already a member" });
+
+    const { error: joinError } = await supabase
+      .from("group_members")
+      .insert({ group_id: group.id, user_id: req.user.id, role: "member" });
+    if (joinError) throw joinError;
 
     await supabase
       .from("groups")
@@ -230,6 +263,15 @@ async function getGroupActivity(req, res, next) {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const skip = Number(req.query.skip) || 0;
+
+    const { data: group, error: groupError } = await supabase.from("groups").select("is_private").eq("id", req.params.id).maybeSingle();
+    if (groupError) throw groupError;
+    if (!group) return res.status(404).json({ success: false, message: "Group not found" });
+    if (group.is_private) {
+      const { data: membership, error: membershipError } = await supabase.from("group_members").select("role").eq("group_id", req.params.id).eq("user_id", req.user.id).maybeSingle();
+      if (membershipError) throw membershipError;
+      if (!membership) return res.status(403).json({ success: false, message: "This group is private" });
+    }
 
     const { data: posts, error } = await supabase
       .from("posts")

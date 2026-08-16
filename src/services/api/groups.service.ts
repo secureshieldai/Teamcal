@@ -2,8 +2,8 @@ import { apiClient } from './client';
 import type { Group, GroupMember, Post } from '../../types/api';
 
 export const groupsService = {
-  async create(value:{name:string;description?:string;isPrivate?:boolean}){const {data}=await apiClient.post<{success:boolean;group:Group}>('/groups',value);return data.group;},
-  async update(id:string,value:Partial<{name:string;description:string;cover:string;is_private:boolean}>){const {data}=await apiClient.patch<{success:boolean;group:Group}>(`/groups/${id}`,value);return data.group;},
+  async create(value:{name:string;description?:string;cover?:string;isPrivate?:boolean;meta?:Record<string,unknown>}){const {data}=await apiClient.post<{success:boolean;group:Group}>('/groups',value);return data.group;},
+  async update(id:string,value:Partial<{name:string;description:string;cover:string;is_private:boolean;metadata:Record<string,unknown>}>){const {data}=await apiClient.patch<{success:boolean;group:Group}>(`/groups/${id}`,value);return data.group;},
   async getMyGroups() {
     const { data } = await apiClient.get<{ success: boolean; groups: Group[] }>('/groups');
     return data.groups;

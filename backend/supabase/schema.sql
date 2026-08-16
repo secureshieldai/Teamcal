@@ -71,8 +71,10 @@ create table if not exists users (
   goal_focus_areas    text[] default '{}',
 
   -- referral
-  referred_by         uuid references users(id),
+  referred_by         uuid references users(id) on delete set null,
   referral_code       text unique,
+  terms_accepted_at   timestamptz,
+  terms_version       text,
 
   created_at          timestamptz default now(),
   updated_at          timestamptz default now()
@@ -112,6 +114,25 @@ create index if not exists idx_fast_logs_user_active  on fast_logs(user_id, acti
 create index if not exists idx_fast_logs_started_at   on fast_logs(user_id, started_at desc);
 
 -- ─────────────────────────────────────────────────────────────
+-- SLEEP LOGS (tap-to-sleep active session tracking)
+-- ─────────────────────────────────────────────────────────────
+create table if not exists sleep_logs (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references users(id) on delete cascade,
+  started_at     bigint not null,
+  ended_at       bigint,
+  duration_hours numeric,
+  score          int,
+  stages         jsonb, -- {awake,light,rem,deep} percentages
+  active         boolean default false,
+  created_at     timestamptz default now()
+);
+
+create index if not exists idx_sleep_logs_user_id    on sleep_logs(user_id);
+create index if not exists idx_sleep_logs_user_active on sleep_logs(user_id, active);
+create index if not exists idx_sleep_logs_started_at on sleep_logs(user_id, started_at desc);
+
+-- ─────────────────────────────────────────────────────────────
 -- TRACKER ENTRIES
 -- Generic time-series log for: calories, water, steps, weight,
 -- workouts, sleep, meals, meal-scan
@@ -139,6 +160,7 @@ create table if not exists posts (
   user_id         uuid not null references users(id) on delete cascade,
   text            text default '',
   image           text,
+  image_urls      text[] not null default '{}',
   likes           int default 0,
   liked_by        uuid[] default '{}',
   community       text,         -- group id when post belongs to a group
@@ -289,6 +311,7 @@ create table if not exists groups (
   description  text default '',
   cover        text,
   avatar       text,
+  metadata     jsonb not null default '{}',
   is_private   boolean default false,
   member_count int default 1,
   created_by   uuid not null references users(id) on delete cascade,
@@ -331,7 +354,9 @@ create table if not exists workouts (
   category    text default 'strength',
   is_template boolean default false,
   is_public   boolean default true,
-  exercises   jsonb default '[]',         -- [{ id, name, detail }]
+  exercises   jsonb default '[]',         -- [{ id, name, detail, sets, reps, restSeconds, notes, muscles, image }]
+  scheduled_days jsonb not null default '[]', -- ['Mon','Thu']
+  rest_days      jsonb not null default '[]',
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );
@@ -411,7 +436,7 @@ create index if not exists idx_earn_entries_user_id on earn_entries(user_id, cre
 create table if not exists referrals (
   id               uuid primary key default gen_random_uuid(),
   referrer_id      uuid not null references users(id) on delete cascade,
-  referred_user_id uuid references users(id),
+  referred_user_id uuid references users(id) on delete set null,
   name             text not null,
   status           text default 'invited' check (status in ('invited','joined','converted')),
   reward           numeric default 0,
@@ -567,17 +592,55 @@ alter table payouts add column if not exists stripe_payouts_enabled boolean not 
 alter table payouts add column if not exists stripe_account_status text not null default 'not-connected';
 
 create table if not exists marketplace_orders (
-  id uuid primary key default gen_random_uuid(), buyer_id uuid not null references users(id), seller_id uuid not null references users(id),
+  id uuid primary key default gen_random_uuid(), buyer_id uuid not null references users(id) on delete cascade, seller_id uuid not null references users(id) on delete cascade,
   currency text not null, total_amount bigint not null check(total_amount>=0), platform_fee_amount bigint not null default 0,
   status text not null, items jsonb not null default '[]', stripe_checkout_session_id text unique,
   stripe_payment_intent_id text unique, paid_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create index if not exists idx_marketplace_orders_buyer on marketplace_orders(buyer_id,created_at desc);
 create index if not exists idx_marketplace_orders_seller on marketplace_orders(seller_id,created_at desc);
-create table if not exists stripe_refunds (id text primary key,order_id uuid not null references marketplace_orders(id),amount bigint not null,currency text not null,status text,reason text,requested_by uuid references users(id),raw jsonb,created_at timestamptz not null default now());
+create table if not exists stripe_refunds (id text primary key,order_id uuid not null references marketplace_orders(id) on delete cascade,amount bigint not null,currency text not null,status text,reason text,requested_by uuid references users(id) on delete set null,raw jsonb,created_at timestamptz not null default now());
 create table if not exists stripe_disputes (id text primary key,order_id uuid references marketplace_orders(id),charge_id text,payment_intent_id text,amount bigint,currency text,reason text,status text,evidence_due_by timestamptz,raw jsonb,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
 create table if not exists stripe_webhook_events (id text primary key,type text not null,stripe_account_id text,livemode boolean not null default false,processed_at timestamptz not null default now());
 do $$ begin create trigger trg_marketplace_orders_updated_at before update on marketplace_orders for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
 do $$ begin create trigger trg_stripe_disputes_updated_at before update on stripe_disputes for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
 create or replace function increment_product_sold_count(product_id uuid,increment_by int default 1) returns void language sql as $$ update marketplace_products set sold_count=coalesce(sold_count,0)+greatest(increment_by,0) where id=product_id; $$;
 alter table marketplace_orders enable row level security;alter table stripe_refunds enable row level security;alter table stripe_disputes enable row level security;alter table stripe_webhook_events enable row level security;
+
+-- AI-generated meal plans (wizard preferences + generated days/meals as jsonb).
+create table if not exists meal_plans (
+  id                   uuid primary key default gen_random_uuid(),
+  user_id              uuid not null references users(id) on delete cascade,
+  duration_days        int not null default 7,
+  daily_calories       int not null default 2000,
+  meal_types           jsonb not null default '["breakfast","lunch","dinner","snack"]',
+  dietary_restrictions jsonb not null default '[]',
+  diet_preference      text not null default 'balanced',
+  allergies            jsonb not null default '[]',
+  health_conditions    jsonb not null default '[]',
+  notes                text default '',
+  days                 jsonb not null default '[]',
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+create index if not exists idx_meal_plans_user on meal_plans(user_id, created_at desc);
+do $$ begin create trigger trg_meal_plans_updated_at before update on meal_plans for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
+alter table meal_plans enable row level security;
+
+-- Per-set exercise performance history (powers Previous/Target progression and personal records).
+create table if not exists exercise_performances (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references users(id) on delete cascade,
+  exercise_name text not null,
+  set_index     int not null default 1,
+  weight        numeric not null default 0,
+  reps          int not null default 0,
+  ts            bigint not null,
+  created_at    timestamptz not null default now()
+);
+create index if not exists idx_exercise_perf_user_exercise on exercise_performances(user_id, exercise_name, set_index, ts desc);
+alter table exercise_performances enable row level security;
+
+-- Smart-alarm preferences (settings only — no server-side notification scheduling yet).
+alter table users add column if not exists sleep_alarm_prefs jsonb not null default '{"wakeTime":"06:30","smartAlarm":true,"wakeWindowMin":30,"sound":"Sunrise"}';
+alter table sleep_logs enable row level security;

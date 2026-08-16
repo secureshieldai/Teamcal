@@ -5,6 +5,7 @@ export interface User {
   name: string;
   bio: string;
   avatar: string | null;
+  dm_enabled?: boolean;
   level: number;
   xp: number;
   coins: number;
@@ -97,6 +98,12 @@ export interface Exercise {
   id: string;
   name: string;
   detail: string;
+  sets?: number;
+  reps?: number;
+  restSeconds?: number;
+  notes?: string;
+  muscles?: string[];
+  image?: string;
 }
 
 export interface Workout {
@@ -109,6 +116,8 @@ export interface Workout {
   is_template: boolean;
   is_public: boolean;
   exercises: Exercise[];
+  scheduled_days: string[];
+  rest_days: string[];
 }
 
 // ── Groups ────────────────────────────────────────────────────────────
@@ -118,6 +127,8 @@ export interface Group {
   description: string;
   cover: string | null;
   avatar: string | null;
+  dm_enabled?: boolean;
+  metadata?: Record<string, unknown>;
   is_private: boolean;
   member_count: number;
   role?: string;
@@ -135,6 +146,7 @@ export interface Post {
   user_id: string;
   text: string;
   image: string | null;
+  image_urls?: string[] | null;
   likes: number;
   liked?: boolean;
   comments_count?: number;

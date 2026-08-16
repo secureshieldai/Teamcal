@@ -76,17 +76,7 @@ export default function HomeScreen() {
 
         <FriendsProgressRow friends={friendsProgress} onSeeAll={() => navigation.navigate('Leaderboards')} />
 
-        <CoachChatCard
-          avatar=""
-          name="TeamCal AI Coach"
-          online={true}
-          verified={true}
-          myLastMessage=""
-          time=""
-          coachReply="Open your private coaching conversation"
-          unreadCount={0}
-          onOpenChat={() => navigation.navigate('CoachChat')}
-        />
+        <CoachChatCard onOpenChat={() => navigation.navigate('CoachChat')} />
 
         <View style={styles.quickLogSection}>
           <SectionHeader title="Quick Log" />
@@ -96,13 +86,15 @@ export default function HomeScreen() {
               if (id === 'scan') { navigation.navigate('ScanFood', { mode: 'food' }); return; }
               if (id === 'water') { navigation.navigate('Water'); return; }
               if (id === 'workout') { navigation.navigate('Workouts'); return; }
-              if (id === 'weight') { navigation.navigate('QuickLogEntry', { kind: 'weight' }); return; }
+              if (id === 'weight') { navigation.navigate('Weight'); return; }
             }}
           />
           <QuickLogRow
             items={quickActionItems}
             style={styles.quickActionRow}
             onPressItem={(id) => {
+              if (id === 'log-supplement') { navigation.navigate('SupplementTracker'); return; }
+              if (id === 'log-mood') { navigation.navigate('MoodJournal'); return; }
               const kind = QUICK_ACTION_KINDS[id];
               if (kind) navigation.navigate('QuickLogEntry', { kind });
             }}

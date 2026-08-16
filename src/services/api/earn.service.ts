@@ -26,12 +26,24 @@ export type MembershipMember={id:string;name:string;avatar?:string;tier:string;j
 export type MembershipEvent={id:string;title:string;type:string;date:string;time:string;timeZone:string;duration:number;limit?:number;tiers:string[];reminder:string;replay:boolean;price?:number;recurring?:boolean};
 export type MembershipMetadata={groupId?:string;profileImage?:string;banner?:string;category?:string;subcategory?:string;rules?:string;valueProposition?:string;audience?:string;memberReceives?:string;welcomeMessage?:string;faqs?:{question:string;answer:string}[];language?:string;privacy?:string;discoverability?:string;memberApproval?:string;postingPermission?:string;commentPermission?:string;dmPermission?:string;moderatorPermission?:string;eventPermission?:string;contentRules?:string;pricingModel?:'free'|'lifetime'|'recurring'|'tiers';currency?:string;lifetimePrice?:number;launchPrice?:number;couponCodes?:string[];lifetimeTerms?:string;monthlyPrice?:number;quarterlyPrice?:number;sixMonthPrice?:number;annualPrice?:number;trial?:string;trialPlans?:string[];paymentRequiredForTrial?:boolean;trialReminder?:boolean;autoRenew?:boolean;repeatTrials?:boolean;tiers?:MembershipTier[];benefits?:string[];members?:MembershipMember[];events?:MembershipEvent[];resources?:{id:string;title:string;type:string;access:string}[];scheduledPosts?:{id:string;title:string;date:string;access:string}[];testimonials?:string[];linkBehavior?:string};
 export type EarnAsset={id:string;kind:EarnAssetKind;subtype:string;title:string;description:string;image?:string|null;status:EarnAssetStatus;price:number;currency:string;metrics:Record<string,number>;metadata:Record<string,unknown>;created_at:string;updated_at:string};
-export type EarnSummary={balance:number;lifetimeEarnings:number;last30Days:number;availableBalance:number;pendingEarnings:number;totalWithdrawn:number;sourceTotals:Record<string,number>;counts:{assets:number;blogs:number;products:number;referrals:number}};
+export type EarnSummary={balance:number;lifetimeEarnings:number;periodEarnings:number;range:string;last30Days:number;availableBalance:number;pendingEarnings:number;totalWithdrawn:number;sourceTotals:Record<string,number>;counts:{assets:number;blogs:number;products:number;referrals:number}};
 
 export const earnService = {
-  async getSummary(){const {data}=await apiClient.get<{success:boolean;summary:EarnSummary;entries:EarnEntry[];payout:StripePayout;assets:EarnAsset[]}>('/earn/summary');return data;},
+  async getSummary(range:'7d'|'30d'|'90d'|'6m'|'1y'|'lifetime'='30d'){const {data}=await apiClient.get<{success:boolean;summary:EarnSummary;entries:EarnEntry[];payout:StripePayout;assets:EarnAsset[]}>('/earn/summary',{params:{range}});return data;},
   async getAssets(kind?:EarnAssetKind){const {data}=await apiClient.get<{success:boolean;assets:EarnAsset[]}>('/earn/assets',{params:{kind}});return data.assets;},
-  async getAsset(id:string){const {data}=await apiClient.get<{success:boolean;asset:EarnAsset}>(`/earn/assets/${id}`);return data.asset;},
+  async getAsset(id:string){
+    try {
+      const {data}=await apiClient.get<{success:boolean;asset:EarnAsset}>(`/earn/assets/${id}`);
+      return data.asset;
+    } catch {
+      const {data}=await apiClient.get<{success:boolean;asset:EarnAsset}>(`/earn/assets/${id}/public`);
+      apiClient.post(`/earn/assets/${id}/view`).catch(()=>undefined);
+      return data.asset;
+    }
+  },
+  async getPublicAsset(id:string){const {data}=await apiClient.get<{success:boolean;asset:EarnAsset & {owner?:boolean}}>(`/earn/assets/${id}/public`);return data.asset;},
+  async recordAssetView(id:string){const {data}=await apiClient.post<{success:boolean;metrics:Record<string,number>}>(`/earn/assets/${id}/view`);return data.metrics;},
+  async getPublicMembership(id:string){const {data}=await apiClient.get<{success:boolean;asset:EarnAsset}>(`/earn/memberships/${id}/public`);return data.asset;},
   async createAsset(value:{kind:EarnAssetKind;subtype?:string;title:string;description?:string;image?:string;status?:EarnAssetStatus;price?:number;currency?:string;metadata?:Record<string,unknown>}){const {data}=await apiClient.post<{success:boolean;asset:EarnAsset}>('/earn/assets',value);return data.asset;},
   async updateAsset(id:string,value:Partial<Omit<EarnAsset,'id'|'kind'|'created_at'|'updated_at'|'metrics'>>){const {data}=await apiClient.patch<{success:boolean;asset:EarnAsset}>(`/earn/assets/${id}`,value);return data.asset;},
   async deleteAsset(id:string){await apiClient.delete(`/earn/assets/${id}`);},

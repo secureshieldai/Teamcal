@@ -47,9 +47,12 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const [schedulingOption, setSchedulingOption] = useState<'smart' | 'custom' | 'queue'>('smart');
   const [personalCampaigns, setPersonalCampaigns] = useState<AudienceCampaign[]>([]);
   const [generatedPosts,setGeneratedPosts]=useState<GeneratedAudiencePost[]>([]);
+  const PLATFORM_COLORS: Record<string,string> = {instagram:'#E1306C',facebook:'#1877F2',linkedin:'#0A66C2',x:'#000000',reddit:'#FF4500',quora:'#B92B27',discord:'#5865F2',tiktok:'#010101',whatsapp:'#25D366',telegram:'#2AABEE'};
+  const PLATFORM_ICONS: Record<string,string> = {instagram:'logo-instagram',facebook:'logo-facebook',linkedin:'logo-linkedin',x:'logo-twitter',reddit:'logo-reddit',quora:'help-circle',discord:'logo-discord',tiktok:'musical-notes',whatsapp:'logo-whatsapp',telegram:'paper-plane'};
   const [connectedAccounts,setConnectedAccounts]=useState<{key:string;label:string;accounts:number;color:string;icon:string}[]>([]);
   const generatePosts=async()=>setGeneratedPosts(await coachService.generateAudience({topic:contentKey||sourceLabel||'Healthy living',instructions:`${instructions}${pdfId?` Include a natural call to action and the links: preview teamcal://pdf/${pdfId}?preview=1, purchase teamcal://pdf/${pdfId}?buy=1, app deep link teamcal://pdf/${pdfId}. Reveal enough to create interest without giving away the complete PDF.`:''}${videoId?` Analyse the video title, description, transcript, captions and key moments. Create hooks, teasers, clip suggestions and watch-now posts. Include video teamcal://video/${videoId}, preview teamcal://video/${videoId}?preview=1, purchase teamcal://video/${videoId}?buy=1, subscription and app deep links.`:''}${membershipId?` Use the community benefits, tiers, trial offer, events, resources, testimonials and FAQs. Create educational, launch and free-trial posts without sounding salesy. Include community teamcal://membership/${membershipId}, tier, trial, event, browser and app deep links.`:''}`,tone,formats,count:Math.min(postsCount,12)}));
-  useFocusEffect(useCallback(() => { let active=true;const load=()=>Promise.all([personalService.list<Omit<AudienceCampaign, 'id'>>('audience-campaign'),personalService.list<{platform:string;handle:string}>('audience-account')]).then(([campaigns,accounts])=>{if(!active)return;setPersonalCampaigns(campaigns.map(r => ({ id:r.id, ...r.data })));const mapped=accounts.map(r=>({key:r.id,label:`${r.data.platform} ${r.data.handle}`,accounts:1,color:colors.primary,icon:'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(current=>current.filter(id=>mapped.some(x=>x.key===id)).concat(mapped.filter(x=>!current.includes(x.key)).map(x=>x.key)));}).catch(() => {});load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)}; }, []));
+  useFocusEffect(useCallback(() => { let active=true;const load=()=>Promise.all([personalService.list<Omit<AudienceCampaign,'id'>>('audience-campaign'),personalService.list<{platform:string;displayName?:string;username?:string;handle?:string}>('audience-account')]).then(([campaigns,accounts])=>{if(!active)return;setPersonalCampaigns(campaigns.map(r=>({id:r.id,...r.data})));// Group by platform for the summary display
+    const byPlatform: Record<string,number>={};accounts.forEach(r=>{const p=r.data.platform||'unknown';byPlatform[p]=(byPlatform[p]||0)+1;});const mapped=Object.entries(byPlatform).map(([p,count])=>({key:p,label:p.charAt(0).toUpperCase()+p.slice(1),accounts:count,color:PLATFORM_COLORS[p]||colors.primary,icon:PLATFORM_ICONS[p]||'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(current=>current.filter(id=>mapped.some(x=>x.key===id)).concat(mapped.filter(x=>!current.includes(x.key)).map(x=>x.key)));}).catch(()=>{});load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)}; }, []));
 
   const toggleKeyPoint = (v: string) => setKeyPoints((prev) => (prev.includes(v) ? prev.filter((k) => k !== v) : [...prev, v]));
   const toggleFormat = (key: string) => setFormats((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -101,6 +104,63 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             Create, customize and schedule content that grows your audience{sourceLabel ? ` from your ${sourceLabel.toLowerCase()}` : ''}.
           </Text>
 
+          {/* A. Create New Campaign — top section */}
+          <TouchableOpacity style={styles.startCard} onPress={startCampaign} activeOpacity={0.9}>
+            <View style={styles.startIconLeft}>
+              <Ionicons name="add" size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.startTitle}>Create New Campaign</Text>
+              <Text style={styles.startSubtitle}>Start building your campaign in just a few steps.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.white} />
+          </TouchableOpacity>
+
+          {/* B. Quick Start Templates */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Quick Start Templates</Text>
+            <TouchableOpacity onPress={() => comingSoon('See all templates')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+            {audienceEngineTemplates.map((template) => (
+              <TouchableOpacity key={template.key} style={styles.templateCard} onPress={startCampaign}>
+                <Ionicons name={template.icon as keyof typeof Ionicons.glyphMap} size={20} color={colors.primary} />
+                <Text style={styles.templateLabel}>{template.label}</Text>
+                <Text style={styles.templateMeta}>{template.posts} posts</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* C. Recent Campaigns */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Recent Campaigns</Text>
+            <TouchableOpacity onPress={() => comingSoon('See all campaigns')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ gap: spacing.sm }}>
+            {personalCampaigns.map((campaign) => (
+              <TouchableOpacity key={campaign.id} style={[styles.campaignRow, shadow.soft]} onPress={() => comingSoon('Campaign details')}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.campaignTitle}>{campaign.title}</Text>
+                  <Text style={styles.campaignMeta}>
+                    {campaign.contentType} · {campaign.posts} posts
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <View style={[styles.statusBadge, campaign.status === 'Scheduled' ? styles.statusScheduled : campaign.status === 'Published' ? styles.statusPublished : styles.statusDraft]}>
+                    <Text style={[styles.statusBadgeText, campaign.status === 'Published' ? styles.statusPublishedText : null]}>{campaign.status}</Text>
+                  </View>
+                  <Text style={styles.campaignDate}>{campaign.date}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            {!personalCampaigns.length?<Text style={styles.campaignMeta}>No campaigns yet.</Text>:null}
+          </View>
+
+          {/* Connected Accounts */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Connected Accounts</Text>
             <TouchableOpacity onPress={() => navigation.navigate('AudienceAccounts')}>
@@ -120,46 +180,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             {!connectedAccounts.length?<Text style={styles.accountLabel}>No accounts connected</Text>:null}
           </View>
 
-          <Text style={styles.sectionTitle}>Quick Start Templates</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-            {audienceEngineTemplates.map((template) => (
-              <TouchableOpacity key={template.key} style={styles.templateCard} onPress={startCampaign}>
-                <Ionicons name={template.icon as keyof typeof Ionicons.glyphMap} size={20} color={colors.primary} />
-                <Text style={styles.templateLabel}>{template.label}</Text>
-                <Text style={styles.templateMeta}>{template.posts} posts</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          <Text style={styles.sectionTitle}>Recent Campaigns</Text>
-          <View style={{ gap: spacing.sm }}>
-            {personalCampaigns.map((campaign) => (
-              <TouchableOpacity key={campaign.id} style={[styles.campaignRow, shadow.soft]} onPress={() => comingSoon('Campaign details')}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.campaignTitle}>{campaign.title}</Text>
-                  <Text style={styles.campaignMeta}>
-                    {campaign.contentType} · {campaign.posts} posts
-                  </Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.campaignStatus}>{campaign.status}</Text>
-                  <Text style={styles.campaignDate}>{campaign.date}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-            {!personalCampaigns.length?<Text style={styles.campaignMeta}>No campaigns yet.</Text>:null}
-          </View>
-
-          <TouchableOpacity style={styles.startCard} onPress={startCampaign} activeOpacity={0.9}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.startTitle}>Create New Campaign</Text>
-              <Text style={styles.startSubtitle}>Turn your content into engaging posts in just a few simple steps.</Text>
-            </View>
-            <View style={styles.startIcon}>
-              <Ionicons name="add" size={22} color={colors.primary} />
-            </View>
-          </TouchableOpacity>
-
+          {/* Performance Overview */}
           <Text style={styles.sectionTitle}>Performance Overview</Text>
           <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>
             <View style={styles.perfStatsRow}>
@@ -236,9 +257,10 @@ const styles = StyleSheet.create({
   headerTitle: { ...typography.h2, color: colors.textPrimary },
   content: { padding: spacing.lg, paddingTop: 0, paddingBottom: spacing.xxl },
   dashSubtitle: { fontSize: 12, color: colors.textSecondary, lineHeight: 17, marginBottom: spacing.lg },
-  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md, marginBottom: spacing.md },
-  sectionTitle: { ...typography.h2, fontSize: 15, color: colors.textPrimary, marginTop: spacing.xl, marginBottom: spacing.md },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl, marginBottom: spacing.md },
+  sectionTitle: { ...typography.h2, fontSize: 15, color: colors.textPrimary },
   manageText: { fontSize: 12, fontWeight: '700', color: colors.primary },
+  seeAllText: { fontSize: 12, fontWeight: '700', color: colors.primary },
   accountsCard: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg },
   accountItem: { alignItems: 'center', gap: 4 },
   accountIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
@@ -250,7 +272,6 @@ const styles = StyleSheet.create({
   campaignRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md },
   campaignTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   campaignMeta: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
-  campaignStatus: { fontSize: 11, fontWeight: '700', color: colors.primary },
   campaignDate: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
   startCard: {
     flexDirection: 'row',
@@ -258,12 +279,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: radii.xl,
     padding: spacing.lg,
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
     gap: spacing.md,
   },
   startTitle: { color: colors.white, fontSize: 15, fontWeight: '800' },
   startSubtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 11.5, marginTop: 2 },
-  startIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  startIconLeft: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
+  statusScheduled: { backgroundColor: 'rgba(255,149,0,0.12)' },
+  statusPublished: { backgroundColor: '#E6F9F0' },
+  statusDraft: { backgroundColor: colors.background },
+  statusBadgeText: { fontSize: 11, fontWeight: '700', color: colors.primary },
+  statusPublishedText: { color: '#22C55E' },
   card: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg },
   perfStatsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   perfStat: { alignItems: 'center' },

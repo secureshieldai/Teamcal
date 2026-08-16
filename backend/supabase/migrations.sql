@@ -133,3 +133,82 @@ create table if not exists stripe_webhook_events (id text primary key,type text 
 do $$ begin create trigger trg_marketplace_orders_updated_at before update on marketplace_orders for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;do $$ begin create trigger trg_stripe_disputes_updated_at before update on stripe_disputes for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
 create or replace function increment_product_sold_count(product_id uuid,increment_by int default 1) returns void language sql as $$ update marketplace_products set sold_count=coalesce(sold_count,0)+greatest(increment_by,0) where id=product_id; $$;
 alter table marketplace_orders enable row level security;alter table stripe_refunds enable row level security;alter table stripe_disputes enable row level security;alter table stripe_webhook_events enable row level security;
+
+-- Migration 010: Ordered multi-image social posts (legacy image remains as a cover).
+alter table if exists posts add column if not exists image_urls text[] not null default '{}';
+update posts set image_urls = array[image] where image is not null and cardinality(image_urls) = 0;
+
+-- Migration 011: AI-generated meal plans (wizard preferences + generated days/meals as jsonb).
+create table if not exists meal_plans (
+  id                   uuid primary key default gen_random_uuid(),
+  user_id              uuid not null references users(id) on delete cascade,
+  duration_days        int not null default 7,
+  daily_calories       int not null default 2000,
+  meal_types           jsonb not null default '["breakfast","lunch","dinner","snack"]',
+  dietary_restrictions jsonb not null default '[]',
+  diet_preference      text not null default 'balanced',
+  allergies            jsonb not null default '[]',
+  health_conditions    jsonb not null default '[]',
+  notes                text default '',
+  days                 jsonb not null default '[]',
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+create index if not exists idx_meal_plans_user on meal_plans(user_id, created_at desc);
+do $$ begin create trigger trg_meal_plans_updated_at before update on meal_plans for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
+alter table meal_plans enable row level security;
+
+-- Migration 012: Workout scheduling + per-set exercise performance history (Previous/Target, PRs).
+alter table if exists workouts add column if not exists scheduled_days jsonb not null default '[]';
+alter table if exists workouts add column if not exists rest_days jsonb not null default '[]';
+create table if not exists exercise_performances (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references users(id) on delete cascade,
+  exercise_name text not null,
+  set_index     int not null default 1,
+  weight        numeric not null default 0,
+  reps          int not null default 0,
+  ts            bigint not null,
+  created_at    timestamptz not null default now()
+);
+create index if not exists idx_exercise_perf_user_exercise on exercise_performances(user_id, exercise_name, set_index, ts desc);
+alter table exercise_performances enable row level security;
+
+-- Migration 013: Sleep tracker (tap-to-sleep active sessions + smart-alarm preferences).
+create table if not exists sleep_logs (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references users(id) on delete cascade,
+  started_at     bigint not null,
+  ended_at       bigint,
+  duration_hours numeric,
+  score          int,
+  stages         jsonb,
+  active         boolean default false,
+  created_at     timestamptz default now()
+);
+create index if not exists idx_sleep_logs_user_id on sleep_logs(user_id);
+create index if not exists idx_sleep_logs_user_active on sleep_logs(user_id, active);
+create index if not exists idx_sleep_logs_started_at on sleep_logs(user_id, started_at desc);
+alter table users add column if not exists sleep_alarm_prefs jsonb not null default '{"wakeTime":"06:30","smartAlarm":true,"wakeWindowMin":30,"sound":"Sunrise"}';
+alter table sleep_logs enable row level security;
+
+-- Migration 014: auditable legal consent captured during email registration.
+alter table users add column if not exists terms_accepted_at timestamptz;
+alter table users add column if not exists terms_version text;
+
+-- Account deletion must not be blocked by referral or commerce relationships.
+alter table users drop constraint if exists users_referred_by_fkey;
+alter table users add constraint users_referred_by_fkey foreign key (referred_by) references users(id) on delete set null;
+alter table referrals drop constraint if exists referrals_referred_user_id_fkey;
+alter table referrals add constraint referrals_referred_user_id_fkey foreign key (referred_user_id) references users(id) on delete set null;
+alter table marketplace_orders drop constraint if exists marketplace_orders_buyer_id_fkey;
+alter table marketplace_orders add constraint marketplace_orders_buyer_id_fkey foreign key (buyer_id) references users(id) on delete cascade;
+alter table marketplace_orders drop constraint if exists marketplace_orders_seller_id_fkey;
+alter table marketplace_orders add constraint marketplace_orders_seller_id_fkey foreign key (seller_id) references users(id) on delete cascade;
+alter table stripe_refunds drop constraint if exists stripe_refunds_order_id_fkey;
+alter table stripe_refunds add constraint stripe_refunds_order_id_fkey foreign key (order_id) references marketplace_orders(id) on delete cascade;
+alter table stripe_refunds drop constraint if exists stripe_refunds_requested_by_fkey;
+alter table stripe_refunds add constraint stripe_refunds_requested_by_fkey foreign key (requested_by) references users(id) on delete set null;
+
+-- Migration 015: Persist the guided community workflow settings.
+alter table if exists groups add column if not exists metadata jsonb not null default '{}';

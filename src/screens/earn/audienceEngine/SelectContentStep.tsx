@@ -39,7 +39,7 @@ export default function SelectContentStep({ selectedKey, onSelect, onNext, accou
             </Text>
             <Text style={styles.previewMeta}>Uses your current backend content</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => onSelect('')}>
             <Text style={styles.changeText}>Change</Text>
           </TouchableOpacity>
         </View>

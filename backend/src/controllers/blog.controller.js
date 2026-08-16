@@ -117,6 +117,24 @@ async function getArticles(req, res, next) {
   }
 }
 
+/** GET /api/blogs/articles/:id */
+async function getArticle(req, res, next) {
+  try {
+    const { data: article, error } = await supabase
+      .from("articles")
+      .select("*")
+      .eq("id", req.params.id)
+      .eq("user_id", req.user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!article) return res.status(404).json({ success: false, message: "Article not found" });
+    res.json({ success: true, article });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** POST /api/blogs/articles */
 async function createArticle(req, res, next) {
   try {
@@ -232,4 +250,4 @@ async function recordView(req, res, next) {
 
 async function getAnalytics(req,res,next){try{const blogId=req.params.id;const {data:site}=await supabase.from('blog_sites').select('id').eq('id',blogId).eq('user_id',req.user.id).maybeSingle();if(!site)return res.status(404).json({success:false,message:'Blog not found'});const {data:articles,error}=await supabase.from('articles').select('id,views,earned,read_minutes,status').eq('blog_id',blogId).eq('user_id',req.user.id);if(error)throw error;const ids=(articles||[]).map(x=>x.id);const [{data:follows},{data:comments}]=await Promise.all([supabase.from('tracker_entries').select('id').eq('tracker','blog-follow').contains('meta',{blogId}),ids.length?supabase.from('tracker_entries').select('id,meta').eq('tracker','article-comment'):{data:[]}]);const commentCount=(comments||[]).filter(x=>ids.includes(x.meta?.articleId)).length;res.json({success:true,analytics:{posts:ids.length,published:(articles||[]).filter(x=>x.status==='published').length,views:(articles||[]).reduce((n,x)=>n+Number(x.views||0),0),earned:(articles||[]).reduce((n,x)=>n+Number(x.earned||0),0),averageReadMinutes:ids.length?(articles||[]).reduce((n,x)=>n+Number(x.read_minutes||0),0)/ids.length:0,followers:(follows||[]).length,comments:commentCount}});}catch(e){next(e);}}
 
-module.exports = { getMySites, createSite, updateSite, deleteSite, getArticles, createArticle, updateArticle, deleteArticle, recordView, getAnalytics };
+module.exports = { getMySites, createSite, updateSite, deleteSite, getArticles, getArticle, createArticle, updateArticle, deleteArticle, recordView, getAnalytics };

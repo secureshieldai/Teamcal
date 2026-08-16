@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-const { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword, requestPasswordReset, verifyPasswordReset, resetPassword } = require("../controllers/auth.controller");
+const { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword, deleteAccount, requestPasswordReset, verifyPasswordReset, resetPassword } = require("../controllers/auth.controller");
 const { protect } = require("../middleware/auth");
 const { validate } = require("../middleware/validate");
 const rateLimit = require("express-rate-limit");
@@ -23,6 +23,7 @@ router.post(
     body("password").isLength({ min: 6 }),
     body("name").optional().trim(),
     body("referralCode").optional().trim().toUpperCase(),
+    body("acceptedTerms").custom((value) => value === true).withMessage("You must agree to the Terms of Use and acknowledge the Privacy Policy"),
   ],
   validate,
   register
@@ -51,6 +52,7 @@ router.post(
 );
 
 router.get("/me", protect, me);
+router.delete("/account", protect, deleteAccount);
 router.patch(
   "/password",
   protect,

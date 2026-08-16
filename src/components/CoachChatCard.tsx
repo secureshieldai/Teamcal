@@ -1,70 +1,25 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Avatar from './Avatar';
-import SectionHeader from './SectionHeader';
-import { colors, radii, shadow, spacing, typography } from '../theme';
+import { colors, radii, spacing } from '../theme';
 
 type Props = {
-  avatar: string;
-  name: string;
-  online?: boolean;
-  verified?: boolean;
-  myLastMessage: string;
-  time: string;
-  coachReply: string;
-  unreadCount?: number;
   onOpenChat?: () => void;
 };
 
-export default function CoachChatCard({
-  avatar,
-  name,
-  online,
-  verified,
-  myLastMessage,
-  time,
-  coachReply,
-  unreadCount,
-  onOpenChat,
-}: Props) {
+export default function CoachChatCard({ onOpenChat }: Props) {
   return (
     <View style={styles.section}>
-      <SectionHeader title="Chat with Your Coach" />
-
-      <View style={[styles.card, shadow.card]}>
-        <View style={styles.topRow}>
-          <Avatar uri={avatar} size={44} online={online} />
-          <View style={styles.info}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{name}</Text>
-              {verified && <Ionicons name="checkmark-circle" size={14} color={colors.primary} />}
-            </View>
-            <Text style={styles.status}>{online ? 'Online' : 'Offline'}</Text>
-          </View>
-          {!!unreadCount && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{unreadCount}</Text>
-            </View>
-          )}
+      <TouchableOpacity style={styles.card} onPress={onOpenChat} activeOpacity={0.85}>
+        <View style={styles.icon}>
+          <Ionicons name="chatbubbles" size={26} color={colors.white} />
         </View>
-
-        <View style={styles.messages}>
-          <Text style={styles.messageLine} numberOfLines={1}>
-            <Text style={styles.sender}>You: </Text>
-            {myLastMessage}
-            <Text style={styles.time}>  {time}</Text>
-          </Text>
-          <Text style={styles.messageLine} numberOfLines={1}>
-            <Text style={styles.sender}>Coach: </Text>
-            {coachReply}
-          </Text>
+        <View style={styles.info}>
+          <Text style={styles.title}>Chat with TeamCal Coach</Text>
+          <Text style={styles.subtitle}>Ask questions, get feedback, or jump on a live call.</Text>
         </View>
-
-        <TouchableOpacity style={styles.button} onPress={onOpenChat} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>Open Chat</Text>
-        </TouchableOpacity>
-      </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -75,71 +30,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   card: {
-    backgroundColor: colors.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: '#FDECE4',
     borderRadius: radii.xl,
     padding: spacing.lg,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  info: {
-    marginLeft: spacing.md,
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  name: {
-    ...typography.bodyBold,
-    color: colors.textPrimary,
-  },
-  status: {
-    ...typography.small,
-    color: colors.success,
-    marginTop: 2,
-  },
-  unreadBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    paddingHorizontal: 6,
+  icon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  unreadText: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: '700',
+  info: {
+    flex: 1,
   },
-  messages: {
-    marginTop: spacing.md,
-    gap: 6,
-  },
-  messageLine: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  sender: {
+  title: {
+    fontSize: 17,
+    fontWeight: '800',
     color: colors.textPrimary,
-    fontWeight: '700',
   },
-  time: {
-    color: colors.textMuted,
-    fontSize: 11,
-  },
-  button: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.navy,
-    borderRadius: radii.pill,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: colors.white,
-    ...typography.bodyBold,
+  subtitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    marginTop: 4,
+    lineHeight: 18,
   },
 });

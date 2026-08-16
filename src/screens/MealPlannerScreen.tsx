@@ -1,13 +1,112 @@
-import React,{useCallback,useMemo,useState} from 'react';
-import {Alert,ScrollView,StatusBar,StyleSheet,Text,TouchableOpacity,View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Ionicons} from '@expo/vector-icons';
-import {useFocusEffect,useNavigation} from '@react-navigation/native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import WeekDaySelector from '../components/WeekDaySelector';import MealRow from '../components/MealRow';
-import {mealsService,type MealEntry} from '../services/api/meals.service';import {colors,radii,spacing,typography} from '../theme';import type {RootStackParamList} from '../navigation/types';
-const dateKey=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-export default function MealPlannerScreen(){const navigation=useNavigation<NativeStackNavigationProp<RootStackParamList>>();const days=useMemo(()=>{const today=new Date();const monday=new Date(today);monday.setDate(today.getDate()-((today.getDay()+6)%7));return Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return{key:dateKey(d),label:d.toLocaleDateString('en',{weekday:'short'}),date:d.getDate()};});},[]);const [selectedDay,setSelectedDay]=useState(dateKey(new Date()));const [meals,setMeals]=useState<MealEntry[]>([]);const [loading,setLoading]=useState(false);
-const load=useCallback(async()=>{try{setLoading(true);setMeals(await mealsService.getDay(selectedDay));}catch(e){Alert.alert('Unable to load meals',(e as Error).message);}finally{setLoading(false);}},[selectedDay]);useFocusEffect(useCallback(()=>{load();},[load]));const remove=(id:string)=>Alert.alert('Delete meal?','This cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:async()=>{await mealsService.remove(id);load();}}]);const total=meals.reduce((n,m)=>n+Number(m.meta.kcal||m.value),0);
-return <SafeAreaView style={s.safeArea} edges={['top']}><StatusBar barStyle="dark-content" backgroundColor={colors.background}/><View style={s.header}><TouchableOpacity onPress={()=>navigation.goBack()}><Ionicons name="chevron-back" size={22}/></TouchableOpacity><Text style={s.pageTitle}>Meal Planner</Text><View style={{width:22}}/></View><View style={s.weekWrap}><WeekDaySelector days={days} selectedKey={selectedDay} onSelect={setSelectedDay}/></View><ScrollView contentContainerStyle={s.content}><View style={s.summary}><Text style={s.dateLabel}>{new Date(`${selectedDay}T12:00:00`).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</Text><Text style={s.total}>{total} kcal</Text></View><View style={{gap:spacing.md}}>{meals.map(m=><MealRow key={m.id} mealType={m.meta.mealType||'Meal'} title={m.meta.name||'Meal'} kcal={Number(m.meta.kcal||m.value)} photo={m.meta.photo} onPress={()=>navigation.navigate('MealEditor',{date:selectedDay,meal:{id:m.id,name:m.meta.name||'',mealType:m.meta.mealType||'Meal',kcal:Number(m.meta.kcal||m.value),protein:Number(m.meta.protein)||0,carbs:Number(m.meta.carbs)||0,fats:Number(m.meta.fats)||0}})} onDelete={()=>remove(m.id)}/>)}</View>{!loading&&!meals.length&&<Text style={s.empty}>No meals planned for this day.</Text>}<TouchableOpacity style={s.addButton} onPress={()=>navigation.navigate('MealEditor',{date:selectedDay})}><Ionicons name="add" size={18} color={colors.primary}/><Text style={s.addButtonText}>Add Meal</Text></TouchableOpacity></ScrollView></SafeAreaView>}
-const s=StyleSheet.create({safeArea:{flex:1,backgroundColor:colors.background},header:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:spacing.lg,paddingTop:spacing.sm},pageTitle:{...typography.h2,color:colors.textPrimary},weekWrap:{paddingHorizontal:spacing.lg,marginTop:spacing.lg},content:{padding:spacing.lg,paddingBottom:spacing.xxl},summary:{flexDirection:'row',justifyContent:'space-between',marginBottom:spacing.md},dateLabel:{fontSize:13,fontWeight:'700',color:colors.textSecondary},total:{fontSize:13,fontWeight:'800',color:colors.primary},empty:{textAlign:'center',color:colors.textMuted,padding:spacing.xl},addButton:{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:6,borderWidth:1.5,borderColor:colors.border,borderRadius:radii.pill,paddingVertical:spacing.md,marginTop:spacing.lg},addButtonText:{color:colors.primary,fontWeight:'700',fontSize:13.5}});
+import React, { useState } from 'react';
+import { ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import MealPlanWizard from './mealplan/MealPlanWizard';
+import MealPlanDashboard from './mealplan/MealPlanDashboard';
+import MealPlannerEmptyState from './mealplan/EmptyState';
+import { useMealPlan } from '../hooks/useMealPlan';
+import { colors, spacing, typography } from '../theme';
+import type { RootStackParamList } from '../navigation/types';
+
+export default function MealPlannerScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {
+    plan,
+    loading,
+    generate,
+    updatePreferences,
+    regenerateDay,
+    regenerateMeal,
+    updateMeal,
+    toggleMealComplete,
+    removeMeal,
+    deletePlan,
+    groceryList,
+  } = useMealPlan();
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  if (wizardOpen) {
+    return (
+      <MealPlanWizard
+        existingPlan={plan}
+        onClose={() => setWizardOpen(false)}
+        onSubmit={async (prefs) => {
+          if (plan) await updatePreferences(prefs);
+          else await generate(prefs);
+          setWizardOpen(false);
+        }}
+      />
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>Meal Planner</Text>
+          <Text style={styles.subtitle}>AI plans + grocery lists</Text>
+        </View>
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : plan ? (
+        <MealPlanDashboard
+          plan={plan}
+          regenerateDay={regenerateDay}
+          regenerateMeal={regenerateMeal}
+          updateMeal={updateMeal}
+          toggleMealComplete={toggleMealComplete}
+          removeMeal={removeMeal}
+          updatePreferences={updatePreferences}
+          deletePlan={deletePlan}
+          groceryList={groceryList}
+          onEditPreferences={() => setWizardOpen(true)}
+        />
+      ) : (
+        <MealPlannerEmptyState onCreate={() => setWizardOpen(true)} />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.navy,
+  },
+  subtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

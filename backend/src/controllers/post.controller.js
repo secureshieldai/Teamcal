@@ -7,12 +7,19 @@ async function enrichPosts(posts,userId){const ids=(posts||[]).map(x=>x.id);if(!
 /** POST /api/posts */
 async function createPost(req, res, next) {
   try {
+    const images = Array.isArray(req.body.images)
+      ? req.body.images.filter((url) => typeof url === "string" && url.trim()).slice(0, 10)
+      : (req.body.image ? [req.body.image] : []);
+    if (Array.isArray(req.body.images) && req.body.images.length > 10) {
+      return res.status(400).json({ success: false, message: "A post can contain at most 10 images" });
+    }
     const { data: post, error } = await supabase
       .from("posts")
       .insert({
         user_id: req.user.id,
         text: req.body.text || "",
-        image: req.body.image || null,
+        image: images[0] || null,
+        image_urls: images,
         community: req.body.community || null,
         community_cover: req.body.communityCover || null,
       })

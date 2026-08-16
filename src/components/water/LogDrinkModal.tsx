@@ -25,6 +25,9 @@ export default function LogDrinkModal({ typeId, onClose, onSubmit }: Props) {
     if (ml > 0) onSubmit(typeId, ml);
   };
 
+  const previewMl = Number(customMl) > 0 ? Number(customMl) : type.referenceMl;
+  const previewHydration = Math.round(previewMl * type.hydrationFactor);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -33,16 +36,27 @@ export default function LogDrinkModal({ typeId, onClose, onSubmit }: Props) {
             <View style={[styles.iconCircle, { backgroundColor: type.background }]}>
               <Ionicons name={type.icon} size={22} color={type.color} />
             </View>
-            <Text style={styles.title}>Log {type.label}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>Log {type.label}</Text>
+              <Text style={styles.description}>{type.description}</Text>
+            </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={22} color={colors.textSecondary} />
             </TouchableOpacity>
+          </View>
+
+          <View style={styles.mathBox}>
+            <Text style={styles.mathText}>
+              Hydration math: {previewMl} ml {type.label} contributes approximately{' '}
+              <Text style={styles.mathHighlight}>{previewHydration} ml</Text> hydration.
+            </Text>
           </View>
 
           <View style={styles.presetsRow}>
             {DRINK_PRESETS_ML.map((ml) => (
               <TouchableOpacity key={ml} style={styles.presetChip} onPress={() => submit(ml)}>
                 <Text style={styles.presetText}>{ml} ml</Text>
+                <Text style={styles.presetHydration}>→ {Math.round(ml * type.hydrationFactor)}ml</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -98,10 +112,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    flex: 1,
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
+  },
+  description: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  mathBox: {
+    backgroundColor: '#FDECE4',
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  mathText: {
+    fontSize: 12.5,
+    color: colors.textPrimary,
+    lineHeight: 18,
+  },
+  mathHighlight: {
+    fontWeight: '800',
+    color: colors.primary,
   },
   presetsRow: {
     flexDirection: 'row',
@@ -112,15 +145,22 @@ const styles = StyleSheet.create({
   presetChip: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.pill,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.background,
+    alignItems: 'center',
   },
   presetText: {
     fontSize: 12.5,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  presetHydration: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.primary,
+    marginTop: 2,
   },
   customLabel: {
     fontSize: 12,

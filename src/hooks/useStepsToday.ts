@@ -5,12 +5,14 @@ import { userService } from '../services/api/user.service';
 import { useAuth } from '../context/AuthContext';
 import { disableStepSync, enableStepSync, isStepSyncEnabled, syncSteps } from '../services/stepSync';
 import { stepsToActiveMinutes, stepsToKcal, stepsToKm } from '../data/stepsData';
+import type { TrackerEntry } from '../types/api';
 
 export function useStepsToday() {
   const { user, refreshUser } = useAuth();
   const goal = user?.goal_steps ?? 8000;
 
   const [sum, setSum] = useState(0);
+  const [entries, setEntries] = useState<TrackerEntry[]>([]);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [syncEnabled, setSyncEnabled] = useState(false);
@@ -27,6 +29,7 @@ export function useStepsToday() {
     try {
       const today = await trackerService.getToday('steps');
       setSum(today.sum);
+      setEntries(today.entries);
       const s = await trackerService.getStreak('steps', goal);
       setStreak(s);
     } catch {
@@ -94,6 +97,7 @@ export function useStepsToday() {
 
   return {
     sum,
+    entries,
     goal,
     percent,
     km,

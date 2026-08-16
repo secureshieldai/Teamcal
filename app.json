@@ -5,6 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/AppIcon.png",
+    "splash": {
+      "image": "./assets/splashscreen.jpeg",
+      "resizeMode": "cover",
+      "backgroundColor": "#FFFFFF"
+    },
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
@@ -50,6 +55,12 @@
       ],
       "expo-font"
       ,
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow TeamCal to record a voice note for your meal plan preferences."
+        }
+      ],
       [
         "expo-video",
         {

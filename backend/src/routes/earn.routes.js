@@ -4,7 +4,7 @@ const {
   getEarnEntries, getReferrals, inviteReferral,
   getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
   getSummary, getAssets, createAsset, updateAsset, deleteAsset,
-  getAsset, uploadPdfFile, uploadVideoFile,
+  getAsset, getPublicAsset, recordAssetView, getPublicMembership, uploadPdfFile, uploadVideoFile,
 } = require("../controllers/earn.controller");
 const { pdfUpload, videoUpload } = require("../middleware/upload");
 
@@ -15,6 +15,9 @@ router.use(protect);
 router.get("/entries", getEarnEntries);
 router.get("/summary", getSummary);
 router.get("/assets", getAssets);
+router.get("/memberships/:id/public", getPublicMembership);
+router.get("/assets/:id/public", getPublicAsset);
+router.post("/assets/:id/view", recordAssetView);
 router.get("/assets/:id", getAsset);
 router.post("/assets", createAsset);
 router.post("/pdfs/upload", pdfUpload.single("pdf"), uploadPdfFile);

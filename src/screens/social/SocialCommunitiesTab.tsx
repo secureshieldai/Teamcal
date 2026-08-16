@@ -4,15 +4,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchBar from '../../components/SearchBar';
 import SegmentedControl from '../../components/SegmentedControl';
 import SectionHeader from '../../components/SectionHeader';
-import Avatar from '../../components/Avatar';
-import { colors, radii, shadow, spacing } from '../../theme';
+import Avatar from '../../components/Avatar';import { colors, radii, shadow, spacing } from '../../theme';
 import { communitiesSubTabs } from '../../data/communityData';
 import { useDiscoverGroups, useGroups } from '../../hooks/useCommunity';
 import { useChallenges } from '../../hooks/useChallenges';
 import { challengesService } from '../../services/api/challenges.service';
 import type { RootStackParamList } from '../../navigation/types';
 import {groupsService} from '../../services/api/groups.service';
-import CreateGroupModal from '../../components/social/CreateGroupModal';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -21,10 +19,16 @@ type Props = {
 export default function SocialCommunitiesTab({ navigation }: Props) {
   const [subTab, setSubTab] = useState(communitiesSubTabs[0]);
   const [query, setQuery] = useState('');
-  const [createOpen,setCreateOpen]=useState(false);
   const { groups: myGroups,refetch:refetchMine } = useGroups();
   const { groups: discoverGroups, loading: discoverLoading, error: discoverError,refetch:refetchDiscover } = useDiscoverGroups();
   const { challenges, loading: challengesLoading } = useChallenges('discover');
+  const changeSubTab = (nextTab: string) => {
+    if (nextTab === 'Challenges') {
+      navigation.navigate('Challenges');
+      return;
+    }
+    setSubTab(nextTab);
+  };
 
   const filteredDiscover = useMemo(
     () => discoverGroups.filter((g) => g.name.toLowerCase().includes(query.trim().toLowerCase())),
@@ -40,7 +44,7 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
       ) : null}
 
       <View style={styles.subTabsWrap}>
-        <SegmentedControl options={communitiesSubTabs} value={subTab} onChange={setSubTab} variant="pill" />
+        <SegmentedControl options={communitiesSubTabs} value={subTab} onChange={changeSubTab} variant="pill" />
       </View>
 
       {subTab === 'Challenges' ? (
@@ -114,7 +118,7 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
               <TouchableOpacity
                 style={styles.createRow}
                 activeOpacity={0.85}
-                onPress={() => setCreateOpen(true)}
+                onPress={() => navigation.navigate('CreateCommunity')}
               >
                 <View style={styles.createIcon}>
                   <Text style={styles.createIconText}>+</Text>
@@ -141,9 +145,7 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
           )}
         />
       )}
-      <CreateGroupModal visible={createOpen} onClose={()=>setCreateOpen(false)} onCreated={()=>Promise.all([refetchMine(),refetchDiscover()]).then(()=>{})}/>
-    </View>
-  );
+    </View>  );
 }
 
 const styles = StyleSheet.create({

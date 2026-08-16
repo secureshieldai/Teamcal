@@ -13,7 +13,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, referralCode?: string) => Promise<string>;
+  register: (email: string, password: string, name: string, acceptedTerms: boolean, referralCode?: string) => Promise<string>;
   verifyEmail: (verificationToken: string, code: string) => Promise<void>;
   socialLogin: (provider: SocialProvider) => Promise<void>;
   logout: () => Promise<void>;
@@ -59,8 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (email: string, password: string, name: string, referralCode?: string) => {
-      const { verificationToken } = await authService.register(email, password, name, referralCode);
+    async (email: string, password: string, name: string, acceptedTerms: boolean, referralCode?: string) => {
+      const { verificationToken } = await authService.register(email, password, name, acceptedTerms, referralCode);
       return verificationToken;
     },
     []

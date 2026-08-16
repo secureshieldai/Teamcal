@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { colors, radii, spacing, typography } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { disableStepSync, enableStepSync, isStepSyncEnabled, syncSteps } from '../services/stepSync';
+import { authService } from '../services/api/auth.service';
 
 const accountItems = [
   { id: 'edit-profile', icon: 'person-outline' as const, label: 'Edit Profile' },
@@ -16,6 +17,9 @@ const accountItems = [
   { id: 'notifications', icon: 'notifications-outline' as const, label: 'Notifications' },
   { id: 'privacy', icon: 'shield-checkmark-outline' as const, label: 'Privacy' },
   { id: 'help', icon: 'help-circle-outline' as const, label: 'Help & Support' },
+  { id: 'terms', icon: 'document-text-outline' as const, label: 'Terms of Use' },
+  { id: 'privacy-policy', icon: 'reader-outline' as const, label: 'Privacy Policy' },
+  { id: 'community-guidelines', icon: 'people-outline' as const, label: 'Community Guidelines' },
 ];
 
 export default function SettingsScreen() {
@@ -31,6 +35,13 @@ export default function SettingsScreen() {
     notifications: 'NotificationSettings',
     privacy: 'Privacy',
     help: 'HelpSupport',
+  };
+
+  const openItem=(id:string)=>{
+    if(id==='terms')return navigation.navigate('LegalDocument',{document:'terms'});
+    if(id==='privacy-policy')return navigation.navigate('LegalDocument',{document:'privacy'});
+    if(id==='community-guidelines')return navigation.navigate('LegalDocument',{document:'community'});
+    navigation.navigate(routes[id] as never);
   };
 
   const handleLogOut = async () => {
@@ -75,7 +86,7 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <MenuListCard items={accountItems} onPressItem={(id) => navigation.navigate(routes[id] as never)} />
+        <MenuListCard items={accountItems} onPressItem={openItem} />
 
         <View style={styles.healthCard}>
           <View style={styles.healthHeader}>
@@ -101,6 +112,9 @@ export default function SettingsScreen() {
         >
           <Ionicons name="log-out-outline" size={18} color={colors.macroProtein} />
           <Text style={styles.logoutText}>{loggingOut ? 'Logging Out…' : 'Log Out'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.deleteButton} onPress={()=>Alert.alert('Delete account?','This permanently deletes your TeamCal account and associated data. This action cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Continue',style:'destructive',onPress:()=>Alert.alert('Final confirmation','Permanently delete your account now?',[{text:'Cancel',style:'cancel'},{text:'Delete Account',style:'destructive',onPress:async()=>{try{await authService.deleteAccount();await logout();navigation.reset({index:0,routes:[{name:'Login'}]});}catch(error){Alert.alert('Unable to delete account',(error as Error).message);}}}])}])}>
+          <Ionicons name="trash-outline" size={18} color={colors.macroProtein}/><Text style={styles.deleteText}>Delete Account</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -153,4 +167,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14.5,
   },
+  deleteButton:{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:spacing.sm,paddingVertical:spacing.md,marginTop:spacing.md},
+  deleteText:{color:colors.macroProtein,fontWeight:'700',fontSize:14},
 });

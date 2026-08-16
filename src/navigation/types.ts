@@ -1,3 +1,7 @@
+import type { Exercise } from '../types/api';
+import type { Recipe } from '../services/api/recipe.service';
+import type { LegalDocumentKey } from '../data/legalDocuments';
+
 export type RootStackParamList = {
   Onboarding: undefined;
   Login: undefined;
@@ -23,12 +27,14 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   Privacy: undefined;
   HelpSupport: undefined;
+  LegalDocument: { document: LegalDocumentKey };
   QuickLogEntry: { kind: string };
   GroceryList: undefined;
   GlobalSearch: { query?: string } | undefined;
   MealEditor: { date: string; meal?: { id: string; name: string; mealType: string; kcal: number; protein: number; carbs: number; fats: number } };
-  WorkoutSession: { workout: { id?: string; title: string; duration?: number; exercises: { id: string; name: string; detail: string }[] } };
+  WorkoutSession: { workout: { id?: string; title: string; duration?: number; exercises: Exercise[] } };
   Comments: { postId: string };
+  CreateCommunity: undefined;
   CreateChallenge: { challengeId?: string } | undefined;
   ProfileCollection: { kind: 'measurements' | 'photos' | 'achievements' };
   MarketplaceDetail: { productId: string };
@@ -37,6 +43,8 @@ export type RootStackParamList = {
   BlogDetail: { blogId: string };
   Water: undefined;
   Steps: undefined;
+  Weight: undefined;
+  Sleep: undefined;
   Fasting: undefined;
   Profile: undefined;
   BlogDashboard: { blogId: string };
@@ -58,10 +66,28 @@ export type RootStackParamList = {
   Goals: undefined;
   ChallengeDetail: { challengeId: string };
   ChallengeInvite: { challengeId: string };
-  PersonalTool: { kind: 'recipe-library'|'my-recipes'|'period-tracker' };
-  ArticleEditor: { blogId:string; articleId?:string };
+  MyRecipes: undefined;
+  RecipeLibrary: undefined;
+  CookMode: { recipe: Recipe };
+  PeriodTracker: undefined;
+  SupplementTracker: undefined;
+  MoodJournal: undefined;
+  LiveJournalCall: undefined;
+  ArticleEditor: { blogId:string; articleId?:string; pickedCategory?:string; pickedTags?:string[]; insertText?:string };
+  SelectCategory: { blogId:string; articleId?:string; current?:string };
+  AddTags: { blogId:string; articleId?:string; current?:string[] };
+  AIHelper: { blogId:string; articleId?:string; existingContent?:string };
   AudienceAccounts: undefined;
   BlogSettings: {blogId:string};
+  UploadVideo: undefined;
+  UploadMultiple: undefined;
+  CreateSeries: undefined;
+  CreateCourse: undefined;
+  RecordVideoFlow: { fileUri?: string } | undefined;
+  ImportFromCloud: undefined;
+  UploadPdf: undefined;
+  CreatePdf: undefined;
+  AiGeneratePdf: undefined;
 };
 
 export type NoParamRoute = {

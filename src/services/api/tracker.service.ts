@@ -2,7 +2,7 @@ import { apiClient } from './client';
 import type { TrackerEntry } from '../../types/api';
 
 // Backend tracker names
-export type TrackerName = 'calories' | 'weight' | 'water' | 'steps' | 'workouts' | 'sleep' | 'meals' | 'walks';
+export type TrackerName = 'calories' | 'weight' | 'water' | 'steps' | 'workouts' | 'sleep' | 'meals' | 'walks' | 'progress-photos' | 'mood';
 
 export interface TrackerTodayResponse {
   success: boolean;

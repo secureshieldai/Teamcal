@@ -5,9 +5,12 @@ import Avatar from './Avatar';
 import { colors, radii, shadow, spacing } from '../theme';
 import { postsService } from '../services/api/posts.service';
 import { personalService } from '../services/api/personal.service';
+import { socialService } from '../services/api/social.service';
+import { useAuth } from '../context/AuthContext';
 
 export type Post = {
   id: string;
+  authorId?: string;
   authorName: string;
   authorAvatar: string;
   time: string;
@@ -23,9 +26,11 @@ export default function PostCard({ post, onComment, onDelete }: { post: Post; on
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
+  const {user}=useAuth();
   useEffect(() => { personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {}); }, [post.id]);
   const toggleLike = async () => { const previous = { likes, liked }; setLiked(!liked); setLikes(Math.max(0, likes + (liked ? -1 : 1))); try { const result = await postsService.toggleLike(post.id); setLikes(result.likes); setLiked(result.liked); } catch (e) { setLikes(previous.likes); setLiked(previous.liked); Alert.alert('Unable to like post', (e as Error).message); } };
   const toggleSaved = async () => { const previous=saved;setSaved(!saved);try{setSaved(await personalService.toggle('saved-post',post.id,{caption:post.caption,authorName:post.authorName,photos:post.photos}));}catch(error){setSaved(previous);Alert.alert('Unable to save post',(error as Error).message);} };
+  const openMenu=()=>{if(onDelete)return Alert.alert('Post options',undefined,[{text:'Delete Post',style:'destructive',onPress:()=>Alert.alert('Delete post','This cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:()=>onDelete(post.id)}])},{text:'Cancel',style:'cancel'}]);const actions:any[]=[{text:'Report Post',onPress:async()=>{try{await socialService.report('post',post.id,'Community guidelines violation');Alert.alert('Report received','Thank you. TeamCal will review this post.');}catch(error){Alert.alert('Unable to report',(error as Error).message);}}}];if(post.authorId&&post.authorId!==user?.id)actions.push({text:'Block User',style:'destructive',onPress:()=>Alert.alert(`Block ${post.authorName}?`,'You will no longer see this user’s posts.',[{text:'Cancel',style:'cancel'},{text:'Block',style:'destructive',onPress:async()=>{try{await socialService.blockUser(post.authorId!);Alert.alert('User blocked');}catch(error){Alert.alert('Unable to block',(error as Error).message);}}}])});actions.push({text:'Cancel',style:'cancel'});Alert.alert('Post options',undefined,actions);};
   return (
     <View style={[styles.card, shadow.card]}>
       <View style={styles.header}>
@@ -34,7 +39,7 @@ export default function PostCard({ post, onComment, onDelete }: { post: Post; on
           <Text style={styles.name}>{post.authorName}</Text>
           <Text style={styles.time}>{post.time}</Text>
         </View>
-        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={()=>onDelete&&Alert.alert('Delete post','This cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:()=>onDelete(post.id)}])}>
+        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={openMenu}>
           <Ionicons name="ellipsis-horizontal" size={18} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
@@ -46,7 +51,7 @@ export default function PostCard({ post, onComment, onDelete }: { post: Post; on
           <Image
             key={uri + i}
             source={{ uri }}
-            style={[styles.photo, post.photos.length > 1 && styles.photoHalf]}
+            style={[styles.photo, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}
           />
         ))}
         {post.badge ? (
@@ -105,18 +110,22 @@ const styles = StyleSheet.create({
   },
   photoRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 4,
     marginTop: spacing.sm,
     borderRadius: radii.lg,
     overflow: 'hidden',
   },
   photo: {
-    flex: 1,
-    height: 150,
     backgroundColor: colors.border,
   },
-  photoHalf: {
-    height: 110,
+  photoSingle: {
+    width: '100%',
+    aspectRatio: 16 / 10,
+  },
+  photoGrid: {
+    width: '49%',
+    aspectRatio: 1,
   },
   badge: {
     position: 'absolute',

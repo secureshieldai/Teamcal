@@ -14,10 +14,10 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Mode = 'food' | 'barcode' | 'cook';
 
-const MODE_COPY: Record<Mode, { title: string; subtitle: string; hint: string; badge: boolean }> = {
-  food: { title: 'Food Scanner', subtitle: 'Point at your food to scan and\nget instant nutrition info', hint: 'Align food within the frame', badge: true },
-  barcode: { title: 'Barcode Scanner', subtitle: 'Scan the barcode on packaged\nfoods and labels', hint: 'Align barcode within the frame', badge: false },
-  cook: { title: 'Scan & Cook', subtitle: 'Scan your ingredients to get\ninstant recipe ideas', hint: 'Align ingredients within the frame', badge: true },
+const MODE_COPY: Record<Mode, { title: string; subtitle: string; hint: string; badge: boolean; help: string }> = {
+  food: { title: 'Food Scanner', subtitle: 'Point at your food to scan and\nget instant nutrition info', hint: 'Align food within the frame', badge: true, help: 'Point your camera at your food and tap the shutter button. TeamCal’s AI will identify what you’re eating and estimate its nutrition instantly.' },
+  barcode: { title: 'Barcode Scanner', subtitle: 'Scan the barcode on packaged\nfoods and labels', hint: 'Align barcode within the frame', badge: false, help: 'Point your camera at a product’s barcode and tap the shutter button. TeamCal’s AI will identify the product and instantly display its nutrition facts and ingredient information.' },
+  cook: { title: 'Scan & Cook', subtitle: 'Scan your ingredients to get\ninstant recipe ideas', hint: 'Align ingredients within the frame', badge: true, help: 'Point your camera at your ingredients and tap the shutter button. TeamCal’s AI will identify them and instantly suggest recipes you can make with what you have.' },
 };
 
 const MODE_OPTIONS: { key: Mode; label: string; description: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -67,7 +67,7 @@ export default function ScanFoodScreen() {
     catch (error) { Alert.alert('Could not log meal', (error as Error).message); }
     finally { setBusy(false); }
   };
-  const showHelp = () => Alert.alert('How it works', 'Point your camera at your food and tap the shutter button. TeamCal’s AI will identify what you’re eating and estimate its nutrition instantly.');
+  const showHelp = () => Alert.alert('How it works', MODE_COPY[mode].help);
 
   const copy = MODE_COPY[mode];
 

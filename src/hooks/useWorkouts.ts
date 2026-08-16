@@ -1,57 +1,26 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useApiQuery } from './useApiQuery';
-import { workoutsService } from '../services/api/workouts.service';
+import { workoutsService, type WeeklyHistoryEntry } from '../services/api/workouts.service';
+import { trackerService } from '../services/api/tracker.service';
 import type { Workout } from '../types/api';
 
-type DisplayWorkout = { title:string; subtitle:string; exercises:{id:string;name:string;detail:string}[] };
+const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function useTodayWorkout() {
-  const { data: workout, loading, refetch } = useApiQuery(
-    () => workoutsService.getToday(),
-    null,
-    []
-  );
+export function useWorkoutsHome() {
+  const { data: workouts, loading, refetch } = useApiQuery(() => workoutsService.list(), [] as Workout[], []);
+  const { data: streak } = useApiQuery(() => trackerService.getStreak('workouts', 1), 0, []);
+  const { data: weekly } = useApiQuery(() => workoutsService.getWeeklyHistory(1), [] as WeeklyHistoryEntry[], []);
 
-  const displayWorkout = workout
-    ? {
-        title: workout.title,
-        subtitle: workout.subtitle || `Today • ${workout.duration} min • ${workout.difficulty}`,
-        exercises: workout.exercises.map((e) => ({ id: e.id, name: e.name, detail: e.detail })),
-      }
-    : null;
+  const todayAbbr = DAY_ABBR[new Date().getDay()];
+  const todayWorkout = useMemo(() => workouts.find((w) => w.scheduled_days?.includes(todayAbbr)) ?? null, [workouts, todayAbbr]);
 
-  return { workout: displayWorkout, loading, refetch };
-}
-
-export function useWorkouts() {
-  const { data: workouts, loading, refetch } = useApiQuery(
-    () => workoutsService.list(),
-    [] as Workout[],
-    []
-  );
-  return { workouts, loading, refetch };
-}
-
-export function useLogWorkout() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const logWorkout = async (workout: DisplayWorkout) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await workoutsService.log({
-        title: workout.title,
-        startedAt: Date.now(),
-        endedAt: Date.now(),
-        exercises: workout.exercises.map((e) => ({ id: e.id, name: e.name, detail: e.detail })),
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to log workout');
-    } finally {
-      setLoading(false);
-    }
+  return {
+    todayWorkout,
+    todayAbbr,
+    workouts,
+    streak,
+    thisWeek: weekly[0] ?? null,
+    loading,
+    refetch,
   };
-
-  return { logWorkout, loading, error };
 }

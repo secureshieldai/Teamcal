@@ -1,16 +1,10 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing, typography } from '../../../theme';
 import { audienceEngineTones } from '../../../data/earnData';
 
 const KEY_POINTS = ['Benefits of the content', 'Key lessons', 'Common mistakes', 'Success stories', 'Before & after results'];
-const QUICK_INPUTS = [
-  { key: 'mic', label: 'Mic', icon: 'mic-outline' },
-  { key: 'images', label: 'Upload Images', icon: 'image-outline' },
-  { key: 'docs', label: 'Upload Docs', icon: 'document-outline' },
-  { key: 'ai', label: 'AI Assist', icon: 'sparkles-outline' },
-] as const;
 
 type Props = {
   instructions: string;
@@ -43,15 +37,6 @@ export default function InstructionsStep({ instructions, setInstructions, keyPoi
         placeholderTextColor={colors.textMuted}
       />
       <Text style={styles.charCount}>{instructions.length}/2000 characters</Text>
-
-      <View style={styles.quickInputRow}>
-        {QUICK_INPUTS.map((input) => (
-          <TouchableOpacity key={input.key} style={styles.quickInputBtn} onPress={() => Alert.alert('Coming soon', `${input.label} isn't available yet.`)}>
-            <Ionicons name={input.icon as keyof typeof Ionicons.glyphMap} size={14} color={colors.textPrimary} />
-            <Text style={styles.quickInputText}>{input.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       <Text style={styles.fieldLabel}>2. Key Points to Focus On (Optional)</Text>
       <View style={styles.chipWrap}>

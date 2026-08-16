@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Alert, Keyboard, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +15,14 @@ const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} i
 export default function ExploreScreen() {
   const [query, setQuery] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const filteredTools = useMemo(() => {
+    const searchTerms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    if (!searchTerms.length) return tools;
+    return tools.filter((tool) => {
+      const searchableText = `${tool.label} ${tool.description} ${tool.id.replaceAll('-', ' ')}`.toLocaleLowerCase();
+      return searchTerms.every((term) => searchableText.includes(term));
+    });
+  }, [query]);
 
   const handlePressTool = (id: string) => {
     switch (id) {
@@ -28,14 +36,14 @@ export default function ExploreScreen() {
       case 'step-tracker': navigation.navigate('Steps'); return;
       case 'water-tracker': navigation.navigate('Water'); return;
       case 'fasting-tracker': navigation.navigate('Fasting'); return;
-      case 'weight-tracker': navigation.navigate('QuickLogEntry', { kind: 'weight' }); return;
-      case 'sleep-tracker': navigation.navigate('QuickLogEntry', { kind: 'sleep' }); return;
-      case 'supplement-tracker': navigation.navigate('QuickLogEntry', { kind: 'supplement' }); return;
-      case 'mood-journal': navigation.navigate('QuickLogEntry', { kind: 'mood' }); return;
+      case 'weight-tracker': navigation.navigate('Weight'); return;
+      case 'sleep-tracker': navigation.navigate('Sleep'); return;
+      case 'supplement-tracker': navigation.navigate('SupplementTracker'); return;
+      case 'mood-journal': navigation.navigate('MoodJournal'); return;
       case 'my-goals': navigation.navigate('Goals'); return;
-      case 'recipe-library': navigation.navigate('PersonalTool',{kind:'recipe-library'}); return;
-      case 'my-recipes': navigation.navigate('PersonalTool',{kind:'my-recipes'}); return;
-      case 'period-tracker': navigation.navigate('PersonalTool',{kind:'period-tracker'}); return;
+      case 'recipe-library': navigation.navigate('RecipeLibrary'); return;
+      case 'my-recipes': navigation.navigate('MyRecipes'); return;
+      case 'period-tracker': navigation.navigate('PeriodTracker'); return;
     }
   };
 
@@ -55,13 +63,16 @@ export default function ExploreScreen() {
             placeholder="Search tools, meals, recipes, features..."
             value={query}
             onChangeText={setQuery}
-            onSubmit={() => navigation.navigate('GlobalSearch', { query })}
+            onSubmit={Keyboard.dismiss}
           />
         </View>
 
         <View style={styles.section}>
           <SectionHeader title="Tools" />
-          <ToolsGrid items={tools} onPressItem={handlePressTool} />
+          <ToolsGrid items={filteredTools} onPressItem={handlePressTool} />
+          {query.trim() && !filteredTools.length ? (
+            <Text style={styles.empty}>No tools found for “{query.trim()}”.</Text>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -91,6 +102,11 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: spacing.lg,
+    marginTop: spacing.xl,
+  },
+  empty: {
+    color: colors.textMuted,
+    textAlign: 'center',
     marginTop: spacing.xl,
   },
 });

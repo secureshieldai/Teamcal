@@ -148,6 +148,98 @@ async function lookupBarcode(req, res, next) {
 
 async function generateAudience(req,res,next){try{const b=req.body||{};const count=Math.min(Math.max(Number(b.count)||6,1),12);let captions=[];if(AI_ENABLED){const prompt=`Return ONLY a JSON array of ${count} concise social media captions. Topic: ${b.topic||'healthy living'}. Instructions: ${b.instructions||'educational and actionable'}. Tone: ${b.tone||'educational'}.`;const result=await model.generateContent(prompt);try{captions=JSON.parse(result.response.text().replace(/```json|```/g,'').trim())}catch{captions=[]}}if(!Array.isArray(captions)||!captions.length)captions=Array.from({length:count},(_,i)=>`${b.topic||'Healthy living'} tip ${i+1}: ${b.instructions||'Take one practical step today and track your progress.'}`);const posts=captions.slice(0,count).map((caption,i)=>({id:`generated-${Date.now()}-${i}`,caption:String(caption),format:(b.formats||['text'])[i%(b.formats||['text']).length],thumbnail:`https://picsum.photos/seed/audience-${Date.now()}-${i}/300/200`,status:'Needs Review'}));res.json({success:true,posts});}catch(e){next(e);}}
 
+/**
+ * POST /api/coach/article-helper
+ * Body: { action: 'write'|'outline'|'intro'|'titles'|'improve'|'chat', topic, instructions?, existingContent? }
+ * Same always-succeeds shape as generateAudience: tries Gemini when AI_ENABLED,
+ * otherwise falls back to a deterministic template — never errors on the client
+ * just because the API key isn't configured.
+ */
+async function generateArticleContent(req, res, next) {
+  try {
+    const b = req.body || {};
+    const action = ["write", "outline", "intro", "titles", "improve", "chat"].includes(b.action) ? b.action : "write";
+    const topic = String(b.topic || "").trim() || "your topic";
+    const instructions = String(b.instructions || "").trim();
+    const existingContent = String(b.existingContent || "").trim();
+
+    const prompts = {
+      write: `Write a well-structured blog post body (4-6 short paragraphs) about: ${topic}. ${instructions ? `Extra instructions: ${instructions}.` : ""} Return ONLY the article body text as plain paragraphs separated by blank lines — no markdown headers, no title line.`,
+      outline: `Create a bullet-point outline (5-8 points) for a blog post about: ${topic}. Return ONLY the outline, one bullet per line, each starting with "- ".`,
+      intro: `Write a single engaging introduction paragraph (2-4 sentences) that hooks the reader for a blog post about: ${topic}. Return ONLY that paragraph.`,
+      titles: `Suggest 5 concise, engaging blog post titles about: ${topic}. Return ONLY a JSON array of exactly 5 strings, no markdown.`,
+      improve: `Improve and tighten the following article content — same meaning, similar length, clearer and more engaging. Return ONLY the improved text.\n\n${existingContent || topic}`,
+      chat: `You are a helpful, concise blog-writing assistant inside an article editor. Respond in 2-4 sentences to: ${topic}`,
+    };
+
+    let text = "";
+    if (AI_ENABLED) {
+      try {
+        const result = await model.generateContent(prompts[action]);
+        text = result.response.text().trim();
+      } catch {
+        text = "";
+      }
+    }
+    if (!text) text = fallbackArticleContent(action, topic, instructions, existingContent);
+
+    if (action === "titles") {
+      let titles;
+      try {
+        titles = JSON.parse(text.replace(/```json|```/g, "").trim());
+      } catch {
+        titles = null;
+      }
+      if (!Array.isArray(titles) || !titles.length) titles = fallbackTitles(topic);
+      return res.json({ success: true, action, titles: titles.slice(0, 5) });
+    }
+
+    res.json({ success: true, action, text });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function fallbackTitles(topic) {
+  return [
+    `The Complete Guide to ${topic}`,
+    `5 Things Nobody Tells You About ${topic}`,
+    `How I Approach ${topic} (And What I'd Do Differently)`,
+    `${topic}: A Beginner's Roadmap`,
+    `Why ${topic} Matters More Than You Think`,
+  ];
+}
+
+function fallbackArticleContent(action, topic, instructions, existingContent) {
+  switch (action) {
+    case "outline":
+      return [
+        `- Why ${topic} matters`,
+        `- Common mistakes people make with ${topic}`,
+        `- A simple framework to get started`,
+        `- A step-by-step approach`,
+        `- Tips to stay consistent`,
+        `- Key takeaways`,
+      ].join("\n");
+    case "intro":
+      return `${topic} is something a lot of people struggle to get right — and the good news is, it doesn't have to be complicated. In this article, we'll break down exactly what works and how to apply it starting today.`;
+    case "titles":
+      return JSON.stringify(fallbackTitles(topic));
+    case "improve":
+      return existingContent || topic;
+    case "chat":
+      return `Happy to help with "${topic}" — try one of the quick actions above, or tell me more about what you're going for.`;
+    case "write":
+    default:
+      return [
+        `Getting started with ${topic} can feel overwhelming, but breaking it down into small, consistent steps makes all the difference.${instructions ? ` ${instructions}` : ""}`,
+        `The most important thing to understand about ${topic} is that consistency beats intensity. Small daily actions compound into real results over time.`,
+        `Here's a simple way to think about it: focus on one change at a time, track your progress, and adjust based on what you learn.`,
+        `Whatever your starting point, the goal is progress, not perfection. Give yourself room to learn as you go.`,
+      ].join("\n\n");
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────
 
 function ruleBasedReply(input, ctx) {
@@ -185,4 +277,4 @@ function buildSuggestions(message) {
   return [];
 }
 
-module.exports = { chat, scanMeal, lookupBarcode, generateAudience, aiRateLimit };
+module.exports = { chat, scanMeal, lookupBarcode, generateAudience, generateArticleContent, aiRateLimit, genAI, model, AI_ENABLED };

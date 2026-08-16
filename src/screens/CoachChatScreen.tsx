@@ -79,7 +79,7 @@ export default function CoachChatScreen() {
       id: 'welcome',
       kind: 'text',
       fromMe: false,
-      text: "Hey! \u{1F44B} I'm your TeamCal Coach. Ask me anything about fasting, meals, sleep, or workouts.",
+      text: "Hey! \u{1F60A} Im your TeamCal Coach. Ask me anything about fasting, meals, sleep, workouts, and more!",
       time: formatTime(new Date()),
     },
   ]);
@@ -134,12 +134,6 @@ export default function CoachChatScreen() {
           <Text style={styles.headerName}>{coachProfile.name}</Text>
           <Text style={styles.headerStatus}>Online</Text>
         </View>
-        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="call-outline" size={20} color={colors.white} />
-        </TouchableOpacity>
-        <TouchableOpacity style={{ marginLeft: spacing.md }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="ellipsis-vertical" size={20} color={colors.white} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -190,7 +184,6 @@ export default function CoachChatScreen() {
           returnKeyType="send"
           editable={!sending}
         />
-        <Ionicons name="image-outline" size={22} color={colors.textSecondary} />
         <TouchableOpacity style={styles.micButton} onPress={handleSend} disabled={sending || !draft.trim()}>
           {sending ? (
             <ActivityIndicator size="small" color={colors.white} />
@@ -200,12 +193,6 @@ export default function CoachChatScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-          <Ionicons name="call-outline" size={16} color={colors.textPrimary} />
-          <Text style={styles.actionButtonText}>Voice Call</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }

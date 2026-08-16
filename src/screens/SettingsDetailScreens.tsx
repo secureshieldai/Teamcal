@@ -90,7 +90,7 @@ export function EditProfileScreen() {
 
 export function ChangePasswordScreen() {
   const [current, setCurrent] = useState(''); const [next, setNext] = useState(''); const [confirm, setConfirm] = useState(''); const [busy, setBusy] = useState(false);
-  const save = async () => { if (next.length < 6) return Alert.alert('Invalid password', 'Use at least 6 characters.'); if (next !== confirm) return Alert.alert('Passwords do not match'); try { setBusy(true); await authService.changePassword(current, next); setCurrent(''); setNext(''); setConfirm(''); Alert.alert('Updated', 'Your password was changed.'); } catch (e) { Alert.alert('Unable to change password', (e as Error).message); } finally { setBusy(false); } };
+  const save = async () => { if (next.length < 8) return Alert.alert('Invalid password', 'Use at least 8 characters.'); if (next !== confirm) return Alert.alert('Passwords do not match'); try { setBusy(true); await authService.changePassword(current, next); setCurrent(''); setNext(''); setConfirm(''); Alert.alert('Updated', 'Your password was changed.'); } catch (e) { Alert.alert('Unable to change password', (e as Error).message); } finally { setBusy(false); } };
   return <Page title="Change Password">{[['Current password', current, setCurrent], ['New password', next, setNext], ['Confirm new password', confirm, setConfirm]].map(([label, value, setter]) => <View key={label as string}><Text style={s.label}>{label as string}</Text><TextInput style={s.input} value={value as string} onChangeText={setter as (v: string) => void} secureTextEntry /></View>)}<Button label="Update Password" onPress={save} busy={busy} /></Page>;
 }
 
@@ -103,14 +103,17 @@ export function NotificationSettingsScreen() {
 }
 
 export function PrivacyScreen() {
-  const [dmEnabled, setDmEnabled] = useState(true); const [busy, setBusy] = useState(false);
-  const save = async () => { try { setBusy(true); await userService.updateProfile({ dm_enabled: dmEnabled }); Alert.alert('Saved', 'Privacy preferences updated.'); } catch (e) { Alert.alert('Unable to save', (e as Error).message); } finally { setBusy(false); } };
+  const { user, refreshUser } = useAuth();
+  const [dmEnabled, setDmEnabled] = useState(user?.dm_enabled ?? true); const [busy, setBusy] = useState(false);
+  useEffect(() => { if (user) setDmEnabled(user.dm_enabled ?? true); }, [user]);
+  const save = async () => { try { setBusy(true); await userService.updateProfile({ dm_enabled: dmEnabled }); await refreshUser(); Alert.alert('Saved', 'Privacy preferences updated.'); } catch (e) { Alert.alert('Unable to save', (e as Error).message); } finally { setBusy(false); } };
   return <Page title="Privacy"><View style={s.row}><View style={{ flex: 1 }}><Text style={s.rowText}>Direct messages</Text><Text style={s.muted}>Allow other members to message you</Text></View><Switch value={dmEnabled} onValueChange={setDmEnabled} trackColor={{ true: colors.primary }} /></View><Button label="Save Privacy Settings" onPress={save} busy={busy} /></Page>;
 }
 
 export function HelpSupportScreen() {
   return <Page title="Help & Support"><Text style={s.section}>How can we help?</Text><Text style={s.muted}>For account, sign-in, billing, or technical issues, contact the TeamCal support team.</Text>
-    <TouchableOpacity style={s.supportCard} onPress={() => Linking.openURL('mailto:support@teamcal.app?subject=TeamCal%20Support')}><Ionicons name="mail-outline" size={22} color={colors.primary} /><View><Text style={s.rowText}>Email support</Text><Text style={s.muted}>support@teamcal.app</Text></View></TouchableOpacity>
+    <TouchableOpacity style={s.supportCard} onPress={() => Linking.openURL('mailto:support@dibedevelopment.com?subject=TeamCal%20Support')}><Ionicons name="mail-outline" size={22} color={colors.primary} /><View><Text style={s.rowText}>Email support</Text><Text style={s.muted}>support@dibedevelopment.com</Text></View></TouchableOpacity>
+    <TouchableOpacity style={s.supportCard} onPress={() => Linking.openURL('https://dibedevelopment.com')}><Ionicons name="globe-outline" size={22} color={colors.primary} /><View><Text style={s.rowText}>Dibe Development</Text><Text style={s.muted}>dibedevelopment.com</Text></View></TouchableOpacity>
     <Text style={s.section}>Common questions</Text>{['How do I update my profile?', 'How do notifications work?', 'How is my health data protected?'].map(x => <View style={s.faq} key={x}><Text style={s.rowText}>{x}</Text><Ionicons name="chevron-forward" size={18} color={colors.textMuted} /></View>)}</Page>;
 }
 

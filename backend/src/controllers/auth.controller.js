@@ -62,7 +62,7 @@ async function register(req, res, next) {
 
     const { data: user, error } = await supabase
       .from("users")
-      .insert({ email: email.toLowerCase(), password_hash: passwordHash, name: name || "", referral_code: newReferralCode })
+      .insert({ email: email.toLowerCase(), password_hash: passwordHash, name: name || "", referral_code: newReferralCode, terms_accepted_at: new Date().toISOString(), terms_version: "2026-08-16" })
       .select()
       .single();
 
@@ -268,8 +268,10 @@ async function changePassword(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function deleteAccount(req,res,next){try{const {error}=await supabase.from("users").delete().eq("id",req.user.id);if(error)throw error;res.json({success:true,message:"Account deleted"});}catch(error){next(error);}}
+
 async function requestPasswordReset(req,res,next){try{const {data:user}=await supabase.from("users").select("id,email").eq("email",req.body.email.toLowerCase()).maybeSingle();if(!user)return res.status(404).json({success:false,message:"No account found for that email"});await issueVerificationCode(user,{purpose:"password-reset"});res.json({success:true,verificationToken:signPurposeToken(user.id,"password-reset-verification"),message:"Reset code sent"});}catch(e){next(e);}}
 async function verifyPasswordReset(req,res,next){try{const {id}=readPurposeToken(req.body.verificationToken,"password-reset-verification");await verifyCode(id,req.body.code);res.json({success:true,resetToken:signPurposeToken(id,"password-reset","10m")});}catch(e){next(e);}}
 async function resetPassword(req,res,next){try{const {id}=readPurposeToken(req.body.resetToken,"password-reset");const password_hash=await bcrypt.hash(req.body.newPassword,12);const {error}=await supabase.from("users").update({password_hash}).eq("id",id);if(error)throw error;res.json({success:true,message:"Password updated"});}catch(e){next(e);}}
 
-module.exports = { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword, requestPasswordReset, verifyPasswordReset, resetPassword };
+module.exports = { register, login, me, firebaseAuth, resendVerification, verifyEmail, changePassword, deleteAccount, requestPasswordReset, verifyPasswordReset, resetPassword };

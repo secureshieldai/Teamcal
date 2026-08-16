@@ -1,7 +1,7 @@
 export type DateRangeKey = '7d'|'30d'|'90d'|'6m'|'1y'|'lifetime'|'custom';
 export const dateRangeOptions:{key:DateRangeKey;label:string}[]=[
   {key:'7d',label:'Last 7 Days'},{key:'30d',label:'Last 30 Days'},{key:'90d',label:'Last 90 Days'},
-  {key:'6m',label:'Last 6 Months'},{key:'1y',label:'Last 1 Year'},{key:'lifetime',label:'Lifetime'},{key:'custom',label:'Custom Date Range'},
+  {key:'6m',label:'Last 6 Months'},{key:'1y',label:'Last 1 Year'},{key:'lifetime',label:'Lifetime'},
 ];
 export type EarningSource={key:string;label:string;value:number;color:string};
 export const earningsBySource:EarningSource[]=[
@@ -12,11 +12,11 @@ export const earningsBySource:EarningSource[]=[
 ];
 export const withdrawSettings={minimumWithdrawal:10,feeFlat:1};
 export const referralProgramDetails=[
-  {key:'commission',icon:'pricetag-outline',title:'Earn 20%',description:'Earn commission on eligible referral purchases and subscriptions.'},
-  {key:'cookie',icon:'time-outline',title:'30-Day Attribution',description:'Eligible purchases are attributed for 30 days.'},
-  {key:'limits',icon:'infinite-outline',title:'No Limits',description:'Invite as many people as you like.'},
-  {key:'tracking',icon:'shield-checkmark-outline',title:'Backend Tracking',description:'Referral status and rewards come from your account.'},
-];
+    {key:'commission',icon:'pricetag-outline',title:'Earn 10%',description:'Earn 10% commission on eligible subscription payments from customers you successfully refer.'},
+    {key:'duration',icon:'time-outline',title:'5 Years of Earnings',description:'A qualified referral can generate eligible commissions for up to 5 years.'},
+    {key:'limits',icon:'infinite-outline',title:'No Limits',description:'Invite as many people as you like.'},
+    {key:'tracking',icon:'shield-checkmark-outline',title:'Instant Tracking',description:'See qualified referrals and recorded commissions in your account.'},
+  ];
 export const earnQuickActions=[
   {key:'audience-engine',label:'Audience Engine',icon:'people-circle-outline'},{key:'create-blog',label:'Create Blog',icon:'create-outline'},
   {key:'upload-pdf',label:'Upload PDF',icon:'document-text-outline'},{key:'upload-video',label:'Upload Video',icon:'videocam-outline'},

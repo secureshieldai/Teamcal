@@ -33,11 +33,11 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
   const [stripePayout,setStripePayout]=useState<StripePayout|null>(null);
   const [withdrawAmount,setWithdrawAmount]=useState('');
   const [payoutBusy,setPayoutBusy]=useState(false);
-  const [summary,setSummary]=useState<EarnSummary>({balance:0,lifetimeEarnings:0,last30Days:0,availableBalance:0,pendingEarnings:0,totalWithdrawn:0,sourceTotals:{},counts:{assets:0,blogs:0,products:0,referrals:0}});
+  const [summary,setSummary]=useState<EarnSummary>({balance:0,lifetimeEarnings:0,periodEarnings:0,range:'30d',last30Days:0,availableBalance:0,pendingEarnings:0,totalWithdrawn:0,sourceTotals:{},counts:{assets:0,blogs:0,products:0,referrals:0}});
   const [entries,setEntries]=useState<EarnEntry[]>([]);
   const [loadError,setLoadError]=useState('');
   const refreshPayout=useCallback(()=>earnService.payoutStatus().then(x=>{setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message)),[]);
-  const refreshSummary=useCallback(()=>earnService.getSummary().then(x=>{setSummary(x.summary);setEntries(x.entries);setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message)),[]);
+  const refreshSummary=useCallback(()=>earnService.getSummary(range==='custom'?'lifetime':range).then(x=>{setSummary(x.summary);setEntries(x.entries);setStripePayout(x.payout);setLoadError('');}).catch(e=>setLoadError((e as Error).message)),[range]);
   useFocusEffect(useCallback(()=>{refreshSummary();refreshPayout();const timer=setInterval(()=>{refreshSummary();refreshPayout()},15000);return()=>clearInterval(timer);},[refreshPayout,refreshSummary]));
   const connectStripe=async()=>{try{setPayoutBusy(true);if(stripePayout?.connected){await Linking.openURL(await earnService.payoutLoginLink());}else{const result=await earnService.connectStripe();await Linking.openURL(result.onboardingUrl);}}catch(error){Alert.alert('Unable to open Stripe',(error as Error).message);}finally{setPayoutBusy(false);}};
   const withdraw=async()=>{const amount=Number(withdrawAmount);if(!amount)return;try{setPayoutBusy(true);await earnService.withdraw(amount);setWithdrawAmount('');await refreshPayout();Alert.alert('Withdrawal requested','Stripe is processing your payout.');}catch(error){Alert.alert('Unable to withdraw',(error as Error).message);}finally{setPayoutBusy(false);}};
@@ -58,13 +58,12 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.statsRow}>
-        <StatCard label="Lifetime Earnings" value={`$${summary.lifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="trending-up-outline" size="lg" />
-        <StatCard label="Last 30 Days" value={`$${summary.last30Days.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="calendar-outline" size="lg" />
+        <StatCard label="Earnings" value={`$${summary.periodEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} icon="trending-up-outline" size="lg" />
+        <StatCard label="Available Balance" value={`$${summary.availableBalance.toFixed(2)}`} icon="wallet-outline" size="lg" />
       </View>
-      <View style={styles.statsRowSm}>
-        <StatCard label="Available Balance" value={`$${summary.availableBalance.toFixed(2)}`} icon="wallet-outline" />
-        <StatCard label="Pending Earnings" value={`$${summary.pendingEarnings.toFixed(2)}`} icon="time-outline" />
-        <StatCard label="Total Withdrawn" value={`$${summary.totalWithdrawn.toLocaleString()}`} icon="business-outline" />
+      <View style={styles.statsRow}>
+        <StatCard label="Pending Earnings" value={`$${summary.pendingEarnings.toFixed(2)}`} icon="time-outline" size="lg" />
+        <StatCard label="Total Withdrawn" value={`$${summary.totalWithdrawn.toLocaleString(undefined,{minimumFractionDigits:2})}`} icon="business-outline" size="lg" />
       </View>
       {loadError?<Text style={styles.disabledHint}>Could not load personal earnings: {loadError}</Text>:null}
 
@@ -201,12 +200,9 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  statsRowSm: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
+  statsRowSm: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   dateRow: {
     marginTop: spacing.lg,
   },

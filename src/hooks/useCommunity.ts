@@ -9,11 +9,12 @@ import type { Post as PostCardItem } from '../components/PostCard';
 function mapPosts(posts: Post[]):PostCardItem[] {
   return posts.map((p) => ({
     id: p.id,
+    authorId: p.user?.id ?? p.user_id,
     authorName: p.user?.name ?? 'Unknown',
     authorAvatar: p.user?.avatar ?? '',
     time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     caption: p.text,
-    photos: p.image ? [p.image] : [],
+    photos: p.image_urls?.length ? p.image_urls : p.image ? [p.image] : [],
     likes: p.likes,
     comments: p.comments_count||0,
     liked: Boolean(p.liked),
@@ -85,10 +86,10 @@ export function useCreatePost() {
   const [loading, setLoading] = useState(false);
 
   // POST /api/posts
-  const createPost = async (text: string, image?: string, community?: string) => {
+  const createPost = async (text: string, images: string[] = [], community?: string) => {
     setLoading(true);
     try {
-      return await postsService.create({ text, image, community });
+      return await postsService.create({ text, images, image: images[0], community });
     } finally {
       setLoading(false);
     }

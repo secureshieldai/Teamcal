@@ -70,12 +70,17 @@ export default function PDFsTab({ navigation }: Props) {
         <DateRangeDropdown value={range} onChange={setRange} />
       </View>
 
-      <TouchableOpacity style={styles.createCard} onPress={() => navigation.navigate('PdfEditor',{mode:'upload'})}>
+      <TouchableOpacity style={styles.createCard} onPress={() => navigation.navigate('UploadPdf')}>
         <View style={{flex:1}}><Text style={styles.createTitle}>Upload or Create a PDF</Text><Text style={styles.createSubtitle}>Publish a book, guide or digital resource</Text></View><Ionicons name="add-circle" size={30} color={colors.white}/>
       </TouchableOpacity>
       <View style={styles.optionsGrid}>
         {UPLOAD_OPTIONS.map((opt) => (
-          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => navigation.navigate('PdfEditor',{mode:opt.key})}>
+          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => {
+            if (opt.key === 'upload') return navigation.navigate('UploadPdf');
+            if (opt.key === 'create') return navigation.navigate('CreatePdf');
+            if (opt.key === 'ai') return navigation.navigate('AiGeneratePdf');
+            navigation.navigate('PdfEditor', { mode: opt.key });
+          }}>
             <View style={styles.optionIcon}>
               <Ionicons name={opt.icon as keyof typeof Ionicons.glyphMap} size={18} color={colors.primary} />
             </View>

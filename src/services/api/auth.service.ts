@@ -3,9 +3,9 @@ import { storage } from '../storage';
 import type { AuthResponse, RegistrationResponse, User } from '../../types/api';
 
 export const authService = {
-  async register(email: string, password: string, name: string, referralCode?: string) {
+  async register(email: string, password: string, name: string, acceptedTerms: boolean, referralCode?: string) {
     const { data } = await apiClient.post<RegistrationResponse>('/auth/register', {
-      email, password, name, referralCode,
+      email, password, name, acceptedTerms, referralCode,
     });
     return data;
   },
@@ -58,6 +58,7 @@ export const authService = {
     });
     return data;
   },
+  async deleteAccount(){await apiClient.delete('/auth/account');await storage.clear();},
   async requestPasswordReset(email:string){const {data}=await apiClient.post<{success:boolean;verificationToken:string;message:string}>('/auth/password-reset/request',{email});return data;},
   async verifyPasswordReset(verificationToken:string,code:string){const {data}=await apiClient.post<{success:boolean;resetToken:string}>('/auth/password-reset/verify',{verificationToken,code});return data;},
   async resetPassword(resetToken:string,newPassword:string){const {data}=await apiClient.post<{success:boolean;message:string}>('/auth/password-reset/complete',{resetToken,newPassword});return data;},

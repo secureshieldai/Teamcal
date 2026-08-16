@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Markdown from 'react-native-markdown-display';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Avatar from '../../components/Avatar';
 import { colors, radii, spacing, typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import { personalService } from '../../services/api/personal.service';
 import {socialService,type ArticleComment} from '../../services/api/social.service';
+import { articleMarkdownIt, articleMarkdownRules } from '../../data/articleMarkdown';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BlogDetail'>;
 
@@ -15,17 +17,19 @@ const VISIBLE_COMMENTS = 3;
 
 export default function BlogDetailScreen({ route, navigation }: Props) {
   const { blogId } = route.params;
-  const [post,setPost]=useState({id:blogId,image:'',title:'',category:'',author:'',authorAvatar:'',authorVerified:false,date:'',readMinutes:0,body:[] as {type:'paragraph';text:string}[]});
+  const [post,setPost]=useState({id:blogId,image:'',title:'',category:'',author:'',authorAvatar:'',authorVerified:false,date:'',readMinutes:0,body:''});
   const [loading,setLoading]=useState(true);const [loadError,setLoadError]=useState('');
 
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
-  const [comments, setComments] = useState<(ArticleComment&{verified?:boolean})[]>([]);
+  const [comments, setComments] = useState<ArticleComment[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState('');
+  const [replyingTo, setReplyingTo] = useState<ArticleComment | null>(null);
+  const [postingComment, setPostingComment] = useState(false);
   const [siteId,setSiteId]=useState('');const [following,setFollowing]=useState(false);
-  useEffect(()=>{const load=()=>socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);setPost({id:item.id,image:item.cover||'',title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:Boolean(item.user?.verified),date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,body:[{type:'paragraph' as const,text:item.body||''}]});setLoadError('');}).catch(e=>setLoadError((e as Error).message)).finally(()=>setLoading(false));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
+  useEffect(()=>{const load=()=>socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);setPost({id:item.id,image:item.cover||'',title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:Boolean(item.user?.verified),date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,body:item.body||''});setLoadError('');}).catch(e=>setLoadError((e as Error).message)).finally(()=>setLoading(false));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
   useEffect(() => {
     if(!post.title)return;const load=()=>Promise.all([personalService.list('saved-blog'),socialService.getArticleEngagement(post.id)]).then(([savedRows,engagement])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(engagement.liked);setLikeCount(engagement.likes);setComments(engagement.comments);}).catch(()=>{});load();const timer=setInterval(load,15000);return()=>clearInterval(timer);
   }, [post.id, post.title]);
@@ -40,12 +44,21 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
   };
 
   const sendComment = async () => {
-    if (!draft.trim()) return;
-    try{const comment=await socialService.addArticleComment(post.id,draft.trim());setComments(prev=>[...prev,comment]);setDraft('');setExpanded(true);}catch{}
+    const text=draft.trim();if (!text||postingComment) return;
+    setPostingComment(true);
+    try{const comment=await socialService.addArticleComment(post.id,text,replyingTo?.id);setComments(prev=>[comment,...prev]);setDraft('');setReplyingTo(null);setExpanded(true);}catch(error){Alert.alert('Unable to comment',(error as Error).message);}finally{setPostingComment(false);}
   };
 
-  const visibleComments = expanded ? comments : comments.slice(0, VISIBLE_COMMENTS);
-  const hiddenCount = comments.length - visibleComments.length;
+  const rootComments=comments.filter(comment=>!comment.parentCommentId);
+  const visibleComments = expanded ? rootComments : rootComments.slice(0, VISIBLE_COMMENTS);
+  const hiddenCount = rootComments.length - visibleComments.length;
+  const toggleCommentLike=async(comment:ArticleComment)=>{const previous=comment;setComments(current=>current.map(item=>item.id===comment.id?{...item,liked:!item.liked,likes:Math.max(0,item.likes+(item.liked?-1:1))}:item));try{const result=await socialService.toggleArticleCommentLike(post.id,comment.id);setComments(current=>current.map(item=>item.id===comment.id?{...item,...result}:item));}catch(error){setComments(current=>current.map(item=>item.id===comment.id?previous:item));Alert.alert('Unable to like comment',(error as Error).message);}};
+
+  function renderComment(comment:ArticleComment,depth=0):React.ReactNode{return <View key={comment.id} style={depth?styles.replyWrap:undefined}><View style={styles.commentRow}>
+    <Avatar uri={comment.avatar} size={depth?30:36} />
+    <View style={styles.commentBody}><View style={styles.commentNameRow}><Text style={styles.commentName}>{comment.name}</Text>{comment.verified&&<Ionicons name="checkmark-circle" size={12} color={colors.primary}/>}</View><Text style={styles.commentText}>{comment.text}</Text><View style={styles.commentFooter}><Text style={styles.commentTime}>{comment.time}</Text><TouchableOpacity onPress={()=>{setReplyingTo(comment);setDraft('');}}><Text style={styles.commentReply}>Reply</Text></TouchableOpacity></View></View>
+    <TouchableOpacity style={styles.commentLike} onPress={()=>toggleCommentLike(comment)}><Ionicons name={comment.liked?'heart':'heart-outline'} size={14} color={comment.liked?colors.macroProtein:colors.textMuted}/><Text style={styles.commentLikeCount}>{comment.likes}</Text></TouchableOpacity>
+  </View>{comments.filter(item=>item.parentCommentId===comment.id).reverse().map(reply=>renderComment(reply,depth+1))}</View>;}
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -56,9 +69,6 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
         <View style={{ flex: 1 }} />
         <TouchableOpacity onPress={toggleSaved} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginRight: spacing.lg }}>
           <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={21} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="ellipsis-horizontal" size={21} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -92,7 +102,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
             onShare={() => Share.share({ message: `${post.title} — ${post.author}` })}
           />
 
-          {post.body.map((block, i) => <Text key={i} style={styles.paragraph}>{block.text}</Text>)}
+          <Markdown markdownit={articleMarkdownIt} rules={articleMarkdownRules} style={markdownStyles}>{post.body}</Markdown>
 
           <ActionRow
             liked={liked}
@@ -110,26 +120,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
 
-          {visibleComments.map((comment) => (
-            <View key={comment.id} style={styles.commentRow}>
-              <Avatar uri={comment.avatar} size={36} />
-              <View style={styles.commentBody}>
-                <View style={styles.commentNameRow}>
-                  <Text style={styles.commentName}>{comment.name}</Text>
-                  {comment.verified && <Ionicons name="checkmark-circle" size={12} color={colors.primary} />}
-                </View>
-                <Text style={styles.commentText}>{comment.text}</Text>
-                <View style={styles.commentFooter}>
-                  <Text style={styles.commentTime}>{comment.time}</Text>
-                  <Text style={styles.commentReply}>Reply</Text>
-                </View>
-              </View>
-              <View style={styles.commentLike}>
-                <Ionicons name="heart-outline" size={14} color={colors.textMuted} />
-                <Text style={styles.commentLikeCount}>{comment.likes}</Text>
-              </View>
-            </View>
-          ))}
+          {visibleComments.map((comment) => renderComment(comment))}
 
           {hiddenCount > 0 && (
             <TouchableOpacity onPress={() => setExpanded(true)}>
@@ -140,17 +131,21 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
       </ScrollView>}
 
       <View style={styles.composer}>
+        <View style={{flex:1}}>
+        {replyingTo?<View style={styles.replyingRow}><Text style={styles.replyingText}>Replying to {replyingTo.name}</Text><TouchableOpacity onPress={()=>setReplyingTo(null)}><Ionicons name="close-circle" size={17} color={colors.textMuted}/></TouchableOpacity></View>:null}
         <TextInput
           style={styles.composerInput}
-          placeholder="Share your thoughts..."
+          placeholder={replyingTo?`Reply to ${replyingTo.name}...`:'Share your thoughts...'}
           placeholderTextColor={colors.textMuted}
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={sendComment}
           returnKeyType="send"
+          editable={!postingComment}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={sendComment} disabled={!draft.trim()}>
-          <Ionicons name="send" size={16} color={colors.white} />
+        </View>
+        <TouchableOpacity style={[styles.sendButton,(!draft.trim()||postingComment)&&styles.sendButtonDisabled]} onPress={sendComment} disabled={!draft.trim()||postingComment}>
+          {postingComment?<ActivityIndicator size="small" color={colors.white}/>:<Ionicons name="send" size={16} color={colors.white} />}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -187,6 +182,24 @@ function ActionRow({
     </View>
   );
 }
+
+const markdownStyles = StyleSheet.create({
+  body: { fontSize: 13.5, lineHeight: 21, color: colors.textPrimary },
+  heading1: { fontSize: 21, fontWeight: '800', color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.sm },
+  heading2: { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.sm },
+  strong: { fontWeight: '800' },
+  em: { fontStyle: 'italic' },
+  s: { textDecorationLine: 'line-through' },
+  paragraph: { marginTop: spacing.sm, marginBottom: 0, width: 'auto' },
+  bullet_list: { marginTop: spacing.sm },
+  ordered_list: { marginTop: spacing.sm },
+  blockquote: { backgroundColor: '#FFEDE3', borderRadius: radii.lg, padding: spacing.md, marginTop: spacing.md, borderLeftWidth: 0 },
+  code_inline: { backgroundColor: colors.background, borderRadius: 4, paddingHorizontal: 4 },
+  code_block: { backgroundColor: colors.background, borderRadius: radii.md, padding: spacing.md, marginTop: spacing.sm },
+  fence: { backgroundColor: colors.background, borderRadius: radii.md, padding: spacing.md, marginTop: spacing.sm },
+  link: { color: colors.primary },
+  image: { borderRadius: radii.lg, marginTop: spacing.md },
+});
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -388,6 +401,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
+  replyWrap:{marginLeft:spacing.xl,borderLeftWidth:1,borderLeftColor:colors.border,paddingLeft:spacing.sm},
   commentBody: {
     flex: 1,
   },
@@ -446,7 +460,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   composerInput: {
-    flex: 1,
     backgroundColor: colors.background,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
@@ -462,4 +475,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  sendButtonDisabled:{opacity:.5},
+  replyingRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:spacing.md,paddingBottom:4},
+  replyingText:{fontSize:11,color:colors.textSecondary,fontWeight:'600'},
 });

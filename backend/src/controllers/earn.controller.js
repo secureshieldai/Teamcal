@@ -7,6 +7,21 @@ const { uploadPublicFile } = require("../services/storage.service");
 
 const ASSET_KINDS = new Set(["pdf", "video", "store", "membership", "campaign"]);
 const ASSET_STATUSES = new Set(["draft", "uploading", "processing", "published", "paused", "scheduled", "under-review", "monetization-review", "restricted", "rejected", "archived"]);
+const MEMBERSHIP_PRICING_MODELS = new Set(["free", "lifetime", "recurring", "tiers"]);
+
+async function validateMembershipAsset(userId, metadata, price, currency) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return "Membership metadata must be an object";
+  if (!metadata.groupId) return "A connected community is required";
+  if (!MEMBERSHIP_PRICING_MODELS.has(metadata.pricingModel || "tiers")) return "Invalid membership pricing model";
+  if (!Number.isFinite(Number(price)) || Number(price) < 0) return "Membership price cannot be negative";
+  if (!/^[A-Z]{3}$/.test(String(currency || "USD").toUpperCase())) return "Currency must be a three-letter code";
+  if (metadata.tiers !== undefined && !Array.isArray(metadata.tiers)) return "Membership tiers must be an array";
+  if ((metadata.tiers || []).some((tier) => !tier || !String(tier.name || "").trim())) return "Every membership tier requires a name";
+  const { data: membership, error } = await supabase.from("group_members").select("role").eq("group_id", metadata.groupId).eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  if (!membership || !["owner", "admin"].includes(membership.role)) return "You do not manage the connected community";
+  return null;
+}
 
 async function getAssets(req, res, next) {
   try {
@@ -28,6 +43,50 @@ async function getAsset(req, res, next) {
     if (error) throw error;
     if (!data) return res.status(404).json({ success: false, message: "Creator asset not found" });
     res.json({ success: true, asset: { id: data.id, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
+  } catch (err) { next(err); }
+}
+
+async function getPublicAsset(req, res, next) {
+  try {
+    const { data, error } = await supabase.from("user_records").select("*").eq("id", req.params.id).in("kind", ["earn-pdf", "earn-video"]).maybeSingle();
+    if (error) throw error;
+    if (!data || (data.user_id !== req.user.id && data.status !== "published")) return res.status(404).json({ success: false, message: "Published asset not found" });
+    const source = data.data || {};
+    const owner = data.user_id === req.user.id;
+    const metadata = { ...(source.metadata || {}) };
+    // Never expose a paid creator's original file through the public catalog.
+    if (!owner && Number(source.price || 0) > 0) {
+      delete metadata.fileUrl;
+      delete metadata.transcriptUrl;
+      delete metadata.captionsUrl;
+    }
+    res.json({ success: true, asset: { id: data.id, owner, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...source, metadata } });
+  } catch (err) { next(err); }
+}
+
+async function recordAssetView(req, res, next) {
+  try {
+    const { data, error } = await supabase.from("user_records").select("id,user_id,status,kind,data").eq("id", req.params.id).in("kind", ["earn-pdf", "earn-video"]).maybeSingle();
+    if (error) throw error;
+    if (!data || (data.user_id !== req.user.id && data.status !== "published")) return res.status(404).json({ success: false, message: "Published asset not found" });
+    const source = data.data || {};
+    const metrics = { ...(source.metrics || {}), views: Number(source.metrics?.views || 0) + 1 };
+    const updated = await supabase.from("user_records").update({ data: { ...source, metrics } }).eq("id", data.id);
+    if (updated.error) throw updated.error;
+    res.json({ success: true, metrics });
+  } catch (err) { next(err); }
+}
+
+async function getPublicMembership(req, res, next) {
+  try {
+    const { data, error } = await supabase.from("user_records").select("*").eq("id", req.params.id).eq("kind", "earn-membership").eq("status", "published").maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ success: false, message: "Membership not found" });
+    const source = data.data || {};
+    const metadata = source.metadata || {};
+    const publicKeys = ["groupId", "profileImage", "banner", "category", "subcategory", "rules", "valueProposition", "audience", "memberReceives", "faqs", "language", "privacy", "pricingModel", "currency", "lifetimePrice", "monthlyPrice", "quarterlyPrice", "sixMonthPrice", "annualPrice", "trial", "autoRenew", "trialReminder", "tiers", "benefits", "testimonials", "lifetimeTerms"];
+    const publicMetadata = Object.fromEntries(publicKeys.filter((key) => metadata[key] !== undefined).map((key) => [key, metadata[key]]));
+    res.json({ success: true, asset: { id: data.id, kind: "membership", status: data.status, created_at: data.created_at, updated_at: data.updated_at, title: source.title, description: source.description, image: source.image, price: source.price, currency: source.currency, metrics: { members: Number(source.metrics?.members || 0), rating: Number(source.metrics?.rating || 0) }, metadata: publicMetadata } });
   } catch (err) { next(err); }
 }
 
@@ -54,6 +113,10 @@ async function createAsset(req, res, next) {
     if (!ASSET_KINDS.has(kind)) return res.status(400).json({ success: false, message: "Invalid asset kind" });
     if (!String(title || "").trim()) return res.status(400).json({ success: false, message: "Title is required" });
     if (!ASSET_STATUSES.has(status)) return res.status(400).json({ success: false, message: "Invalid asset status" });
+    if (kind === "membership") {
+      const validationError = await validateMembershipAsset(req.user.id, metadata, price, currency);
+      if (validationError) return res.status(400).json({ success: false, message: validationError });
+    }
     const assetData = { subtype, title: String(title).trim(), description, image, price: Number(price) || 0, currency: String(currency).toUpperCase(), metrics: {}, metadata };
     const { data, error } = await supabase.from("user_records").insert({ user_id: req.user.id, kind: `earn-${kind}`, data: assetData, status }).select().single();
     if (error) throw error;
@@ -69,6 +132,14 @@ async function updateAsset(req, res, next) {
     if (req.body.status && !ASSET_STATUSES.has(req.body.status)) return res.status(400).json({ success: false, message: "Invalid asset status" });
     const allowed = ["subtype", "title", "description", "image", "price", "currency", "metadata"];
     const assetData = { ...existing.data, ...Object.fromEntries(allowed.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]])) };
+    if (!String(assetData.title || "").trim()) return res.status(400).json({ success: false, message: "Title is required" });
+    assetData.title = String(assetData.title).trim();
+    assetData.price = Number(assetData.price) || 0;
+    assetData.currency = String(assetData.currency || "USD").toUpperCase();
+    if (existing.kind === "earn-membership") {
+      const validationError = await validateMembershipAsset(req.user.id, assetData.metadata, assetData.price, assetData.currency);
+      if (validationError) return res.status(400).json({ success: false, message: validationError });
+    }
     const { data, error } = await supabase.from("user_records").update({ data: assetData, status: req.body.status || existing.status }).eq("id", req.params.id).eq("user_id", req.user.id).select().maybeSingle();
     if (error) throw error;
     res.json({ success: true, asset: { id: data.id, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
@@ -85,7 +156,10 @@ async function deleteAsset(req, res, next) {
 }
 
 async function getSummary(req, res, next) {
-  try {
+    try {
+      const rangeDays = { "7d": 7, "30d": 30, "90d": 90, "6m": 183, "1y": 365 };
+      const range = Object.prototype.hasOwnProperty.call(rangeDays, req.query.range) ? req.query.range : "lifetime";
+      const rangeCutoff = range === "lifetime" ? null : Date.now() - rangeDays[range] * 86400000;
     const [entryResult, payoutResult, assetResult, blogResult, articleResult, productResult, orderResult, referralResult] = await Promise.all([
       supabase.from("earn_entries").select("*").eq("user_id", req.user.id).order("created_at", { ascending: false }),
       supabase.from("payouts").select("*").eq("user_id", req.user.id).maybeSingle(),
@@ -103,12 +177,14 @@ async function getSummary(req, res, next) {
     const paidOrders = (orderResult.data || []).filter((item) => item.status === "paid" || item.status === "complete" || item.status === "completed");
     const storeEarnings = paidOrders.reduce((sum, item) => sum + Math.max(0, Number(item.total_amount || 0) - Number(item.platform_fee_amount || 0)) / 100, 0);
     const monthlyBlog = (articleResult.data || []).filter((item) => new Date(item.created_at).getTime() >= monthlyCutoff).reduce((sum, item) => sum + Number(item.earned || 0), 0);
-    const monthlyStore = paidOrders.filter((item) => new Date(item.paid_at || item.created_at).getTime() >= monthlyCutoff).reduce((sum, item) => sum + Math.max(0, Number(item.total_amount || 0) - Number(item.platform_fee_amount || 0)) / 100, 0);
+      const monthlyStore = paidOrders.filter((item) => new Date(item.paid_at || item.created_at).getTime() >= monthlyCutoff).reduce((sum, item) => sum + Math.max(0, Number(item.total_amount || 0) - Number(item.platform_fee_amount || 0)) / 100, 0);
+      const periodBlog = (articleResult.data || []).filter((item) => !rangeCutoff || new Date(item.created_at).getTime() >= rangeCutoff).reduce((sum, item) => sum + Number(item.earned || 0), 0);
+      const periodStore = paidOrders.filter((item) => !rangeCutoff || new Date(item.paid_at || item.created_at).getTime() >= rangeCutoff).reduce((sum, item) => sum + Math.max(0, Number(item.total_amount || 0) - Number(item.platform_fee_amount || 0)) / 100, 0);
     const total = blogEarnings + storeEarnings;
     const monthly = monthlyBlog + monthlyStore;
     const payout = payoutResult.data || {};
     const sourceTotals = { blogs: blogEarnings, stores: storeEarnings };
-    res.json({ success: true, summary: { balance: Number(payout.pending || 0), lifetimeEarnings: total, last30Days: monthly, availableBalance: Number(payout.pending || 0), pendingEarnings: Number(payout.pending || 0), totalWithdrawn: Number(payout.paid_out || 0), sourceTotals, counts: { assets: (assetResult.data || []).length, blogs: (blogResult.data || []).length, products: (productResult.data || []).length, referrals: (referralResult.data || []).length } }, entries, payout, assets: assetResult.data || [] });
+      res.json({ success: true, summary: { balance: Number(payout.pending || 0), lifetimeEarnings: total, periodEarnings: periodBlog + periodStore, range, last30Days: monthly, availableBalance: Number(payout.pending || 0), pendingEarnings: Number(payout.pending || 0), totalWithdrawn: Number(payout.paid_out || 0), sourceTotals, counts: { assets: (assetResult.data || []).length, blogs: (blogResult.data || []).length, products: (productResult.data || []).length, referrals: (referralResult.data || []).length } }, entries, payout, assets: assetResult.data || [] });
   } catch (err) { next(err); }
 }
 
@@ -340,5 +416,5 @@ async function handleReferralJoin(referralCode, newUserId) {
 module.exports = {
   getEarnEntries, getReferrals, inviteReferral, handleReferralJoin,
   getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
-  getSummary, getAssets, getAsset, createAsset, updateAsset, deleteAsset, uploadPdfFile, uploadVideoFile,
+  getSummary, getAssets, getAsset, getPublicAsset, recordAssetView, getPublicMembership, createAsset, updateAsset, deleteAsset, uploadPdfFile, uploadVideoFile,
 };

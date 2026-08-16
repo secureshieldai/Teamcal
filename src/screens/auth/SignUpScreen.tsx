@@ -33,7 +33,7 @@ export default function SignUpScreen() {
     setError('');
     setLoading(true);
     try {
-      const verificationToken = await register(email, password, name);
+      const verificationToken = await register(email, password, name, agreed);
       navigation.navigate('VerifyCode', { mode: 'signup', email, verificationToken });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create your account. Please try again.');
@@ -81,16 +81,18 @@ export default function SignUpScreen() {
         isPassword
       />
 
-      <TouchableOpacity style={styles.termsRow} onPress={() => setAgreed((v) => !v)} activeOpacity={0.8}>
+      <View style={styles.termsRow}>
+        <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{checked:agreed}} accessibilityLabel="Agree to the Terms of Use and acknowledge the Privacy Policy" onPress={() => setAgreed((v) => !v)} activeOpacity={0.8}>
         <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
           {agreed && <Ionicons name="checkmark" size={14} color={colors.white} />}
         </View>
-        <Text style={styles.termsText}>I agree to the Terms & Privacy Policy</Text>
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <Text style={styles.termsText}>I agree to the <Text style={styles.legalLink} onPress={()=>navigation.navigate('LegalDocument',{document:'terms'})}>Terms of Use</Text> and acknowledge the <Text style={styles.legalLink} onPress={()=>navigation.navigate('LegalDocument',{document:'privacy'})}>Privacy Policy</Text>.</Text>
+      </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <AuthButton label="Sign Up" onPress={handleSignUp} loading={loading} />
+      <AuthButton label="Sign Up" onPress={handleSignUp} loading={loading} disabled={!agreed} />
     </AuthLayout>
   );
 }
@@ -121,6 +123,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     flex: 1,
   },
+  legalLink:{color:colors.primary,fontWeight:'700',textDecorationLine:'underline'},
   error: {
     fontSize: 12,
     color: colors.macroProtein,

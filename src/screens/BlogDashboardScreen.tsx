@@ -11,7 +11,7 @@ import { blogsService } from '../services/api/blogs.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BlogDashboard'>;
 
-const DASHBOARD_TABS = ['Dashboard', 'Posts', 'Drafts', 'Scheduled', 'Comments', 'Followers', 'Analytics', 'Settings'];
+const DASHBOARD_TABS = ['Dashboard', 'Posts'];
 
 const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
@@ -20,10 +20,6 @@ type PostView={id:string;blogId:string;title:string;status:'Published'|'Draft'|'
 
 const QUICK_LINKS = [
   { key: 'blog-settings', label: 'Blog Settings', icon: 'settings-outline' },
-  { key: 'monetization', label: 'Monetization Settings', icon: 'cash-outline' },
-  { key: 'seo', label: 'SEO & Social Settings', icon: 'search-outline' },
-  { key: 'domain', label: 'Custom Domain', icon: 'globe-outline' },
-  { key: 'export', label: 'Export Blog Data', icon: 'cloud-download-outline' },
 ];
 
 export default function BlogDashboardScreen({ route, navigation }: Props) {
@@ -65,14 +61,11 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
           </View>
           <Text style={styles.blogUrl}>{blog.url}</Text>
           <View style={styles.blogActionsRow}>
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => comingSoon('View blog')}>
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => navigation.navigate('BlogDetail',{blogId})}>
               <Text style={styles.outlineBtnText}>View Blog</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.outlineBtn} onPress={() => Share.share({ message: `Check out my blog: ${blog.url}` })}>
               <Text style={styles.outlineBtnText}>Share</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => comingSoon('More options')}>
-              <Ionicons name="ellipsis-horizontal" size={16} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -92,18 +85,15 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
             <Text style={styles.sectionTitle}>Overview Stats</Text>
             <View style={styles.statsGrid}>
               <MiniStat label="Total Views" value={blog.views.toLocaleString()} />
-              <MiniStat label="Visitors" value={Math.round(blog.views * 0.63).toLocaleString()} />
               <MiniStat label="Total Earnings" value={`$${blog.earned.toLocaleString()}`} />
               <MiniStat label="Followers" value={blog.followers.toLocaleString()} />
-              <MiniStat label="Avg. Read Time" value="4m 38s" />
-              <MiniStat label="Conversion Rate" value="2.6%" />
             </View>
 
             <Text style={styles.sectionTitle}>Top Performing Posts</Text>
             <View style={[styles.card, shadow.card]}>
               {posts.length === 0 && <Text style={styles.emptyText}>No posts yet for this blog.</Text>}
               {posts.map((post, i) => (
-                <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => comingSoon('Post analytics')}>
+                <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ArticleEditor',{blogId,articleId:post.id})}>
                   <Image source={{ uri: post.thumbnail }} style={styles.postThumb} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.postTitle} numberOfLines={1}>
@@ -135,7 +125,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
             <Text style={styles.sectionTitle}>Quick Links</Text>
             <View style={[styles.card, shadow.card]}>
               {QUICK_LINKS.map((link, i) => (
-              <TouchableOpacity key={link.key} style={[styles.linkRow, i === QUICK_LINKS.length - 1 && { borderBottomWidth: 0 }]} onPress={() => link.key==='blog-settings'?navigation.navigate('BlogSettings',{blogId}):comingSoon(link.label)}>
+              <TouchableOpacity key={link.key} style={[styles.linkRow, i === QUICK_LINKS.length - 1 && { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('BlogSettings',{blogId})}>
                   <Ionicons name={link.icon as keyof typeof Ionicons.glyphMap} size={17} color={colors.primary} />
                   <Text style={styles.linkLabel}>{link.label}</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -148,14 +138,6 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
               <View style={styles.earningsRow}>
                 <Text style={styles.earningsLabel}>Total Earnings</Text>
                 <Text style={styles.earningsValue}>${blog.earned.toLocaleString()}</Text>
-              </View>
-              <View style={styles.earningsRow}>
-                <Text style={styles.earningsLabel}>This Month</Text>
-                <Text style={styles.earningsValueMuted}>${(blog.earned * 0.15).toFixed(2)}</Text>
-              </View>
-              <View style={[styles.earningsRow, { borderBottomWidth: 0 }]}>
-                <Text style={styles.earningsLabel}>Pending</Text>
-                <Text style={styles.earningsValueMuted}>${(blog.earned * 0.02).toFixed(2)}</Text>
               </View>
             </View>
           </>
@@ -178,12 +160,6 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {tab !== 'Dashboard' && tab !== 'Posts' && (
-          <View style={[styles.card, shadow.card, styles.placeholderCard]}>
-            <Ionicons name="construct-outline" size={28} color={colors.textMuted} />
-            <Text style={styles.placeholderText}>{tab} is coming soon.</Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );

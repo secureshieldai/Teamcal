@@ -46,9 +46,9 @@ export const postsService = {
 
   /**
    * POST /api/posts
-   * Body: { text, image?, community? }
+   * Body: { text, image?, images?, community? } — images (up to 10) takes precedence; image is the legacy single-photo fallback.
    */
-  async create(payload: { text: string; image?: string; community?: string }) {
+  async create(payload: { text: string; image?: string; images?: string[]; community?: string }) {
     const { data } = await apiClient.post<{ success: boolean; post: Post }>('/posts', payload);
     return data.post;
   },

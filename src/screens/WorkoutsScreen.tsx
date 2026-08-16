@@ -1,12 +1,104 @@
-import React,{useCallback,useState} from 'react';
-import {ScrollView,StatusBar,StyleSheet,Text,TouchableOpacity,View} from 'react-native';import {SafeAreaView} from 'react-native-safe-area-context';import {Ionicons} from '@expo/vector-icons';import {useFocusEffect,useNavigation} from '@react-navigation/native';import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import SegmentedControl from '../components/SegmentedControl';import ExerciseRow from '../components/ExerciseRow';import {colors,radii,shadow,spacing,typography} from '../theme';import {workoutTabs} from '../data/workoutsData';import {useTodayWorkout,useWorkouts} from '../hooks/useWorkouts';import {useApiQuery} from '../hooks/useApiQuery';import {workoutsService,type WorkoutLog} from '../services/api/workouts.service';import type {RootStackParamList} from '../navigation/types';
-export default function WorkoutsScreen(){const [tab,setTab]=useState(workoutTabs[0]);const navigation=useNavigation<NativeStackNavigationProp<RootStackParamList>>();const {workout:todayWorkout}=useTodayWorkout();const {workouts}=useWorkouts();const history=useApiQuery(()=>workoutsService.getHistory(),[] as WorkoutLog[],[]);useFocusEffect(useCallback(()=>{if(tab==='History')history.refetch();},[tab,history.refetch]));
-const start=(w:{id?:string;title:string;duration?:number;exercises:{id:string;name:string;detail:string}[]})=>navigation.navigate('WorkoutSession',{workout:w});
-return <SafeAreaView style={s.safe} edges={['top']}><StatusBar barStyle="dark-content" backgroundColor={colors.background}/><View style={s.header}><TouchableOpacity onPress={()=>navigation.goBack()}><Ionicons name="chevron-back" size={22}/></TouchableOpacity><Text style={s.pageTitle}>Workouts</Text><View style={{width:22}}/></View><View style={s.tabs}><SegmentedControl options={workoutTabs} value={tab} onChange={setTab} variant="pill"/></View><ScrollView contentContainerStyle={s.content}>
-{tab==='Plan'&&(todayWorkout?<><WorkoutCard title={todayWorkout.title} subtitle={todayWorkout.subtitle} exercises={todayWorkout.exercises}/><TouchableOpacity style={s.start} onPress={()=>start({title:todayWorkout.title,exercises:todayWorkout.exercises})}><Text style={s.startText}>Start Workout</Text></TouchableOpacity></>:<Text style={s.empty}>No workout is scheduled for today.</Text>)}
-{tab==='Library'&&<View style={{gap:spacing.md}}>{workouts.map(w=><TouchableOpacity key={w.id} style={[s.card,shadow.card]} onPress={()=>start({id:w.id,title:w.title,duration:w.duration,exercises:w.exercises})}><View style={s.cardHead}><View><Text style={s.workoutTitle}>{w.title}</Text><Text style={s.subtitle}>{w.duration} min · {w.difficulty} · {w.category}</Text></View><Ionicons name="play-circle" size={30} color={colors.primary}/></View><Text style={s.exerciseCount}>{w.exercises.length} exercises</Text></TouchableOpacity>)}</View>}
-{tab==='History'&&<View style={{gap:spacing.md}}>{history.data.map(log=><View style={[s.card,shadow.soft]} key={log.id}><Text style={s.workoutTitle}>{log.title}</Text><Text style={s.subtitle}>{new Date(log.started_at).toLocaleDateString()} · {log.duration||Math.max(1,Math.round((log.ended_at-log.started_at)/60000))} min</Text><Text style={s.exerciseCount}>{log.exercises?.length||0} exercises completed</Text></View>)}{!history.loading&&!history.data.length&&<Text style={s.empty}>Complete a workout to see it here.</Text>}</View>}
-</ScrollView></SafeAreaView>}
-function WorkoutCard({title,subtitle,exercises}:{title:string;subtitle:string;exercises:{id:string;name:string;detail:string}[]}){return <View style={[s.card,shadow.card]}><Text style={s.workoutTitle}>{title}</Text><Text style={s.subtitle}>{subtitle}</Text><View style={{marginTop:spacing.md}}>{exercises.map(e=><ExerciseRow key={e.id} name={e.name} detail={e.detail}/>)}</View></View>}
-const s=StyleSheet.create({safe:{flex:1,backgroundColor:colors.background},header:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:spacing.lg,paddingTop:spacing.sm},pageTitle:{...typography.h2},tabs:{paddingHorizontal:spacing.lg,marginTop:spacing.md},content:{padding:spacing.lg,paddingBottom:spacing.xxl},card:{backgroundColor:colors.card,borderRadius:radii.xl,padding:spacing.lg},cardHead:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},workoutTitle:{fontSize:16,fontWeight:'800',color:colors.textPrimary},subtitle:{fontSize:12,color:colors.textSecondary,marginTop:3,textTransform:'capitalize'},exerciseCount:{fontSize:12,fontWeight:'700',color:colors.primary,marginTop:spacing.md},start:{backgroundColor:colors.primary,borderRadius:radii.pill,paddingVertical:spacing.md,alignItems:'center',marginTop:spacing.lg},startText:{color:colors.white,fontWeight:'700',fontSize:15},empty:{textAlign:'center',color:colors.textMuted,marginTop:40}});
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import WorkoutsHome from './workouts/WorkoutsHome';
+import CreateWorkoutScreen from './workouts/CreateWorkoutScreen';
+import ScanCoachScreen from './workouts/scanCoach/ScanCoachScreen';
+import RecommendationsScreen from './workouts/RecommendationsScreen';
+import WorkoutProgressScreen from './workouts/ProgressScreen';
+import WorkoutHistoryScreen from './workouts/WorkoutHistoryScreen';
+import { colors, spacing, typography } from '../theme';
+import type { RootStackParamList } from '../navigation/types';
+import type { Workout } from '../types/api';
+
+type WorkoutsView = 'home' | 'create' | 'scan' | 'recommendations' | 'progress' | 'history';
+
+export default function WorkoutsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [view, setView] = useState<WorkoutsView>('home');
+  const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+  const goHome = () => setView('home');
+
+  const startWorkout = (workout: Workout) => {
+    navigation.navigate('WorkoutSession', {
+      workout: { id: workout.id, title: workout.title, duration: workout.duration, exercises: workout.exercises },
+    });
+  };
+
+  if (view === 'create') {
+    return <CreateWorkoutScreen existing={editingWorkout} onClose={goHome} onSaved={goHome} />;
+  }
+  if (view === 'scan') {
+    return <ScanCoachScreen onClose={goHome} onSaved={goHome} />;
+  }
+  if (view === 'recommendations') {
+    return <RecommendationsScreen onClose={goHome} />;
+  }
+  if (view === 'progress') {
+    return <WorkoutProgressScreen onClose={goHome} />;
+  }
+  if (view === 'history') {
+    return <WorkoutHistoryScreen onClose={goHome} />;
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>Workouts</Text>
+          <Text style={styles.subtitle}>AI-generated plans</Text>
+        </View>
+      </View>
+
+      <WorkoutsHome
+        onOpenScanCoach={() => setView('scan')}
+        onOpenRecommendations={() => setView('recommendations')}
+        onOpenProgress={() => setView('progress')}
+        onOpenHistory={() => setView('history')}
+        onCreateWorkout={() => {
+          setEditingWorkout(null);
+          setView('create');
+        }}
+        onEditWorkout={(w) => {
+          setEditingWorkout(w);
+          setView('create');
+        }}
+        onStartWorkout={startWorkout}
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.navy,
+  },
+  subtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+});

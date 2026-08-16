@@ -5,8 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { useFastingNow } from '../../hooks/useFastingNow';
-import { METABOLIC_STAGES } from '../../data/fastingData';
 import ProtocolPickerModal from '../../components/fasting/ProtocolPickerModal';
+import FastingInsightsSection from '../../components/fasting/FastingInsightsSection';
 import type { RootStackParamList } from '../../navigation/types';
 
 function formatElapsed(totalSeconds: number) {
@@ -152,22 +152,7 @@ export default function FastingNowTab({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.card, shadow.card]}>
-        <Text style={styles.sectionLabel}>METABOLIC STAGES</Text>
-        {METABOLIC_STAGES.map((s) => {
-          const isCurrent = active && s.id === stage.id;
-          return (
-            <View key={s.id} style={styles.stageRow}>
-              <View style={[styles.stageBar, isCurrent && styles.stageBarActive]} />
-              <View style={styles.stageInfo}>
-                <Text style={[styles.stageLabel, isCurrent && styles.stageLabelActive]}>{s.label}</Text>
-                <Text style={styles.stageDescription}>{s.description}</Text>
-              </View>
-              <Text style={styles.stageHours}>{s.hours}h</Text>
-            </View>
-          );
-        })}
-      </View>
+      <FastingInsightsSection stage={stage} active={!!active} />
 
       <View style={[styles.card, shadow.card]}>
         <Text style={styles.sectionLabel}>THIS WEEK</Text>
@@ -359,45 +344,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     letterSpacing: 0.5,
     marginBottom: spacing.md,
-  },
-  stageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  stageBar: {
-    width: 4,
-    alignSelf: 'stretch',
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    marginRight: spacing.md,
-  },
-  stageBarActive: {
-    backgroundColor: colors.primary,
-  },
-  stageInfo: {
-    flex: 1,
-  },
-  stageLabel: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  stageLabelActive: {
-    color: colors.primary,
-  },
-  stageDescription: {
-    fontSize: 11.5,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  stageHours: {
-    fontSize: 12,
-    color: colors.textMuted,
-    fontWeight: '600',
   },
   weekRow: {
     flexDirection: 'row',
