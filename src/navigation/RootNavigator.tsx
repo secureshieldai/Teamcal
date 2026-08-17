@@ -76,6 +76,9 @@ import ImportFromCloudScreen from '../screens/ImportFromCloudScreen';
 import UploadPdfScreen from '../screens/UploadPdfScreen';
 import CreatePdfScreen from '../screens/CreatePdfScreen';
 import AiGeneratePdfScreen from '../screens/AiGeneratePdfScreen';
+import CreateStoreScreen from '../screens/CreateStoreScreen';
+import StoreDashboardScreen from '../screens/StoreDashboardScreen';
+import AddProductScreen from '../screens/AddProductScreen';
 import MembershipEditorScreen from '../screens/MembershipEditorScreen';
 import MembershipDashboardScreen from '../screens/MembershipDashboardScreen';
 import MembershipPublicScreen from '../screens/MembershipPublicScreen';
@@ -170,6 +173,9 @@ export default function RootNavigator() {
       <Stack.Screen name="UploadPdf" component={UploadPdfScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="CreatePdf" component={CreatePdfScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="AiGeneratePdf" component={AiGeneratePdfScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="CreateStore" component={CreateStoreScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="StoreDashboard" component={StoreDashboardScreen} />
+      <Stack.Screen name="AddProduct" component={AddProductScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="MembershipEditor" component={MembershipEditorScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="MembershipDashboard" component={MembershipDashboardScreen} />
       <Stack.Screen name="MembershipPublic" component={MembershipPublicScreen} />

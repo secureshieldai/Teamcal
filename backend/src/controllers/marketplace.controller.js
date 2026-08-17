@@ -1,6 +1,7 @@
 const { supabase } = require("../config/supabase");
 const { notifySafely } = require("../services/notification.service");
 const { getStripe, platformFeeAmount } = require("../config/stripe");
+const { emitStoreCommerceChange } = require("../realtime");
 
 /**
  * GET /api/marketplace/products?category=&featured=true&limit=20&skip=0
@@ -204,18 +205,20 @@ async function checkout(req, res, next) {
   try {
     const ids = [...new Set((req.body.productIds || []).filter(Boolean))];
     if (!ids.length) return res.status(400).json({ success: false, message: "Cart is empty" });
-    const { data: products, error } = await supabase.from("marketplace_products").select("id,title,description,photo,price,currency,seller_id").in("id", ids).eq("is_active", true);
+    const { data: products, error } = await supabase.from("marketplace_products").select("id,title,description,photo,price,currency,seller_id,store_id").in("id", ids).eq("is_active", true);
     if (error) throw error; if (!products?.length) return res.status(404).json({ success: false, message: "Products not found" });
     if(products.length!==ids.length)return res.status(400).json({success:false,message:"One or more products are unavailable"});
     const sellers=[...new Set(products.map(p=>p.seller_id))];if(sellers.length!==1)return res.status(400).json({success:false,message:"Checkout currently supports products from one seller at a time"});
+    const stores=[...new Set(products.map(p=>p.store_id).filter(Boolean))];if(stores.length!==1||products.some(p=>!p.store_id))return res.status(400).json({success:false,message:"All products must belong to one store"});
     const currencies=[...new Set(products.map(p=>String(p.currency||"USD").toLowerCase()))];if(currencies.length!==1)return res.status(400).json({success:false,message:"All products must use the same currency"});
     const {data:sellerPayout}=await supabase.from("payouts").select("stripe_account_id,stripe_charges_enabled,stripe_payouts_enabled").eq("user_id",sellers[0]).maybeSingle();
     if(!sellerPayout?.stripe_account_id||!sellerPayout.stripe_charges_enabled)return res.status(409).json({success:false,message:"Seller is not ready to accept Stripe payments"});
     const currency=currencies[0];const items=products.map(p=>({id:p.id,title:p.title,price:Number(p.price),quantity:1,sellerId:p.seller_id}));const totalMinor=items.reduce((n,p)=>n+Math.round(p.price*100),0);const feeMinor=platformFeeAmount(totalMinor);
-    const {data:order,error:orderError}=await supabase.from("marketplace_orders").insert({buyer_id:req.user.id,seller_id:sellers[0],currency,total_amount:totalMinor,platform_fee_amount:feeMinor,status:"creating-checkout",items}).select().single();if(orderError)throw orderError;
+    const {data:order,error:orderError}=await supabase.from("marketplace_orders").insert({buyer_id:req.user.id,seller_id:sellers[0],store_id:stores[0],currency,total_amount:totalMinor,platform_fee_amount:feeMinor,status:"creating-checkout",items}).select().single();if(orderError)throw orderError;
     const base=(process.env.PUBLIC_APP_URL||"http://localhost:8081").replace(/\/$/,"");
     let session;try{session=await getStripe().checkout.sessions.create({mode:"payment",client_reference_id:order.id,line_items:products.map(p=>({quantity:1,price_data:{currency,unit_amount:Math.round(Number(p.price)*100),product_data:{name:p.title,description:p.description||undefined,images:p.photo?[p.photo]:undefined,metadata:{teamcalProductId:p.id}}}})),payment_intent_data:{application_fee_amount:feeMinor,transfer_data:{destination:sellerPayout.stripe_account_id},metadata:{teamcalOrderId:order.id,teamcalBuyerId:req.user.id,teamcalSellerId:sellers[0]}},metadata:{teamcalOrderId:order.id},success_url:`${base}/marketplace/orders?checkout=success&session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${base}/marketplace/orders?checkout=cancelled`},{idempotencyKey:`checkout:${order.id}`});}catch(e){await supabase.from("marketplace_orders").update({status:"checkout-failed"}).eq("id",order.id);throw e;}
     const {data:updated,error:updateError}=await supabase.from("marketplace_orders").update({status:"pending-payment",stripe_checkout_session_id:session.id}).eq("id",order.id).select().single();if(updateError)throw updateError;
+    emitStoreCommerceChange(sellers[0], stores[0], "order", updated);
     notifySafely(req.user.id, "order", "Order created", `Your order for ${products.length} item${products.length === 1 ? "" : "s"} is awaiting payment.`, { entityId: order.id });
     res.status(201).json({ success:true, order:updated, checkoutUrl:session.url });
   } catch (err) { next(err); }

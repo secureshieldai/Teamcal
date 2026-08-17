@@ -1,5 +1,6 @@
 const { getStripe } = require("../config/stripe");
 const { supabase } = require("../config/supabase");
+const { emitStoreCommerceChange } = require("../realtime");
 const { notifySafely } = require("../services/notification.service");
 
 async function updateConnectedAccount(account) {
@@ -32,6 +33,7 @@ async function webhook(req, res) {
       const { data: order } = await supabase.from("marketplace_orders").update({ status:"paid", stripe_payment_intent_id:object.payment_intent, paid_at:new Date().toISOString() }).eq("stripe_checkout_session_id",object.id).neq("status","paid").select().maybeSingle();
       if (order) {
         for (const item of order.items || []) await supabase.rpc("increment_product_sold_count", { product_id:item.id, increment_by:item.quantity || 1 });
+        if (order.store_id) emitStoreCommerceChange(order.seller_id, order.store_id, "order", order);
         notifySafely(order.buyer_id,"order","Payment successful","Your marketplace order has been paid.",{entityId:order.id});
       }
     }

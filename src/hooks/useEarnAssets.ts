@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { earnService, type EarnAsset, type EarnAssetKind } from '../services/api/earn.service';
+import { subscribeToAssetChanges } from '../services/realtime';
 
 export function useEarnAssets(kind: EarnAssetKind) {
   const [assets, setAssets] = useState<EarnAsset[]>([]);
@@ -13,9 +14,24 @@ export function useEarnAssets(kind: EarnAssetKind) {
   }, [kind]);
   useFocusEffect(useCallback(() => {
     refresh();
-    const timer = setInterval(refresh, 15000);
-    return () => clearInterval(timer);
-  }, [refresh]));
+    let unsubscribe: () => void = () => undefined;
+    let active = true;
+    subscribeToAssetChanges(({ action, asset }) => {
+      if (!active) return;
+      if (action === 'deleted') {
+        setAssets((current) => current.filter((item) => item.id !== asset.id));
+      } else if ('kind' in asset && asset.kind === kind) {
+        setAssets((current) => {
+          const exists = current.some((item) => item.id === asset.id);
+          return exists
+            ? current.map((item) => item.id === asset.id ? asset as EarnAsset : item)
+            : [asset as EarnAsset, ...current];
+        });
+      }
+    }).then((cleanup) => { if (active) unsubscribe = cleanup; else cleanup(); });
+    const timer = setInterval(refresh, 60000);
+    return () => { active = false; unsubscribe(); clearInterval(timer); };
+  }, [kind, refresh]));
   const create = useCallback(async (value: Parameters<typeof earnService.createAsset>[0]) => {
     const asset = await earnService.createAsset(value);
     setAssets((current) => [asset, ...current]);

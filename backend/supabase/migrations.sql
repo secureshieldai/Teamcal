@@ -126,6 +126,12 @@ alter table payouts add column if not exists stripe_charges_enabled boolean not 
 alter table payouts add column if not exists stripe_payouts_enabled boolean not null default false;
 alter table payouts add column if not exists stripe_account_status text not null default 'not-connected';
 create table if not exists marketplace_orders (id uuid primary key default gen_random_uuid(),buyer_id uuid not null references users(id),seller_id uuid not null references users(id),currency text not null,total_amount bigint not null check(total_amount>=0),platform_fee_amount bigint not null default 0,status text not null,items jsonb not null default '[]',stripe_checkout_session_id text unique,stripe_payment_intent_id text unique,paid_at timestamptz,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+alter table marketplace_products add column if not exists store_id uuid references user_records(id) on delete cascade;
+alter table marketplace_orders add column if not exists store_id uuid references user_records(id) on delete set null;
+create index if not exists idx_marketplace_products_store on marketplace_products(store_id,created_at desc);
+create index if not exists idx_marketplace_orders_store on marketplace_orders(store_id,created_at desc);
+with single_stores as (select user_id,min(id::text)::uuid as store_id from user_records where kind='earn-store' group by user_id having count(*)=1) update marketplace_products p set store_id=s.store_id from single_stores s where p.seller_id=s.user_id and p.store_id is null;
+update marketplace_orders o set store_id=p.store_id from marketplace_products p where o.store_id is null and p.id=(o.items->0->>'id')::uuid and p.store_id is not null;
 create index if not exists idx_marketplace_orders_buyer on marketplace_orders(buyer_id,created_at desc);create index if not exists idx_marketplace_orders_seller on marketplace_orders(seller_id,created_at desc);
 create table if not exists stripe_refunds (id text primary key,order_id uuid not null references marketplace_orders(id),amount bigint not null,currency text not null,status text,reason text,requested_by uuid references users(id),raw jsonb,created_at timestamptz not null default now());
 create table if not exists stripe_disputes (id text primary key,order_id uuid references marketplace_orders(id),charge_id text,payment_intent_id text,amount bigint,currency text,reason text,status text,evidence_due_by timestamptz,raw jsonb,created_at timestamptz not null default now(),updated_at timestamptz not null default now());

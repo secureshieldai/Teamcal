@@ -1,4 +1,5 @@
 const { supabase } = require("../config/supabase");
+const { emitAssetChange } = require("../realtime");
 const { randomUUID } = require("node:crypto");
 const { notifySafely } = require("../services/notification.service");
 const { getStripe } = require("../config/stripe");
@@ -120,7 +121,9 @@ async function createAsset(req, res, next) {
     const assetData = { subtype, title: String(title).trim(), description, image, price: Number(price) || 0, currency: String(currency).toUpperCase(), metrics: {}, metadata };
     const { data, error } = await supabase.from("user_records").insert({ user_id: req.user.id, kind: `earn-${kind}`, data: assetData, status }).select().single();
     if (error) throw error;
-    res.status(201).json({ success: true, asset: { id: data.id, kind, status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
+    const asset = { id: data.id, kind, status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data };
+    emitAssetChange(req.user.id, "created", asset);
+    res.status(201).json({ success: true, asset });
   } catch (err) { next(err); }
 }
 
@@ -142,16 +145,80 @@ async function updateAsset(req, res, next) {
     }
     const { data, error } = await supabase.from("user_records").update({ data: assetData, status: req.body.status || existing.status }).eq("id", req.params.id).eq("user_id", req.user.id).select().maybeSingle();
     if (error) throw error;
-    res.json({ success: true, asset: { id: data.id, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data } });
+    const asset = { id: data.id, kind: data.kind.slice(5), status: data.status, created_at: data.created_at, updated_at: data.updated_at, ...data.data };
+    emitAssetChange(req.user.id, "updated", asset);
+    res.json({ success: true, asset });
   } catch (err) { next(err); }
 }
 
 async function deleteAsset(req, res, next) {
   try {
-    const { data, error } = await supabase.from("user_records").delete().eq("id", req.params.id).eq("user_id", req.user.id).like("kind", "earn-%").select("id").maybeSingle();
+    const { data, error } = await supabase.from("user_records").delete().eq("id", req.params.id).eq("user_id", req.user.id).like("kind", "earn-%").select("id,kind").maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ success: false, message: "Creator asset not found" });
+    emitAssetChange(req.user.id, "deleted", { id: req.params.id, kind: data.kind?.slice(5) });
     res.json({ success: true });
+  } catch (err) { next(err); }
+}
+
+async function requireOwnedStore(userId, storeId) {
+  const { data, error } = await supabase.from("user_records").select("id").eq("id", storeId).eq("user_id", userId).eq("kind", "earn-store").maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function getStoreOrders(req, res, next) {
+  try {
+    if (!await requireOwnedStore(req.user.id, req.params.id)) return res.status(404).json({ success: false, message: "Store not found" });
+    const { data, error } = await supabase.from("marketplace_orders")
+      .select("*, buyer:buyer_id(id,name,avatar,email)")
+      .eq("store_id", req.params.id).eq("seller_id", req.user.id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, orders: data || [] });
+  } catch (err) { next(err); }
+}
+
+async function getStoreCustomers(req, res, next) {
+  try {
+    if (!await requireOwnedStore(req.user.id, req.params.id)) return res.status(404).json({ success: false, message: "Store not found" });
+    const { data, error } = await supabase.from("marketplace_orders")
+      .select("buyer_id,total_amount,status,created_at,buyer:buyer_id(id,name,avatar,email)")
+      .eq("store_id", req.params.id).eq("seller_id", req.user.id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    const customers = [...(data || []).reduce((map, order) => {
+      const current = map.get(order.buyer_id) || { id: order.buyer_id, ...(order.buyer || {}), orders: 0, spent: 0, lastOrderAt: order.created_at };
+      current.orders += 1;
+      if (["paid", "complete", "completed"].includes(order.status)) current.spent += Number(order.total_amount || 0) / 100;
+      map.set(order.buyer_id, current);
+      return map;
+    }, new Map()).values()];
+    res.json({ success: true, customers });
+  } catch (err) { next(err); }
+}
+
+async function createStoreProduct(req, res, next) {
+  try {
+    const { data: store, error: storeError } = await supabase.from("user_records").select("*").eq("id", req.params.id).eq("user_id", req.user.id).eq("kind", "earn-store").maybeSingle();
+    if (storeError) throw storeError;
+    if (!store) return res.status(404).json({ success: false, message: "Store not found" });
+    const product = req.body;
+    if (!String(product.title || "").trim() || !product.category) return res.status(400).json({ success: false, message: "Product title and category are required" });
+    const { data: listing, error } = await supabase.from("marketplace_products").insert({
+      seller_id: req.user.id, store_id: store.id, title: String(product.title).trim(), description: product.description || "",
+      photo: product.image || null, price: Number(product.price) || 0, currency: store.data?.currency || "USD",
+      category: product.category, is_featured: false, is_active: product.status === "published",
+    }).select().single();
+    if (error) throw error;
+    const storedProduct = { ...product, id: listing.id };
+    const metadata = { ...(store.data?.metadata || {}), products: [...(store.data?.metadata?.products || []), storedProduct] };
+    const assetData = { ...store.data, metadata };
+    const { data: updated, error: updateError } = await supabase.from("user_records").update({ data: assetData }).eq("id", store.id).select().single();
+    if (updateError) { await supabase.from("marketplace_products").delete().eq("id", listing.id); throw updateError; }
+    const asset = { id: updated.id, kind: "store", status: updated.status, created_at: updated.created_at, updated_at: updated.updated_at, ...updated.data };
+    emitAssetChange(req.user.id, "updated", asset);
+    res.status(201).json({ success: true, product: storedProduct, asset });
   } catch (err) { next(err); }
 }
 
@@ -416,5 +483,5 @@ async function handleReferralJoin(referralCode, newUserId) {
 module.exports = {
   getEarnEntries, getReferrals, inviteReferral, handleReferralJoin,
   getPayout, connectPayout, payoutStatus, payoutLoginLink, disconnectPayout, withdraw, dailyCheckin, redeemReward, getRedemptions,
-  getSummary, getAssets, getAsset, getPublicAsset, recordAssetView, getPublicMembership, createAsset, updateAsset, deleteAsset, uploadPdfFile, uploadVideoFile,
+  getSummary, getAssets, getAsset, getPublicAsset, recordAssetView, getPublicMembership, getStoreOrders, getStoreCustomers, createStoreProduct, createAsset, updateAsset, deleteAsset, uploadPdfFile, uploadVideoFile,
 };

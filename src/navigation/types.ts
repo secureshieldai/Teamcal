@@ -88,6 +88,9 @@ export type RootStackParamList = {
   UploadPdf: undefined;
   CreatePdf: undefined;
   AiGeneratePdf: undefined;
+  CreateStore: undefined;
+  StoreDashboard: { storeId: string };
+  AddProduct: { storeId: string; productId?: string };
 };
 
 export type NoParamRoute = {

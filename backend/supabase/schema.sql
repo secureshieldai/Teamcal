@@ -597,6 +597,12 @@ create table if not exists marketplace_orders (
   status text not null, items jsonb not null default '[]', stripe_checkout_session_id text unique,
   stripe_payment_intent_id text unique, paid_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
+alter table marketplace_products add column if not exists store_id uuid references user_records(id) on delete cascade;
+alter table marketplace_orders add column if not exists store_id uuid references user_records(id) on delete set null;
+create index if not exists idx_marketplace_products_store on marketplace_products(store_id,created_at desc);
+create index if not exists idx_marketplace_orders_store on marketplace_orders(store_id,created_at desc);
+with single_stores as (select user_id,min(id::text)::uuid as store_id from user_records where kind='earn-store' group by user_id having count(*)=1) update marketplace_products p set store_id=s.store_id from single_stores s where p.seller_id=s.user_id and p.store_id is null;
+update marketplace_orders o set store_id=p.store_id from marketplace_products p where o.store_id is null and p.id=(o.items->0->>'id')::uuid and p.store_id is not null;
 create index if not exists idx_marketplace_orders_buyer on marketplace_orders(buyer_id,created_at desc);
 create index if not exists idx_marketplace_orders_seller on marketplace_orders(seller_id,created_at desc);
 create table if not exists stripe_refunds (id text primary key,order_id uuid not null references marketplace_orders(id) on delete cascade,amount bigint not null,currency text not null,status text,reason text,requested_by uuid references users(id) on delete set null,raw jsonb,created_at timestamptz not null default now());
