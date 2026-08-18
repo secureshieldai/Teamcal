@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -32,6 +32,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   const [draft, setDraft] = useState('');
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [activeStoryId, setActiveStoryId] = useState<string | null>(null);
   const {user}=useAuth();
   const socialBlogs=useApiQuery(()=>socialService.getSocialBlogs(),[],[]);
   const socialVideos=useApiQuery(()=>socialService.getSocialVideos(),[],[]);
@@ -60,8 +61,9 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
     likes:item.metrics?.likes||0,
     comments:item.metrics?.comments||0,
   }));
-  const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.user?.avatar||item.image}));
-  const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType,fileName:asset.fileName});await postsService.create({text:'Shared a story',image:url});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
+  const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.image}));
+  const activeStory=activeStoryId ? socialStories.data.find(item=>item.id===activeStoryId) : undefined;
+  const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType,fileName:asset.fileName});await postsService.create({text:'',image:url,community:'story'});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
 
   useFocusEffect(useCallback(() => {
     refetch();
@@ -96,7 +98,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   return (
     <View style={styles.flex}>
       <View style={styles.storiesWrap}>
-        <StoriesRow currentUserAvatar={user?.avatar||''} stories={storyCards} onAddStory={addStory} onPressStory={(id)=>{const story=socialStories.data.find(x=>x.id===id);if(story)Alert.alert(story.user?.name||'Story',story.image);}} />
+        <StoriesRow currentUserAvatar={user?.avatar||''} stories={storyCards} onAddStory={addStory} onPressStory={setActiveStoryId} />
       </View>
 
       <View style={styles.subTabsWrap}>
@@ -176,6 +178,19 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
         onClose={() => setAiModalOpen(false)}
         onUseCaption={(caption) => setDraft((prev) => (prev.trim() ? `${prev}\n${caption}` : caption))}
       />
+
+      <Modal visible={Boolean(activeStory)} animationType="fade" transparent onRequestClose={() => setActiveStoryId(null)}>
+        <View style={styles.storyViewer}>
+          <View style={styles.storyHeader}>
+            <Image source={{ uri: activeStory?.user?.avatar || activeStory?.image }} style={styles.storyAvatar} />
+            <Text style={styles.storyAuthor} numberOfLines={1}>{activeStory?.user?.name || 'Story'}</Text>
+            <TouchableOpacity accessibilityLabel="Close story" onPress={() => setActiveStoryId(null)} hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
+              <Ionicons name="close" size={30} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+          {activeStory?.image ? <Image source={{ uri: activeStory.image }} style={styles.storyImage} resizeMode="contain" /> : null}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -230,4 +245,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: spacing.xl,
   },
+  storyViewer: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
+  storyHeader: { position: 'absolute', zIndex: 1, top: 48, left: spacing.lg, right: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  storyAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.border },
+  storyAuthor: { flex: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
+  storyImage: { width: '100%', height: '100%' },
 });

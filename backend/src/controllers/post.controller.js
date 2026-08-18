@@ -7,11 +7,24 @@ async function enrichPosts(posts,userId){const ids=(posts||[]).map(x=>x.id);if(!
 /** POST /api/posts */
 async function createPost(req, res, next) {
   try {
+    const isStory = req.body.community === "story";
     const images = Array.isArray(req.body.images)
       ? req.body.images.filter((url) => typeof url === "string" && url.trim()).slice(0, 10)
       : (req.body.image ? [req.body.image] : []);
     if (Array.isArray(req.body.images) && req.body.images.length > 10) {
       return res.status(400).json({ success: false, message: "A post can contain at most 10 images" });
+    }
+    if (isStory && images.length !== 1) {
+      return res.status(400).json({ success: false, message: "A story requires exactly one image" });
+    }
+    if (isStory) {
+      const { error: replaceError } = await supabase
+        .from("posts")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("user_id", req.user.id)
+        .eq("community", "story")
+        .is("deleted_at", null);
+      if (replaceError) throw replaceError;
     }
     const { data: post, error } = await supabase
       .from("posts")
@@ -20,7 +33,7 @@ async function createPost(req, res, next) {
         text: req.body.text || "",
         image: images[0] || null,
         image_urls: images,
-        community: req.body.community || null,
+        community: isStory ? "story" : (req.body.community || null),
         community_cover: req.body.communityCover || null,
       })
       .select()
@@ -65,6 +78,7 @@ async function myPosts(req, res, next) {
       .select("*, user:user_id (id, name, avatar, verified)")
       .eq("user_id", req.user.id)
       .is("deleted_at", null)
+      .or("community.is.null,community.neq.story")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -89,6 +103,7 @@ async function getFeed(req, res, next) {
         )
       `)
       .is("deleted_at", null)
+      .or("community.is.null,community.neq.story")
       .order("created_at", { ascending: false })
       .range(skip, skip + limit - 1);
 
