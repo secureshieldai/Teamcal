@@ -5,8 +5,8 @@ const { supabase } = require("../config/supabase");
 const BUCKET = process.env.SUPABASE_UPLOAD_BUCKET || "teamcal-uploads";
 let bucketReady = false;
 
-async function ensureBucket() {
-  if (bucketReady) return;
+async function ensureBucket(force = false) {
+  if (bucketReady && !force) return;
   const bucketOptions = {
     public: true,
     fileSizeLimit: `${Math.max(Number(process.env.UPLOAD_MAX_SIZE_MB) || 10, Number(process.env.PDF_UPLOAD_MAX_SIZE_MB) || 100, Number(process.env.VIDEO_UPLOAD_MAX_SIZE_MB) || 500)}MB`,
@@ -16,6 +16,12 @@ async function ensureBucket() {
   if (error || !data) {
     const { error: createError } = await supabase.storage.createBucket(BUCKET, bucketOptions);
     if (createError && !/already exists/i.test(createError.message)) throw createError;
+    // A concurrent request may have created the bucket after getBucket(). In
+    // that case it still needs our limits and MIME types applied.
+    if (createError) {
+      const { error: updateError } = await supabase.storage.updateBucket(BUCKET, bucketOptions);
+      if (updateError) throw updateError;
+    }
   } else {
     const { error: updateError } = await supabase.storage.updateBucket(BUCKET, bucketOptions);
     if (updateError) throw updateError;
@@ -23,17 +29,34 @@ async function ensureBucket() {
   bucketReady = true;
 }
 
+function exceededBucketLimit(error) {
+  return /object exceeded maximum allowed size/i.test(error?.message || "");
+}
+
+async function uploadObject(objectPath, file, cacheControl) {
+  const options = {
+    contentType: file.mimetype,
+    cacheControl,
+    upsert: false,
+  };
+  let { error } = await supabase.storage.from(BUCKET).upload(objectPath, file.buffer, options);
+
+  // Bucket configuration can be changed outside this process while the local
+  // readiness flag remains cached. Refresh it once before rejecting a file
+  // that already passed the API's own upload-size validation.
+  if (exceededBucketLimit(error)) {
+    await ensureBucket(true);
+    ({ error } = await supabase.storage.from(BUCKET).upload(objectPath, file.buffer, options));
+  }
+  if (error) throw error;
+}
+
 async function uploadPublicImage(folder, userId, file) {
   if (!file?.buffer) throw new Error("Image buffer is missing");
   await ensureBucket();
   const extension = path.extname(file.originalname || "").toLowerCase() || `.${file.mimetype.split("/")[1] || "jpg"}`;
   const objectPath = `${folder}/${userId}/${randomUUID()}${extension}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(objectPath, file.buffer, {
-    contentType: file.mimetype,
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (error) throw error;
+  await uploadObject(objectPath, file, "31536000");
   return supabase.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
 }
 
@@ -42,12 +65,7 @@ async function uploadPublicFile(folder, userId, file) {
   await ensureBucket();
   const extension = path.extname(file.originalname || "").toLowerCase() || ".pdf";
   const objectPath = `${folder}/${userId}/${randomUUID()}${extension}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(objectPath, file.buffer, {
-    contentType: file.mimetype,
-    cacheControl: "3600",
-    upsert: false,
-  });
-  if (error) throw error;
+  await uploadObject(objectPath, file, "3600");
   return supabase.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
 }
 
