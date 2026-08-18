@@ -9,7 +9,12 @@ async function ensureBucket(force = false) {
   if (bucketReady && !force) return;
   const bucketOptions = {
     public: true,
-    fileSizeLimit: `${Math.max(Number(process.env.UPLOAD_MAX_SIZE_MB) || 10, Number(process.env.PDF_UPLOAD_MAX_SIZE_MB) || 100, Number(process.env.VIDEO_UPLOAD_MAX_SIZE_MB) || 500)}MB`,
+    // Do not impose a second, bucket-level cap. Multer already enforces the
+    // configured limit for each upload type, while Supabase's project-wide
+    // limit still applies. A shared bucket limit based on the 500 MB video
+    // default can exceed the project's plan and leave image uploads stuck on
+    // an older, smaller bucket limit.
+    fileSizeLimit: null,
     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf", "video/mp4", "video/quicktime", "video/webm", "video/x-m4v", "text/vtt", "application/x-subrip", "text/plain"],
   };
   const { data, error } = await supabase.storage.getBucket(BUCKET);
