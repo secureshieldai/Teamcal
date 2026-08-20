@@ -9,6 +9,9 @@ import SegmentedControl from '../../components/SegmentedControl';
 import BlogCard from '../../components/social/BlogCard';
 import AIAssistantModal from '../../components/social/AIAssistantModal';
 import VideoFeedTab from './VideoFeedTab';
+import SocialGamesTab from './SocialGamesTab';
+import SocialLiveTab from './SocialLiveTab';
+import SocialEventsTab from './SocialEventsTab';
 import type { VideoFeedItem } from '../../components/social/VideoFeedCard';
 import { colors, radii, spacing } from '../../theme';
 import { feedSubTabs } from '../../data/communityData';
@@ -117,6 +120,12 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
         />
       ) : subTab === 'Videos' ? (
         <VideoFeedTab videos={videoCards} loading={socialVideos.loading} />
+      ) : subTab === 'Games' ? (
+        <SocialGamesTab />
+      ) : subTab === 'Live' ? (
+        <SocialLiveTab />
+      ) : subTab === 'Events' ? (
+        <SocialEventsTab />
       ) : (
         <FlatList
           data={posts}

@@ -39,10 +39,10 @@ export default function MembershipEditorScreen({ route, navigation }: Props) {
   }, [membershipId]);
 
   const pickImage = async (kind: 'profileImage' | 'banner') => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
     if (result.canceled) return;
     setBusy(true);
-    try { md({ [kind]: await postsService.uploadImage(result.assets[0].uri) }); }
+    try { md({ [kind]: await postsService.uploadImage({ uri: result.assets[0].uri, mimeType: result.assets[0].mimeType || 'image/jpeg', fileName: result.assets[0].fileName || `${kind}.jpg` }) }); }
     catch (error) { Alert.alert('Upload failed', (error as Error).message); }
     finally { setBusy(false); }
   };

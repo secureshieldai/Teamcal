@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.use(protect);
 
-router.post("/chat", aiRateLimit, chat);
+router.post("/chat", aiRateLimit, upload.single("image"), chat);
 router.post("/scan-meal", aiRateLimit, upload.single("image"), scanMeal);
 router.post("/barcode", aiRateLimit, lookupBarcode);
 router.post("/audience/generate",aiRateLimit,generateAudience);

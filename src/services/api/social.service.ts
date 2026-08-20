@@ -83,4 +83,7 @@ export const socialService = {
   async getFriendsProgress() { const { data } = await apiClient.get<{ success: boolean; friends: FriendProgress[] }>('/social/friends/progress'); return data.friends; },
   async getCreators() { const { data } = await apiClient.get<{ success: boolean; creators: CreatorUser[] }>('/social/creators'); return data.creators; },
   async toggleFollow(userId: string) { const { data } = await apiClient.post<{ success: boolean; following: boolean }>(`/social/users/${userId}/follow`); return data.following; },
+  async getLiveStreams() { try { const { data } = await apiClient.get<{ success: boolean; streams: unknown[] }>('/social/live'); return data.streams as any[]; } catch { return []; } },
+  async getEvents() { try { const { data } = await apiClient.get<{ success: boolean; events: unknown[] }>('/social/events'); return data.events as any[]; } catch { return []; } },
+  async registerEvent(eventId: string) { const { data } = await apiClient.post(`/social/events/${eventId}/register`); return data; },
 };

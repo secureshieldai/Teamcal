@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,6 +27,11 @@ const FOCUS_AREAS = [
   { id: 'recovery', label: 'Recovery' },
 ];
 
+const formatIncomeAmount = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+  return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+};
+
 export default function GoalsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, refreshUser } = useAuth();
@@ -42,12 +47,19 @@ export default function GoalsScreen() {
   const [fatsG, setFatsG] = useState(user?.goal_fats_g ?? 65);
   const [weightKg, setWeightKg] = useState(user?.goal_weight_kg ?? 75);
   const [incomeGoal, setIncomeGoal] = useState(1000);
+  const [incomeGoalInput, setIncomeGoalInput] = useState('1,000');
   const [saving, setSaving] = useState(false);
   const [incomeRecordId,setIncomeRecordId]=useState<string>();
 
   useEffect(() => {
-    personalService.list<{value:number}>('income-goal').then(rows=>{if(rows[0]){setIncomeRecordId(rows[0].id);setIncomeGoal(Number(rows[0].data.value));}}).catch(()=>{});
+    personalService.list<{value:number}>('income-goal').then(rows=>{if(rows[0]){const value=Number(rows[0].data.value);setIncomeRecordId(rows[0].id);setIncomeGoal(value);setIncomeGoalInput(formatIncomeAmount(String(value)));}}).catch(()=>{});
   }, []);
+
+  const handleIncomeGoalChange = (value: string) => {
+    const formatted = formatIncomeAmount(value);
+    setIncomeGoalInput(formatted);
+    setIncomeGoal(Number(formatted.replace(/,/g, '')) || 0);
+  };
 
   const toggleFocusArea = (id: string) => {
     setFocusAreas((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
@@ -126,7 +138,22 @@ export default function GoalsScreen() {
           <GoalSlider label="Carbs" value={carbsG} unit="g" min={50} max={500} step={5} onChange={setCarbsG} />
           <GoalSlider label="Fats" value={fatsG} unit="g" min={20} max={150} step={5} onChange={setFatsG} />
           <GoalSlider label="Target weight" value={weightKg} unit="kg" min={40} max={150} step={1} onChange={setWeightKg} />
-          <GoalSlider label="Monthly income goal" value={incomeGoal} unit="$" min={0} max={20000} step={100} onChange={setIncomeGoal} />
+          <View style={styles.incomeGoalWrap}>
+            <Text style={styles.incomeGoalLabel}>Monthly income goal</Text>
+            <View style={styles.incomeInputWrap}>
+              <Text style={styles.currencyPrefix}>$</Text>
+              <TextInput
+                value={incomeGoalInput}
+                onChangeText={handleIncomeGoalChange}
+                keyboardType="number-pad"
+                inputMode="numeric"
+                placeholder="0"
+                placeholderTextColor={colors.textMuted}
+                style={styles.incomeInput}
+                accessibilityLabel="Monthly income goal in US dollars"
+              />
+            </View>
+          </View>
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
@@ -202,6 +229,38 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radii.xl,
     padding: spacing.lg,
+  },
+  incomeGoalWrap: {
+    marginBottom: spacing.xs,
+  },
+  incomeGoalLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  incomeInputWrap: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+  },
+  currencyPrefix: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginRight: spacing.xs,
+  },
+  incomeInput: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   focusHeaderRow: {
     flexDirection: 'row',

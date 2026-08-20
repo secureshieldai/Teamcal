@@ -49,7 +49,6 @@ const PLATFORMS = [
   { key: 'discord',    label: 'Discord',    color: '#5865F2', icon: 'logo-discord',    authType: 'oauth' },
   { key: 'tiktok',     label: 'TikTok',     color: '#010101', icon: 'musical-notes',   authType: 'oauth' },
   { key: 'whatsapp',   label: 'WhatsApp',   color: '#25D366', icon: 'logo-whatsapp',   authType: 'business' },
-  { key: 'telegram',   label: 'Telegram',   color: '#2AABEE', icon: 'paper-plane',     authType: 'bot' },
 ] as const;
 
 type PlatformKey = typeof PLATFORMS[number]['key'];
@@ -60,18 +59,15 @@ function getPlatform(key: string) {
 
 // ─── OAuth helpers ────────────────────────────────────────────────────────────
 
-const BASE_URL =
-  (process.env.EXPO_PUBLIC_API_URL ?? 'https://teamcal-mr7g.onrender.com/api').replace(/\/api$/, '');
-
 async function startOAuthFlow(platformKey: PlatformKey): Promise<void> {
   // Initiate server-side OAuth — backend redirects to platform, then back to app via deep link
-  const url = `${BASE_URL}/api/social-auth/connect/${platformKey}`;
-  const supported = await Linking.canOpenURL(url);
+  const { data } = await apiClient.post<{ success: boolean; authUrl: string }>(`/social-auth/connect/${platformKey}`);
+  const supported = await Linking.canOpenURL(data.authUrl);
   if (!supported) {
     Alert.alert('Unable to open browser', 'Please update your device settings to allow opening links.');
     return;
   }
-  await Linking.openURL(url);
+  await Linking.openURL(data.authUrl);
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -105,6 +101,12 @@ export default function AudienceAccountsScreen({ navigation }: Props) {
       if (url.includes('social-auth/callback') || url.includes('audience-accounts')) {
         setConnecting(null);
         load();
+        try {
+          const callback = new URL(url);
+          if (callback.searchParams.get('status') === 'error') {
+            Alert.alert('Connection failed', callback.searchParams.get('message') || 'The social account could not be connected.');
+          }
+        } catch { /* Refreshing the account list is still safe if a provider returns a malformed URL. */ }
       }
     });
     return () => sub.remove();

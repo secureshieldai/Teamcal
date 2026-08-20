@@ -87,7 +87,7 @@ export default function FastingNowTab({ navigation }: Props) {
   }, [history]);
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       {active ? (
         <View style={[styles.timerCard, shadow.card]}>
           <FastingRing percent={(elapsedHours / active.target_hours) * 100}>
@@ -179,9 +179,12 @@ export default function FastingNowTab({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xxl + spacing.lg,
     gap: spacing.lg,
   },
   timerCard: {
@@ -337,6 +340,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radii.xl,
     padding: spacing.lg,
+    minHeight: 112,
   },
   sectionLabel: {
     fontSize: 11.5,
@@ -348,10 +352,12 @@ const styles = StyleSheet.create({
   weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingBottom: spacing.xs,
   },
   weekItem: {
     alignItems: 'center',
     gap: 6,
+    minHeight: 46,
   },
   weekDot: {
     width: 28,
@@ -371,6 +377,7 @@ const styles = StyleSheet.create({
   },
   weekLabel: {
     fontSize: 10.5,
+    lineHeight: 14,
     color: colors.textMuted,
     fontWeight: '600',
   },

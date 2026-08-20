@@ -176,11 +176,11 @@ export default function CreateCommunityScreen({ navigation }: Props) {
   const displayCover = customCoverUri || coverUri;
 
   const pickCustomCover = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
     if (result.canceled) return;
     setBusy(true);
     try {
-      const url = await postsService.uploadImage(result.assets[0].uri);
+      const url = await postsService.uploadImage({ uri: result.assets[0].uri, mimeType: result.assets[0].mimeType || 'image/jpeg', fileName: result.assets[0].fileName || 'cover.jpg' });
       setCustomCoverUri(url);
     } catch (e) {
       Alert.alert('Upload failed', (e as Error).message);

@@ -17,7 +17,7 @@ export default function MealPlannerEmptyState({ onCreate }: Props) {
         </View>
       </View>
 
-      <Text style={styles.title}>Create your first meal plan</Text>
+      <Text style={styles.title}>Create your meal plan</Text>
       <Text style={styles.subtitle}>
         Answer a few quick questions and Blaze will generate a personalized meal plan based on your goals, preferences, lifestyle,
         dietary needs, and health information.

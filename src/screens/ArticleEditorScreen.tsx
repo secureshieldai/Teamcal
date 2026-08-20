@@ -169,11 +169,11 @@ export default function ArticleEditorScreen({ route, navigation }: Props) {
 
   // ── Cover image ────────────────────────────────────────────────────────────
   const pickCover = async () => {
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
     if (!picked.canceled) {
       setBusy(true);
       try {
-        setCover(await postsService.uploadImage(picked.assets[0].uri));
+        setCover(await postsService.uploadImage({ uri: picked.assets[0].uri, mimeType: picked.assets[0].mimeType || 'image/jpeg', fileName: picked.assets[0].fileName || 'cover.jpg' }));
         dirty.current = true;
       } catch (e) {
         Alert.alert('Upload failed', (e as Error).message);
@@ -184,11 +184,11 @@ export default function ArticleEditorScreen({ route, navigation }: Props) {
   };
 
   const insertImage = async () => {
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
     if (picked.canceled) return;
     setBusy(true);
     try {
-      const url = await postsService.uploadImage(picked.assets[0].uri);
+      const url = await postsService.uploadImage({ uri: picked.assets[0].uri, mimeType: picked.assets[0].mimeType || 'image/jpeg', fileName: picked.assets[0].fileName || 'image.jpg' });
       insertAtCursor(`![](${url})`);
     } catch (e) {
       Alert.alert('Upload failed', (e as Error).message);

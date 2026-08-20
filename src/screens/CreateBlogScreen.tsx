@@ -28,7 +28,7 @@ export default function CreateBlogScreen() {
   const [creating, setCreating] = useState(false);
   const [createdBlogId, setCreatedBlogId] = useState('');
   const [logo,setLogo]=useState('');const [cover,setCover]=useState('');
-  const chooseImage=async(kind:'logo'|'cover')=>{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;setCreating(true);try{const url=await postsService.uploadImage(result.assets[0].uri);if(kind==='logo')setLogo(url);else setCover(url);}catch(e){Alert.alert('Upload failed',(e as Error).message)}finally{setCreating(false)}};
+  const chooseImage=async(kind:'logo'|'cover')=>{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.5,allowsEditing:true,aspect:kind==='logo'?[1,1]:[16,9]});if(result.canceled)return;setCreating(true);try{const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType||'image/jpeg',fileName:asset.fileName||`${kind}.jpg`});if(kind==='logo')setLogo(url);else setCover(url);}catch(e){Alert.alert('Upload failed',(e as Error).message)}finally{setCreating(false)}};
 
   const suggestedSubdomain = useMemo(
     () => (subdomain || name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'my-blog',

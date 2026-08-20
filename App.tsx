@@ -12,7 +12,12 @@ export default function App() {
       <SafeAreaProvider>
         <AuthProvider>
           <StepSyncManager />
-          <NavigationContainer>
+          <NavigationContainer
+            linking={{
+              prefixes: ['teamcal://'],
+              config: { screens: { AudienceAccounts: 'social-auth/callback' } },
+            }}
+          >
             <RootNavigator />
           </NavigationContainer>
         </AuthProvider>

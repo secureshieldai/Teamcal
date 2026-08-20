@@ -2,6 +2,7 @@
   "expo": {
     "name": "TeamCal",
     "slug": "TeamCal",
+    "scheme": "teamcal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/AppIcon.png",
@@ -50,7 +51,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow TeamCal to analyze a food photo."
+          "photosPermission": "Allow TeamCal to share selected photos with your AI coach and analyze food photos."
         }
       ],
       "expo-font"

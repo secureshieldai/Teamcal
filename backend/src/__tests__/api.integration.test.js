@@ -150,6 +150,8 @@ describe("protected route boundaries", () => {
     ["get", "/api/workouts"],
   ["get", "/api/marketplace/products"],
   ["get", "/api/personal"],
+  ["get", "/api/social-auth/platforms"],
+  ["post", "/api/social-auth/connect/instagram"],
   ["get", "/api/earn/payout/status"],
   ["post", "/api/earn/payout/login-link"],
   ["post", "/api/marketplace/checkout"],

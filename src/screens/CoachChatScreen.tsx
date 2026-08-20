@@ -1,7 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import ChatBubble from '../components/ChatBubble';
 import CoachMascotAvatar from '../components/CoachMascotAvatar';
@@ -71,6 +72,18 @@ function ProgressCardBubble({ time }: { time: string }) {
   );
 }
 
+function ImageMessageBubble({ uri, text, time }: { uri: string; text?: string; time: string }) {
+  return (
+    <View style={styles.imageMessageWrap}>
+      <View style={styles.imageMessageBubble}>
+        <Image source={{ uri }} style={styles.messageImage} resizeMode="cover" />
+        {text ? <Text style={styles.imageCaption}>{text}</Text> : null}
+      </View>
+      <Text style={styles.imageMessageTime}>{time}</Text>
+    </View>
+  );
+}
+
 export default function CoachChatScreen() {
   const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
@@ -84,23 +97,45 @@ export default function CoachChatScreen() {
     },
   ]);
   const [draft, setDraft] = useState('');
+  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [sending, setSending] = useState(false);
+
+  const pickImage = useCallback(async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsMultipleSelection: false,
+      });
+      if (!result.canceled) setSelectedImage(result.assets[0]);
+    } catch (error) {
+      Alert.alert('Unable to select image', (error as Error).message);
+    }
+  }, []);
 
   const handleSend = useCallback(async () => {
     const text = draft.trim();
-    if (!text || sending) return;
+    const image = selectedImage;
+    if ((!text && !image) || sending) return;
 
     setDraft('');
+    setSelectedImage(null);
     setSending(true);
     setMessages((prev) => [
       ...prev,
-      { id: `u-${Date.now()}`, kind: 'text', fromMe: true, text, time: formatTime(new Date()) },
+      image
+        ? { id: `u-${Date.now()}`, kind: 'image', fromMe: true, uri: image.uri, text: text || undefined, time: formatTime(new Date()) }
+        : { id: `u-${Date.now()}`, kind: 'text', fromMe: true, text, time: formatTime(new Date()) },
       { id: TYPING_ID, kind: 'text', fromMe: false, text: '...', time: '' },
     ]);
 
     try {
       const context = await buildCoachContext();
-      const { reply } = await coachService.sendMessage(text, context);
+      const { reply } = await coachService.sendMessage(text, context, image ? {
+        uri: image.uri,
+        mimeType: image.mimeType,
+        fileName: image.fileName,
+      } : undefined);
       setMessages((prev) => [
         ...prev.filter((m) => m.id !== TYPING_ID),
         { id: `c-${Date.now()}`, kind: 'text', fromMe: false, text: reply, time: formatTime(new Date()) },
@@ -119,7 +154,7 @@ export default function CoachChatScreen() {
     } finally {
       setSending(false);
     }
-  }, [draft, sending]);
+  }, [draft, selectedImage, sending]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -161,6 +196,9 @@ export default function CoachChatScreen() {
           if (message.kind === 'progress') {
             return <ProgressCardBubble key={message.id} time={message.time} />;
           }
+          if (message.kind === 'image') {
+            return <ImageMessageBubble key={message.id} uri={message.uri} text={message.text} time={message.time} />;
+          }
           return (
             <ChatBubble
               key={message.id}
@@ -173,24 +211,37 @@ export default function CoachChatScreen() {
         })}
       </ScrollView>
 
-      <View style={styles.inputBar}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          placeholderTextColor={colors.textMuted}
-          value={draft}
-          onChangeText={setDraft}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-          editable={!sending}
-        />
-        <TouchableOpacity style={styles.micButton} onPress={handleSend} disabled={sending || !draft.trim()}>
-          {sending ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Ionicons name={draft.trim() ? 'send' : 'mic'} size={18} color={colors.white} />
-          )}
-        </TouchableOpacity>
+      <View style={styles.composer}>
+        {selectedImage ? (
+          <View style={styles.imagePreviewWrap}>
+            <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
+            <TouchableOpacity style={styles.removeImageButton} onPress={() => setSelectedImage(null)} accessibilityLabel="Remove selected image">
+              <Ionicons name="close" size={16} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        <View style={styles.inputBar}>
+          <TouchableOpacity style={styles.imageButton} onPress={pickImage} disabled={sending} accessibilityLabel="Select an image">
+            <Ionicons name="image-outline" size={21} color={colors.primary} />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder={selectedImage ? 'Add a message (optional)...' : 'Type a message...'}
+            placeholderTextColor={colors.textMuted}
+            value={draft}
+            onChangeText={setDraft}
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            editable={!sending}
+          />
+          <TouchableOpacity style={styles.micButton} onPress={handleSend} disabled={sending || (!draft.trim() && !selectedImage)}>
+            {sending ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Ionicons name={draft.trim() || selectedImage ? 'send' : 'mic'} size={18} color={colors.white} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
     </SafeAreaView>
@@ -346,14 +397,73 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: colors.textSecondary,
   },
+  imageMessageWrap: {
+    alignSelf: 'flex-end',
+    width: '72%',
+    marginBottom: spacing.md,
+  },
+  imageMessageBubble: {
+    overflow: 'hidden',
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+    borderBottomRightRadius: 4,
+  },
+  messageImage: {
+    width: '100%',
+    aspectRatio: 1.25,
+  },
+  imageCaption: {
+    color: colors.white,
+    fontSize: 13.5,
+    lineHeight: 19,
+    padding: spacing.md,
+  },
+  imageMessageTime: {
+    alignSelf: 'flex-end',
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 4,
+    marginRight: 4,
+  },
+  composer: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  imagePreviewWrap: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.lg,
+  },
+  imagePreview: {
+    width: 72,
+    height: 72,
+    borderRadius: radii.md,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+  },
+  imageButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFEDE3',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
     flex: 1,

@@ -36,6 +36,7 @@ const workoutRoutes = require("./routes/workout.routes");
 const marketplaceRoutes = require("./routes/marketplace.routes");
 const personalRoutes = require("./routes/personal.routes");
 const stripeRoutes = require("./routes/stripe.routes");
+const socialAuthRoutes = require("./routes/socialAuth.routes");
 
 const app = express();
 
@@ -125,6 +126,7 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/personal", personalRoutes);
+app.use("/api/social-auth", socialAuthRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));

@@ -21,18 +21,22 @@ const aiRateLimit = rateLimit({
 
 /**
  * POST /api/coach/chat
- * Body: { message, context: { fastHours, hydrationMl, steps, sleepHours } }
+ * Body: { message, context: { fastHours, hydrationMl, steps, sleepHours } }, with an optional multipart image.
  *
  * Mirrors contextualReply() in src/routes/coach.tsx — falls back to rule-based
  * replies if Gemini API key is not configured.
  */
 async function chat(req, res, next) {
   try {
-    const { message, context = {} } = req.body;
+    const message = String(req.body.message || "").trim();
+    let context = req.body.context || {};
+    if (typeof context === "string") {
+      try { context = JSON.parse(context); } catch { context = {}; }
+    }
     const { fastHours = 0, hydrationMl = 0, steps = 0, sleepHours = 7 } = context;
 
-    if (!message || !message.trim()) {
-      return res.status(400).json({ success: false, message: "message is required" });
+    if (!message && !req.file) {
+      return res.status(400).json({ success: false, message: "A message or image is required" });
     }
 
     let reply;
@@ -47,18 +51,20 @@ The user's current data:
 
 Keep replies concise (2-4 sentences max), warm, and data-driven. No markdown headers. No bullet lists.`;
 
-      const chatSession = model.startChat({
-        history: [],
-        generationConfig: { maxOutputTokens: 256, temperature: 0.7 },
-      });
-      const result = await chatSession.sendMessage(`${systemPrompt}\n\nUser: ${message}`);
+      const prompt = `${systemPrompt}\n\nUser: ${message || "Please analyze this image and give me relevant health coaching advice."}`;
+      const parts = req.file
+        ? [prompt, { inlineData: { data: req.file.buffer.toString("base64"), mimeType: req.file.mimetype } }]
+        : [prompt];
+      const result = await model.generateContent(parts);
       reply = result.response.text();
+    } else if (req.file) {
+      reply = "I received your image, but image analysis is temporarily unavailable. Please try again shortly.";
     } else {
       reply = ruleBasedReply(message, { fastHours, hydrationMl, steps, sleepHours });
     }
 
     // Build suggestion links matching the frontend suggestion format
-    const suggestions = buildSuggestions(message);
+    const suggestions = buildSuggestions(message || "image health advice");
 
     res.json({ success: true, reply, suggestions });
   } catch (err) {

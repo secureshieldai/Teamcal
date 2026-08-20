@@ -53,12 +53,17 @@ export default function PeriodTrackerScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsRow}>
+      <ScrollView
+        horizontal
+        style={styles.tabsScroll}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsRow}
+      >
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
             <TouchableOpacity key={t.id} style={[styles.tab, active && styles.tabActive]} onPress={() => setTab(t.id)}>
-              <Ionicons name={t.icon} size={14} color={active ? colors.white : colors.textSecondary} />
+              <Ionicons name={t.icon} size={16} color={active ? colors.white : colors.textSecondary} />
               <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
             </TouchableOpacity>
           );
@@ -101,17 +106,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabsRow: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  tabsScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+    minHeight: 64,
+  },
+  tabsRow: {
+    minHeight: 64,
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
   tab: {
+    minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     borderRadius: radii.pill,
-    paddingVertical: spacing.sm,
+    paddingVertical: 10,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.card,
   },
   tabActive: { backgroundColor: colors.primary },
-  tabText: { fontSize: 12.5, fontWeight: '700', color: colors.textSecondary },
+  tabText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
   tabTextActive: { color: colors.white },
 });

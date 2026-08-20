@@ -9,6 +9,7 @@ import SocialFeedTab from './social/SocialFeedTab';
 import SocialChatsTab from './social/SocialChatsTab';
 import SocialCommunitiesTab from './social/SocialCommunitiesTab';
 import SocialMeTab from './social/SocialMeTab';
+import PlayGamesTab from './social/PlayGamesTab';
 import { colors, spacing, typography } from '../theme';
 import { socialTopTabs } from '../data/communityData';
 import type { RootStackParamList } from '../navigation/types';
@@ -57,6 +58,8 @@ export default function CommunityScreen() {
         <SocialChatsTab navigation={navigation} />
       ) : tab === 'Communities' ? (
         <SocialCommunitiesTab navigation={navigation} />
+      ) : tab === 'Games' ? (
+        <PlayGamesTab />
       ) : tab === 'Me' ? (
         <SocialMeTab navigation={navigation} />
       ) : (
