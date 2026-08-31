@@ -12,6 +12,7 @@ import {
   StepBar, WizardHeader, WizardNav, Field, CategoryDropdown,
   LanguageDropdown, ThumbnailPicker, MonetizationStep, PreviewStep, sw,
 } from './earn/video/VideoWizardShared';
+import AddToShowcaseModal, { type AddToShowcaseConfig } from './earn/video/AddToShowcaseModal';
 import type { MonetizationType, PreviewType } from './earn/video/videoData';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateCourse'>;
@@ -45,8 +46,8 @@ export default function CreateCourseScreen({ navigation }: Props) {
   const [price, setPrice] = useState('29.99');
   const [allowComments, setAllowComments] = useState(true);
   const [allowLikes, setAllowLikes] = useState(true);
-  const [addToShowcase, setAddToShowcase] = useState(false);
-  const [dropContent, setDropContent] = useState(false);
+  const [showcaseConfig, setShowcaseConfig] = useState<AddToShowcaseConfig>({ enabled: false });
+  const [showShowcaseModal, setShowShowcaseModal] = useState(false);
 
   // Step 4
   const [previewType, setPreviewType] = useState<PreviewType>('first-30');
@@ -119,7 +120,7 @@ export default function CreateCourseScreen({ navigation }: Props) {
           previewType, previewCustomStart: customStart ? Number(customStart) : undefined,
           previewCustomEnd: customEnd ? Number(customEnd) : undefined,
           previewFileUrl: previewFileUri || undefined,
-          commentsEnabled: allowComments, sharingEnabled: allowLikes, addToShowcase, dropContent,
+          commentsEnabled: allowComments, sharingEnabled: allowLikes, showcaseConfig,
         },
       });
       navigation.replace('VideoDashboard', { videoId: asset.id });
@@ -210,8 +211,7 @@ export default function CreateCourseScreen({ navigation }: Props) {
           price={price} onPrice={setPrice}
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
-          addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
-          dropContent={dropContent} onDropContent={setDropContent}
+          addToShowcase={showcaseConfig.enabled} onAddToShowcase={() => setShowShowcaseModal(true)}
         />
       )}
 
@@ -223,8 +223,7 @@ export default function CreateCourseScreen({ navigation }: Props) {
           previewFileUri={previewFileUri} onPickPreview={pickPreview}
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
-          addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
-          dropContent={dropContent} onDropContent={setDropContent}
+          addToShowcase={showcaseConfig.enabled} onAddToShowcase={() => setShowShowcaseModal(true)}
         />
       )}
 
@@ -240,6 +239,12 @@ export default function CreateCourseScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
         )}
+
+      <AddToShowcaseModal
+        visible={showShowcaseModal}
+        onClose={() => setShowShowcaseModal(false)}
+        onConfirm={(config) => setShowcaseConfig(config)}
+      />
     </SafeAreaView>
   );
 }

@@ -27,6 +27,13 @@ async function addEntry(req, res, next) {
   }
 }
 
+function deduplicatedTotal(entries) {
+  const imported = entries.filter((entry) => entry.meta?.cumulative);
+  const manual = entries.filter((entry) => !entry.meta?.cumulative);
+  return manual.reduce((sum, entry) => sum + Number(entry.value), 0) +
+    imported.reduce((max, entry) => Math.max(max, Number(entry.value)), 0);
+}
+
 /** POST /api/tracker/steps/sync
  * Replaces one imported cumulative total for a local calendar day. Manual step
  * entries remain additive, while repeated device/health syncs are idempotent.
@@ -112,7 +119,7 @@ async function getToday(req, res, next) {
       .order("ts", { ascending: false });
 
     if (error) throw error;
-    const sum = entries.reduce((a, e) => a + Number(e.value), 0);
+    const sum = req.params.tracker === "steps" ? deduplicatedTotal(entries) : entries.reduce((a, e) => a + Number(e.value), 0);
     res.json({ success: true, entries, sum });
   } catch (err) {
     next(err);
@@ -142,7 +149,7 @@ async function getLastN(req, res, next) {
       d.setUTCDate(d.getUTCDate() - (days - 1 - i));
       const k = dayKey(d.getTime() + timezoneOffsetMinutes * 60000, timezoneOffsetMinutes);
       const day = entries.filter((e) => dayKey(e.ts, timezoneOffsetMinutes) === k);
-      return { day: k, total: day.reduce((a, b) => a + Number(b.value), 0), count: day.length };
+      return { day: k, total: req.params.tracker === "steps" ? deduplicatedTotal(day) : day.reduce((a, b) => a + Number(b.value), 0), count: day.length };
     });
 
     res.json({ success: true, data: result });
@@ -198,7 +205,8 @@ async function getStreak(req, res, next) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const k = dayKey(d.getTime());
-      const total = entries.filter((e) => dayKey(e.ts) === k).reduce((a, b) => a + Number(b.value), 0);
+      const dayEntries = entries.filter((e) => dayKey(e.ts) === k);
+      const total = req.params.tracker === "steps" ? deduplicatedTotal(dayEntries) : dayEntries.reduce((a, b) => a + Number(b.value), 0);
       if (total >= dailyGoal) streak++;
       else if (i > 0) break;
     }

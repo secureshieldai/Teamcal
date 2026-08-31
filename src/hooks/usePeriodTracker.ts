@@ -101,6 +101,23 @@ export function usePeriodTracker() {
     [nextPeriodDate, cycleLength]
   );
 
+  // Full prediction detail for any single date — powers the Daily Cycle Prediction sheet.
+  const getDayDetail = useCallback(
+    (ts: number) => {
+      const d = startOfDay(ts);
+      const cyclesSince = Math.floor(daysBetween(effectiveAnchor, d) / cycleLength);
+      const cycleStart = effectiveAnchor + cyclesSince * cycleLength * DAY_MS;
+      const dayInCycle = daysBetween(cycleStart, d) + 1;
+      const isPeriod = dayInCycle <= periodLength;
+      const isOvulation = dayInCycle === ovulationDay;
+      const isFertile = dayInCycle >= fertileStart && dayInCycle <= fertileEnd;
+      const dayPhase: CyclePhase = isPeriod ? 'menstrual' : isFertile ? 'ovulatory' : dayInCycle < fertileStart ? 'follicular' : 'luteal';
+      const daysUntilPeriod = Math.max(0, cycleLength - dayInCycle + 1);
+      return { cycleDay: dayInCycle, phase: dayPhase, isPeriod, isOvulation, isFertile, daysUntilPeriod };
+    },
+    [effectiveAnchor, cycleLength, periodLength, ovulationDay, fertileStart, fertileEnd]
+  );
+
   const cycleLengths = useMemo(() => {
     const diffs: number[] = [];
     for (let i = 1; i < periodStarts.length; i++) diffs.push(daysBetween(periodStarts[i - 1], periodStarts[i]));
@@ -200,6 +217,7 @@ export function usePeriodTracker() {
     fertileWindowLength,
     ovulationDay,
     classifyDate,
+    getDayDetail,
     next3Cycles,
     avgCycle,
     avgPeriod: periodLength,

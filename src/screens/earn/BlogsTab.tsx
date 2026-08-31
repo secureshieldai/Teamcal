@@ -18,6 +18,17 @@ const SORT_OPTIONS = ['Newest', 'Oldest', 'Highest Earning', 'Most Viewed', 'Mos
 
 const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
+function confirmDelete(itemName: string, onConfirm: () => void) {
+  Alert.alert(
+    'Delete permanently?',
+    `Are you sure you want to permanently delete "${itemName}"? This action cannot be undone.`,
+    [
+      { text: 'No', style: 'cancel' },
+      { text: 'Yes, delete permanently', style: 'destructive', onPress: onConfirm },
+    ]
+  );
+}
+
 export default function BlogsTab({ navigation }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
   const [sort, setSort] = useState(SORT_OPTIONS[0]);
@@ -86,7 +97,36 @@ export default function BlogsTab({ navigation }: Props) {
 
       <View style={{ gap: spacing.md }}>
         {loadError?<Text style={styles.blogUrl}>Could not load your blogs: {loadError}</Text>:null}
-        {userBlogs.map(blog=><TouchableOpacity key={blog.id} style={[styles.blogCard,shadow.soft]} activeOpacity={0.85} onPress={()=>navigation.navigate('BlogDashboard',{blogId:blog.id})}><Image source={{uri:blog.cover||`https://picsum.photos/seed/${blog.id}/500/280`}} style={styles.blogCover}/><View style={styles.blogInfo}><View style={styles.blogTopRow}><Text style={styles.blogName} numberOfLines={1}>{blog.name}</Text><StatusBadge status={blog.status||'draft'}/></View><Text style={styles.blogUrl} numberOfLines={1}>{blog.slug}.teamcal.blog</Text><View style={styles.categoryPill}><Text style={styles.categoryPillText}>{blog.category||'General'}</Text></View><View style={styles.blogStatsRow}><Text style={styles.blogStat}>Saved to your account</Text></View></View><Ionicons name="chevron-forward" size={18} color={colors.textMuted}/></TouchableOpacity>)}
+        {userBlogs.map(blog => (
+          <View key={blog.id} style={[styles.blogCard, shadow.soft]}>
+            <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md }} activeOpacity={0.85} onPress={() => navigation.navigate('BlogDashboard', { blogId: blog.id })}>
+              <Image source={{ uri: blog.cover || `https://picsum.photos/seed/${blog.id}/500/280` }} style={styles.blogCover} />
+              <View style={styles.blogInfo}>
+                <View style={styles.blogTopRow}>
+                  <Text style={styles.blogName} numberOfLines={1}>{blog.name}</Text>
+                  <StatusBadge status={blog.status || 'draft'} />
+                </View>
+                <Text style={styles.blogUrl} numberOfLines={1}>{blog.slug}.teamcal.blog</Text>
+                <View style={styles.categoryPill}><Text style={styles.categoryPillText}>{blog.category || 'General'}</Text></View>
+                <View style={styles.blogStatsRow}><Text style={styles.blogStat}>Saved to your account</Text></View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => confirmDelete(blog.name, async () => {
+                try {
+                  await blogsService.deleteSite(blog.id);
+                  setUserBlogs(prev => prev.filter(b => b.id !== blog.id));
+                  Alert.alert('Deleted successfully');
+                } catch (e) { Alert.alert('Error', (e as Error).message); }
+              })}
+            >
+              <Ionicons name="trash-outline" size={17} color={colors.macroProtein} />
+            </TouchableOpacity>
+          </View>
+        ))}
         {!loadError&&!userBlogs.length?<Text style={styles.blogUrl}>No personal blogs yet. Create one above.</Text>:null}
       </View>
 
@@ -246,6 +286,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.md,
   },
+  deleteBtn: { padding: spacing.xs },
   blogCover: {
     width: 56,
     height: 56,

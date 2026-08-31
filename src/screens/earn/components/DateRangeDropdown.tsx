@@ -16,9 +16,9 @@ export default function DateRangeDropdown({ value, onChange }: Props) {
   return (
     <>
       <TouchableOpacity style={styles.button} onPress={() => setOpen(true)} activeOpacity={0.8}>
-        <Ionicons name="calendar-outline" size={14} color={colors.textPrimary} />
+        <Ionicons name="calendar-outline" size={16} color={colors.textPrimary} />
         <Text style={styles.buttonText}>{activeLabel}</Text>
-        <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
+        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -54,11 +54,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
   },
   buttonText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
   },

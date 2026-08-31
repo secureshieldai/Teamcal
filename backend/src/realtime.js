@@ -4,6 +4,10 @@ const { supabase } = require("./config/supabase");
 
 let io;
 
+function getIo() {
+  return io;
+}
+
 function initRealtime(server) {
   io = new Server(server, {
     path: "/realtime",
@@ -28,7 +32,24 @@ function initRealtime(server) {
     }
   });
 
-  io.on("connection", (socket) => socket.join(`user:${socket.userId}`));
+  io.on("connection", (socket) => {
+    // Personal room
+    socket.join(`user:${socket.userId}`);
+
+    // ── Live streaming rooms ──────────────────────────────────────
+    socket.on("live:join_discover", () => {
+      socket.join("live:discover");
+    });
+
+    socket.on("live:join_stream", ({ streamId }) => {
+      if (streamId) socket.join(`live:${streamId}`);
+    });
+
+    socket.on("live:leave_stream", ({ streamId }) => {
+      if (streamId) socket.leave(`live:${streamId}`);
+    });
+  });
+
   return io;
 }
 
@@ -40,4 +61,4 @@ function emitStoreCommerceChange(userId, storeId, resource, value) {
   io?.to(`user:${userId}`).emit("store:commerce", { storeId, resource, value });
 }
 
-module.exports = { initRealtime, emitAssetChange, emitStoreCommerceChange };
+module.exports = { initRealtime, getIo, emitAssetChange, emitStoreCommerceChange };

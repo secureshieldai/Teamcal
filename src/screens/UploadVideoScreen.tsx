@@ -42,7 +42,6 @@ export default function UploadVideoScreen({ navigation }: Props) {
   const [allowComments, setAllowComments] = useState(true);
   const [allowLikes, setAllowLikes] = useState(true);
   const [addToShowcase, setAddToShowcase] = useState(false);
-  const [dropContent, setDropContent] = useState(false);
 
   // Step 4 – Preview
   const [previewType, setPreviewType] = useState<PreviewType>('first-30');
@@ -198,7 +197,7 @@ export default function UploadVideoScreen({ navigation }: Props) {
           <CategoryDropdown value={category} onChange={setCategory} />
           <Field label="Tags" value={tags} onChangeText={setTags} placeholder="mindset, motivation, success" maxLength={100} />
           <LanguageDropdown value={language} onChange={setLanguage} />
-          <ThumbnailPicker uri={thumbnailUri} onPick={pickThumbnail} />
+          <ThumbnailPicker uri={thumbnailUri} onPick={pickThumbnail} onAiHelper={() => navigation.navigate('AIHelper', { blogId: '', existingContent: title })} />
         </ScrollView>
       )}
 
@@ -209,7 +208,6 @@ export default function UploadVideoScreen({ navigation }: Props) {
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
           addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
-          dropContent={dropContent} onDropContent={setDropContent}
         />
       )}
 
@@ -222,7 +220,6 @@ export default function UploadVideoScreen({ navigation }: Props) {
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
           addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
-          dropContent={dropContent} onDropContent={setDropContent}
         />
       )}
 

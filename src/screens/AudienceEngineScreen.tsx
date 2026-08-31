@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -11,19 +11,19 @@ import CustomizeStep from './earn/audienceEngine/CustomizeStep';
 import GenerateStep from './earn/audienceEngine/GenerateStep';
 import ReviewStep from './earn/audienceEngine/ReviewStep';
 import ScheduleStep from './earn/audienceEngine/ScheduleStep';
+import TemplateLibraryModal from './earn/audienceEngine/TemplateLibraryModal';
 import MiniLineChart from '../components/charts/MiniLineChart';
 import { colors, radii, shadow, spacing, typography } from '../theme';
 import {
   audienceEngineTemplates,
+  audienceEngineTemplatesByKey,
 } from '../data/earnData';
 import type { RootStackParamList } from '../navigation/types';
 import { personalService } from '../services/api/personal.service';
 import {coachService,type GeneratedAudiencePost} from '../services/api/coach.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AudienceEngine'>;
-type AudienceCampaign={id:string;title:string;contentType:string;posts:number;status:string;date:string};
-
-const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
+type AudienceCampaign={id:string;title:string;contentType:string;posts:number;status:string;date:string;platforms:string[]};
 
 export default function AudienceEngineScreen({ route, navigation }: Props) {
   const sourceLabel = route.params?.sourceLabel;
@@ -32,6 +32,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const membershipId = route.params?.membershipId;
   const [mode, setMode] = useState<'dashboard' | 'wizard'>('dashboard');
   const [step, setStep] = useState(1);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   const [contentKey, setContentKey] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -40,25 +41,58 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
   const [avoid, setAvoid] = useState('');
   const [notes, setNotes] = useState('');
   const [postsCount, setPostsCount] = useState(40);
+  const [customPostCount, setCustomPostCount] = useState(0);
   const [formats, setFormats] = useState<string[]>(['text', 'carousel']);
   const [objective, setObjective] = useState('views');
   const [approvals, setApprovals] = useState<Record<string, 'Approved' | 'Needs Review'>>({});
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
-  const [schedulingOption, setSchedulingOption] = useState<'smart' | 'custom' | 'queue'>('smart');
+  const [schedulingOption, setSchedulingOption] = useState<'smart' | 'custom'>('smart');
   const [personalCampaigns, setPersonalCampaigns] = useState<AudienceCampaign[]>([]);
   const [generatedPosts,setGeneratedPosts]=useState<GeneratedAudiencePost[]>([]);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const [showAllCampaigns, setShowAllCampaigns] = useState(false);
+  
   const PLATFORM_COLORS: Record<string,string> = {instagram:'#E1306C',facebook:'#1877F2',linkedin:'#0A66C2',x:'#000000',reddit:'#FF4500',quora:'#B92B27',discord:'#5865F2',tiktok:'#010101',whatsapp:'#25D366'};
   const PLATFORM_ICONS: Record<string,string> = {instagram:'logo-instagram',facebook:'logo-facebook',linkedin:'logo-linkedin',x:'logo-twitter',reddit:'logo-reddit',quora:'help-circle',discord:'logo-discord',tiktok:'musical-notes',whatsapp:'logo-whatsapp'};
   const [connectedAccounts,setConnectedAccounts]=useState<{key:string;label:string;accounts:number;color:string;icon:string}[]>([]);
+  
   const generatePosts=async()=>setGeneratedPosts(await coachService.generateAudience({topic:contentKey||sourceLabel||'Healthy living',instructions:`${instructions}${pdfId?` Include a natural call to action and the links: preview teamcal://pdf/${pdfId}?preview=1, purchase teamcal://pdf/${pdfId}?buy=1, app deep link teamcal://pdf/${pdfId}. Reveal enough to create interest without giving away the complete PDF.`:''}${videoId?` Analyse the video title, description, transcript, captions and key moments. Create hooks, teasers, clip suggestions and watch-now posts. Include video teamcal://video/${videoId}, preview teamcal://video/${videoId}?preview=1, purchase teamcal://video/${videoId}?buy=1, subscription and app deep links.`:''}${membershipId?` Use the community benefits, tiers, trial offer, events, resources, testimonials and FAQs. Create educational, launch and free-trial posts without sounding salesy. Include community teamcal://membership/${membershipId}, tier, trial, event, browser and app deep links.`:''}`,tone,formats,count:Math.min(postsCount,12)}));
-  useFocusEffect(useCallback(() => { let active=true;const load=()=>Promise.all([personalService.list<Omit<AudienceCampaign,'id'>>('audience-campaign'),personalService.list<{platform:string;displayName?:string;username?:string;handle?:string}>('audience-account')]).then(([campaigns,accounts])=>{if(!active)return;setPersonalCampaigns(campaigns.map(r=>({id:r.id,...r.data})));// Group by platform for the summary display
-    const byPlatform: Record<string,number>={};accounts.forEach(r=>{const p=r.data.platform||'unknown';byPlatform[p]=(byPlatform[p]||0)+1;});const mapped=Object.entries(byPlatform).map(([p,count])=>({key:p,label:p.charAt(0).toUpperCase()+p.slice(1),accounts:count,color:PLATFORM_COLORS[p]||colors.primary,icon:PLATFORM_ICONS[p]||'at-outline'}));setConnectedAccounts(mapped);setSelectedAccounts(current=>current.filter(id=>mapped.some(x=>x.key===id)).concat(mapped.filter(x=>!current.includes(x.key)).map(x=>x.key)));}).catch(()=>{});load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)}; }, []));
+  
+  useFocusEffect(useCallback(() => { 
+    let active=true;
+    const load=()=>Promise.all([
+      personalService.list<Omit<AudienceCampaign,'id'>>('audience-campaign'),
+      personalService.list<{platform:string;displayName?:string;username?:string;handle?:string}>('audience-account')
+    ]).then(([campaigns,accounts])=>{
+      if(!active)return;
+      setPersonalCampaigns(campaigns.map(r=>({id:r.id,...r.data})));
+      const byPlatform: Record<string,number>={};
+      accounts.forEach(r=>{const p=r.data.platform||'unknown';byPlatform[p]=(byPlatform[p]||0)+1;});
+      const mapped=Object.entries(byPlatform).map(([p,count])=>({key:p,label:p.charAt(0).toUpperCase()+p.slice(1),accounts:count,color:PLATFORM_COLORS[p]||colors.primary,icon:PLATFORM_ICONS[p]||'at-outline'}));
+      setConnectedAccounts(mapped);
+      setSelectedAccounts(current=>current.filter(id=>mapped.some(x=>x.key===id)).concat(mapped.filter(x=>!current.includes(x.key)).map(x=>x.key)));
+    }).catch(()=>{});
+    load();
+    const timer=setInterval(load,15000);
+    return ()=>{active=false;clearInterval(timer)}; 
+  }, []));
 
   const toggleKeyPoint = (v: string) => setKeyPoints((prev) => (prev.includes(v) ? prev.filter((k) => k !== v) : [...prev, v]));
   const toggleFormat = (key: string) => setFormats((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   const toggleAccount = (key: string) => setSelectedAccounts((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
-  const startCampaign = () => {
+  const startCampaign = (templateKey?: string) => {
+    if (templateKey) {
+      const template = audienceEngineTemplatesByKey[templateKey];
+      if (template) {
+        setSelectedTemplate(templateKey);
+        setPostsCount(template.posts);
+        if (templateKey === 'content-repurposing') setTone('conversational');
+        else if (templateKey === 'product-launch' || templateKey === 'sales-conversion') setTone('professional');
+        else if (templateKey === 'blog-traffic' || templateKey === 'lead-generation') setTone('educational');
+        else if (templateKey === 'membership-growth') setTone('inspirational');
+      }
+    }
     setStep(1);
     setMode('wizard');
   };
@@ -67,15 +101,19 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
     setMode('dashboard');
     setStep(1);
     setContentKey('');
+    setSelectedTemplate(null);
     setApprovals({});
+    setFormats(['text', 'carousel']);
+    setPostsCount(40);
   };
 
   const persistCampaign = async (status: 'Scheduled'|'Draft') => {
-    const value = { title: contentKey || sourceLabel || 'My Campaign', contentType: sourceLabel || 'Custom Content', posts: postsCount, status, date: new Date().toLocaleDateString() };
+    const value = { title: contentKey || sourceLabel || 'My Campaign', contentType: sourceLabel || 'Custom Content', posts: postsCount, status, date: new Date().toLocaleDateString(), platforms: selectedAccounts };
     const record = await personalService.create('audience-campaign', value, { status: status.toLowerCase() });
     await personalService.create('audience-publication',{campaignId:record.id,instructions,keyPoints,tone,avoid,notes,formats,objective,accounts:selectedAccounts,schedulingOption,approvals,postsCount,posts:generatedPosts},{externalKey:record.id,status:status.toLowerCase()});
     setPersonalCampaigns(current => [{ id: record.id, ...value }, ...current]);
   };
+  
   const finishSchedule = async () => {
     try { await persistCampaign('Scheduled'); Alert.alert('Campaign scheduled', `${postsCount} posts have been scheduled across ${selectedAccounts.length} platforms.`, [{ text: 'Done', onPress: resetToDashboard }]); }
     catch(error){ Alert.alert('Unable to schedule campaign',(error as Error).message); }
@@ -85,6 +123,12 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
     try { await persistCampaign('Draft'); Alert.alert('Saved as draft', 'Your campaign has been saved. You can find it in Recent Campaigns.', [{ text: 'OK', onPress: resetToDashboard }]); }
     catch(error){ Alert.alert('Unable to save draft',(error as Error).message); }
   };
+
+  const featuredTemplates = [
+    audienceEngineTemplates.find(t => t.key === 'blog-traffic'),
+    audienceEngineTemplates.find(t => t.key === '30day-calendar'),
+    audienceEngineTemplates.find(t => t.key === 'membership-growth'),
+  ].filter(Boolean);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -104,8 +148,7 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             Create, customize and schedule content that grows your audience{sourceLabel ? ` from your ${sourceLabel.toLowerCase()}` : ''}.
           </Text>
 
-          {/* A. Create New Campaign — top section */}
-          <TouchableOpacity style={styles.startCard} onPress={startCampaign} activeOpacity={0.9}>
+          <TouchableOpacity style={styles.startCard} onPress={() => startCampaign()} activeOpacity={0.9}>
             <View style={styles.startIconLeft}>
               <Ionicons name="add" size={22} color={colors.primary} />
             </View>
@@ -116,37 +159,35 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             <Ionicons name="chevron-forward" size={18} color={colors.white} />
           </TouchableOpacity>
 
-          {/* B. Quick Start Templates */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Quick Start Templates</Text>
-            <TouchableOpacity onPress={() => comingSoon('See all templates')}>
+            <TouchableOpacity onPress={() => setShowTemplateLibrary(true)}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-            {audienceEngineTemplates.map((template) => (
-              <TouchableOpacity key={template.key} style={styles.templateCard} onPress={startCampaign}>
-                <Ionicons name={template.icon as keyof typeof Ionicons.glyphMap} size={20} color={colors.primary} />
-                <Text style={styles.templateLabel}>{template.label}</Text>
-                <Text style={styles.templateMeta}>{template.posts} posts</Text>
+            {featuredTemplates.map((template) => (
+              <TouchableOpacity key={template?.key} style={styles.templateCard} onPress={() => startCampaign(template?.key)} activeOpacity={0.85}>
+                <Ionicons name={template?.icon as keyof typeof Ionicons.glyphMap} size={20} color={colors.primary} />
+                <Text style={styles.templateLabel}>{template?.label}</Text>
+                <Text style={styles.templateMeta}>{template?.posts} posts</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
-          {/* C. Recent Campaigns */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Recent Campaigns</Text>
-            <TouchableOpacity onPress={() => comingSoon('See all campaigns')}>
+            <TouchableOpacity onPress={() => setShowAllCampaigns(true)}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
           <View style={{ gap: spacing.sm }}>
-            {personalCampaigns.map((campaign) => (
-              <TouchableOpacity key={campaign.id} style={[styles.campaignRow, shadow.soft]} onPress={() => comingSoon('Campaign details')}>
+            {personalCampaigns.slice(0, 3).map((campaign) => (
+              <TouchableOpacity key={campaign.id} style={[styles.campaignRow, shadow.soft]} onPress={() => Alert.alert('Coming soon', 'Campaign details aren\'t available yet.')} activeOpacity={0.75}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.campaignTitle}>{campaign.title}</Text>
                   <Text style={styles.campaignMeta}>
-                    {campaign.contentType} · {campaign.posts} posts
+                    {campaign.contentType} · {campaign.posts} posts · {campaign.platforms.length} platform(s)
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
@@ -160,7 +201,6 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             {!personalCampaigns.length?<Text style={styles.campaignMeta}>No campaigns yet.</Text>:null}
           </View>
 
-          {/* Connected Accounts */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Connected Accounts</Text>
             <TouchableOpacity onPress={() => navigation.navigate('AudienceAccounts')}>
@@ -180,7 +220,6 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
             {!connectedAccounts.length?<Text style={styles.accountLabel}>No accounts connected</Text>:null}
           </View>
 
-          {/* Performance Overview */}
           <Text style={styles.sectionTitle}>Performance Overview</Text>
           <View style={[styles.card, shadow.card, { marginBottom: spacing.xxl }]}>
             <View style={styles.perfStatsRow}>
@@ -216,6 +255,8 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
         <CustomizeStep
           postsCount={postsCount}
           setPostsCount={setPostsCount}
+          customPostCount={customPostCount}
+          setCustomPostCount={setCustomPostCount}
           formats={formats}
           toggleFormat={toggleFormat}
           objective={objective}
@@ -238,6 +279,50 @@ export default function AudienceEngineScreen({ route, navigation }: Props) {
           onBack={() => setStep(5)}
         />
       )}
+
+      <TemplateLibraryModal
+        visible={showTemplateLibrary}
+        onClose={() => setShowTemplateLibrary(false)}
+        onSelectTemplate={(key) => {
+          setShowTemplateLibrary(false);
+          startCampaign(key);
+        }}
+        templates={audienceEngineTemplates}
+      />
+
+      <Modal visible={showAllCampaigns} animationType="slide" transparent={false}>
+        <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => setShowAllCampaigns(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>All Campaigns</Text>
+            <View style={{ width: 22 }} />
+          </View>
+          <FlatList
+            data={personalCampaigns}
+            contentContainerStyle={styles.content}
+            keyExtractor={c => c.id}
+            renderItem={({ item: campaign }) => (
+              <TouchableOpacity style={[styles.campaignRow, shadow.soft]} onPress={() => Alert.alert('Coming soon', 'Campaign details aren\'t available yet.')} activeOpacity={0.75}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.campaignTitle}>{campaign.title}</Text>
+                  <Text style={styles.campaignMeta}>
+                    {campaign.contentType} · {campaign.posts} posts · {campaign.platforms.length} platform(s)
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <View style={[styles.statusBadge, campaign.status === 'Scheduled' ? styles.statusScheduled : campaign.status === 'Published' ? styles.statusPublished : styles.statusDraft]}>
+                    <Text style={[styles.statusBadgeText, campaign.status === 'Published' ? styles.statusPublishedText : null]}>{campaign.status}</Text>
+                  </View>
+                  <Text style={styles.campaignDate}>{campaign.date}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={<Text style={styles.campaignMeta}>No campaigns yet.</Text>}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -269,7 +354,7 @@ const styles = StyleSheet.create({
   templateCard: { width: 100, backgroundColor: colors.card, borderRadius: radii.lg, padding: spacing.md, alignItems: 'center', gap: 6 },
   templateLabel: { fontSize: 11, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
   templateMeta: { fontSize: 9.5, color: colors.textSecondary },
-  campaignRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md },
+  campaignRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md, marginBottom: spacing.sm },
   campaignTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   campaignMeta: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
   campaignDate: { fontSize: 10, color: colors.textMuted, marginTop: 2 },

@@ -188,6 +188,11 @@ export default function SupplementTrackerScreen() {
           <Text style={styles.addBtnText}>Add supplement</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.scanBtn} onPress={() => navigation.navigate('SupplementScanner')} activeOpacity={0.85}>
+          <Ionicons name="scan-outline" size={18} color={colors.primary} />
+          <Text style={styles.scanBtnText}>Scan Supplement</Text>
+        </TouchableOpacity>
+
         <View style={[styles.card, shadow.soft, styles.costRow]}>
           <View>
             <Text style={styles.sectionLabel}>MONTHLY COST</Text>
@@ -267,6 +272,8 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: colors.textMuted, fontSize: 13, paddingVertical: spacing.md },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.md },
   addBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
+  scanBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radii.pill, paddingVertical: spacing.md, borderWidth: 1.5, borderColor: colors.primary },
+  scanBtnText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
   costRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   costValue: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginTop: 4 },
   costIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FDECE4', alignItems: 'center', justifyContent: 'center' },

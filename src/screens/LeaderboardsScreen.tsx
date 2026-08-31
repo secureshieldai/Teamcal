@@ -3,6 +3,8 @@ import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/types';
 import SegmentedControl from '../components/SegmentedControl';
 import LeaderboardHighlightCard from '../components/LeaderboardHighlightCard';
 import LeaderboardRow from '../components/LeaderboardRow';
@@ -13,7 +15,7 @@ import { useLeaderboard } from '../hooks/useLeaderboards';
 
 export default function LeaderboardsScreen() {
   const [tab, setTab] = useState(leaderboardTabs[2]);
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const type = tab === 'Global' ? 'global' : tab === 'Friends' ? 'friends' : 'teams';
   const { entries: leaderboardEntries, yourRank, highlightTeam, loading } = useLeaderboard(type);
 
@@ -38,7 +40,15 @@ export default function LeaderboardsScreen() {
 
         <View style={[styles.listCard, shadow.card]}>
           {leaderboardEntries.map((entry) => (
-            <LeaderboardRow key={entry.rank} {...entry} />
+            <LeaderboardRow
+              key={entry.rank}
+              rank={entry.rank}
+              name={entry.name}
+              avatar={entry.avatar}
+              points={entry.points}
+              highlighted={entry.highlighted}
+              onPress={entry.isTeam ? undefined : () => navigation.navigate('UserProfile', { userId: entry.id, username: entry.name })}
+            />
           ))}
         </View>
         {!loading && !leaderboardEntries.length && <Text style={styles.empty}>No rankings are available yet.</Text>}

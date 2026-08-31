@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { useStepsToday } from '../../hooks/useStepsToday';
 import { GOAL_PRESETS } from '../../data/stepsData';
+import ConnectedSourcesCard from '../../components/steps/ConnectedSourcesCard';
 
 const RING_SIZE = 200;
 const RING_STROKE = 16;
@@ -43,7 +44,7 @@ export default function StepsTodayTab() {
   const {
     sum, goal, percent, km, kcal, activeMin, streak,
     syncEnabled, syncSupported, syncBusy, toggleSync,
-    goalSaving, updateGoal,
+    goalSaving, updateGoal, refetch,
   } = useStepsToday();
   const [customGoal, setCustomGoal] = useState('');
 
@@ -72,7 +73,7 @@ export default function StepsTodayTab() {
         </View>
       </View>
 
-      <View style={[styles.card, shadow.card]}>
+      {false && <View style={[styles.card, shadow.card]}>
         <Text style={styles.sectionLabel}>CONNECTED SOURCES</Text>
         <TouchableOpacity
           style={styles.sourceRow}
@@ -102,7 +103,9 @@ export default function StepsTodayTab() {
           <Text style={styles.sourceLabel}>Fitness tracker</Text>
           <Text style={styles.sourceStatus}>Not connected</Text>
         </View>
-      </View>
+      </View>}
+
+      <ConnectedSourcesCard onSynced={refetch} />
 
       <View style={[styles.card, shadow.card]}>
         <View style={styles.goalHeader}>

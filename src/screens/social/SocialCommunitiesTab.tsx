@@ -4,7 +4,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchBar from '../../components/SearchBar';
 import SegmentedControl from '../../components/SegmentedControl';
 import SectionHeader from '../../components/SectionHeader';
-import Avatar from '../../components/Avatar';import { colors, radii, shadow, spacing } from '../../theme';
+import Avatar from '../../components/Avatar';
+import SocialChannelsTab from './SocialChannelsTab';
+import { colors, radii, shadow, spacing } from '../../theme';
 import { communitiesSubTabs } from '../../data/communityData';
 import { useDiscoverGroups, useGroups } from '../../hooks/useCommunity';
 import { useChallenges } from '../../hooks/useChallenges';
@@ -47,7 +49,13 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
         <SegmentedControl options={communitiesSubTabs} value={subTab} onChange={changeSubTab} variant="pill" />
       </View>
 
-      {subTab === 'Challenges' ? (
+      {subTab === 'Channels' ? (
+        <SocialChannelsTab navigation={navigation} />
+      ) : subTab === 'Challenges' ? (
+
+      ) : null}
+
+      {subTab === 'Challenges' && subTab !== 'Channels' ? (
         <FlatList
           data={challenges}
           keyExtractor={(item) => item.id}

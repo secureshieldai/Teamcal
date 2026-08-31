@@ -12,6 +12,8 @@ import {
   StepBar, WizardHeader, WizardNav, Field, CategoryDropdown,
   LanguageDropdown, ThumbnailPicker, MonetizationStep, PreviewStep, sw,
 } from './earn/video/VideoWizardShared';
+import AddToShowcaseModal, { type AddToShowcaseConfig } from './earn/video/AddToShowcaseModal';
+import ScheduleContentModal, { type ScheduleConfig } from './earn/video/ScheduleContentModal';
 import type { MonetizationType, PreviewType } from './earn/video/videoData';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateSeries'>;
@@ -22,6 +24,8 @@ type Episode = { id: string; title: string; description: string; fileUri: string
 export default function CreateSeriesScreen({ navigation }: Props) {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [showShowcaseModal, setShowShowcaseModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Step 1 – Series Info
   const [title, setTitle] = useState('');
@@ -40,8 +44,8 @@ export default function CreateSeriesScreen({ navigation }: Props) {
   const [price, setPrice] = useState('9.99');
   const [allowComments, setAllowComments] = useState(true);
   const [allowLikes, setAllowLikes] = useState(true);
-  const [addToShowcase, setAddToShowcase] = useState(false);
-  const [dropContent, setDropContent] = useState(false);
+  const [showcaseConfig, setShowcaseConfig] = useState<AddToShowcaseConfig>({ enabled: false });
+  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>({ enabled: false });
 
   // Step 4 – Preview
   const [previewType, setPreviewType] = useState<PreviewType>('first-30');
@@ -114,7 +118,9 @@ export default function CreateSeriesScreen({ navigation }: Props) {
           previewType, previewCustomStart: customStart ? Number(customStart) : undefined,
           previewCustomEnd: customEnd ? Number(customEnd) : undefined,
           previewFileUrl: previewFileUri || undefined,
-          commentsEnabled: allowComments, sharingEnabled: allowLikes, addToShowcase, dropContent,
+          commentsEnabled: allowComments, sharingEnabled: allowLikes,
+          showcaseConfig,
+          scheduleConfig,
         },
       });
       navigation.replace('VideoDashboard', { videoId: asset.id });
@@ -191,14 +197,16 @@ export default function CreateSeriesScreen({ navigation }: Props) {
       )}
 
       {step === 2 && (
-        <MonetizationStep
-          selected={monetization} onSelect={setMonetization}
-          price={price} onPrice={setPrice}
-          allowComments={allowComments} onAllowComments={setAllowComments}
-          allowLikes={allowLikes} onAllowLikes={setAllowLikes}
-          addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
-          dropContent={dropContent} onDropContent={setDropContent}
-        />
+        <>
+          <MonetizationStep
+            selected={monetization} onSelect={setMonetization}
+            price={price} onPrice={setPrice}
+            allowComments={allowComments} onAllowComments={setAllowComments}
+            allowLikes={allowLikes} onAllowLikes={setAllowLikes}
+            addToShowcase={showcaseConfig.enabled} onAddToShowcase={() => setShowShowcaseModal(true)}
+            dropContent={scheduleConfig.enabled} onDropContent={() => setShowScheduleModal(true)}
+          />
+        </>
       )}
 
       {step === 3 && (
@@ -209,8 +217,8 @@ export default function CreateSeriesScreen({ navigation }: Props) {
           previewFileUri={previewFileUri} onPickPreview={pickPreview}
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
-          addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
-          dropContent={dropContent} onDropContent={setDropContent}
+          addToShowcase={showcaseConfig.enabled} onAddToShowcase={() => setShowShowcaseModal(true)}
+          dropContent={scheduleConfig.enabled} onDropContent={() => setShowScheduleModal(true)}
         />
       )}
 
@@ -226,6 +234,19 @@ export default function CreateSeriesScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
         )}
+
+      <AddToShowcaseModal
+        visible={showShowcaseModal}
+        onClose={() => setShowShowcaseModal(false)}
+        onConfirm={(config) => setShowcaseConfig(config)}
+      />
+
+      <ScheduleContentModal
+        visible={showScheduleModal}
+        episodes={episodes.map((ep, i) => ({ id: ep.id, title: ep.title, episode: i + 1 }))}
+        onClose={() => setShowScheduleModal(false)}
+        onConfirm={(config) => setScheduleConfig(config)}
+      />
     </SafeAreaView>
   );
 }

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { usePeriodTracker } from '../../hooks/usePeriodTracker';
+import DailyPredictionSheet from './DailyPredictionSheet';
+import CycleSettingsModal from '../../components/periodTracker/CycleSettingsModal';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -21,12 +24,15 @@ const CATEGORY_TEXT: Record<string, string> = {
   follicular: '#B79A3A',
 };
 
-export default function PredictTab() {
-  const { classifyDate, next3Cycles } = usePeriodTracker();
+export default function PredictTab({ onLogDate }: { onLogDate?: (d: Date) => void } = {}) {
+  const { classifyDate, next3Cycles, settings, saveSettings } = usePeriodTracker();
+  const insets = useSafeAreaInsets();
   const [viewMonth, setViewMonth] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
@@ -42,7 +48,7 @@ export default function PredictTab() {
   const monthLabel = viewMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} showsVerticalScrollIndicator={false}>
       <View style={[styles.calendarCard, shadow.card]}>
         <View style={styles.monthRow}>
           <TouchableOpacity onPress={() => setViewMonth(new Date(year, month - 1, 1))} style={styles.navBtn}>
@@ -68,7 +74,7 @@ export default function PredictTab() {
             const category = classifyDate(date.getTime());
             const isToday = date.toDateString() === todayKey;
             return (
-              <View key={date.toISOString()} style={styles.cell}>
+              <TouchableOpacity key={date.toISOString()} style={styles.cell} activeOpacity={0.7} onPress={() => setSelectedDate(date)}>
                 <View
                   style={[
                     styles.dayCircle,
@@ -79,7 +85,7 @@ export default function PredictTab() {
                   <Text style={[styles.dayText, { color: CATEGORY_TEXT[category] }]}>{date.getDate()}</Text>
                 </View>
                 {category === 'ovulation' && <View style={styles.ovulationDot} />}
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -108,6 +114,16 @@ export default function PredictTab() {
           <LegendItem color={CATEGORY_BG.luteal} label="Luteal" />
         </View>
       </View>
+
+      <DailyPredictionSheet
+        visible={!!selectedDate}
+        date={selectedDate}
+        onClose={() => setSelectedDate(null)}
+        onChangeDate={setSelectedDate}
+        onLogSymptoms={(d) => { setSelectedDate(null); onLogDate?.(d); }}
+        onEditCycleInfo={() => { setSelectedDate(null); setSettingsOpen(true); }}
+      />
+      <CycleSettingsModal visible={settingsOpen} settings={settings} onClose={() => setSettingsOpen(false)} onSave={saveSettings} />
     </ScrollView>
   );
 }

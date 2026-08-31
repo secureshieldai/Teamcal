@@ -18,7 +18,7 @@ export default function StatCard({ label, value, icon, size = 'sm', trend, trend
       <View style={styles.topRow}>
         {icon && (
           <View style={styles.iconCircle}>
-            <Ionicons name={icon} size={15} color={colors.primary} />
+            <Ionicons name={icon} size={18} color={colors.primary} />
           </View>
         )}
         {trend && (
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     width: '31.5%',
   },
   cardLg: {
-    width: '48%',
+    flex: 1,
   },
   topRow: {
     flexDirection: 'row',
@@ -55,30 +55,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   iconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: '#FFEDE3',
     alignItems: 'center',
     justifyContent: 'center',
   },
   trend: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontWeight: '700',
   },
   value: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '800',
     color: colors.textPrimary,
     marginTop: spacing.sm,
   },
   valueLg: {
-    fontSize: 20,
+    fontSize: 24,
   },
   label: {
-    fontSize: 10.5,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 3,
   },
 });

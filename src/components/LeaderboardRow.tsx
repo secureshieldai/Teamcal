@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from './Avatar';
 import { colors, radii, spacing } from '../theme';
 
@@ -9,16 +9,17 @@ type Props = {
   avatar: string;
   points: string;
   highlighted?: boolean;
+  onPress?: () => void;
 };
 
-export default function LeaderboardRow({ rank, name, avatar, points, highlighted }: Props) {
+export default function LeaderboardRow({ rank, name, avatar, points, highlighted, onPress }: Props) {
   return (
-    <View style={[styles.row, highlighted && styles.rowHighlighted]}>
+    <TouchableOpacity style={[styles.row, highlighted && styles.rowHighlighted]} onPress={onPress} disabled={!onPress} activeOpacity={onPress ? 0.7 : 1}>
       <Text style={styles.rank}>{rank}</Text>
       <Avatar uri={avatar} size={36} />
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.points}>{points}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 

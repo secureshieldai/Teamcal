@@ -18,6 +18,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   'Monetization Review': { bg: '#E5F0FF', text: colors.macroFat },
   Invited: { bg: '#E5F0FF', text: colors.macroFat },
   Paused: { bg: '#F3D9CB', text: colors.primaryDark },
+  Unpublished: { bg: '#FFF3E0', text: '#E68A00' },
   Failed: { bg: '#FDE7E9', text: colors.macroProtein },
   Reversed: { bg: '#FDE7E9', text: colors.macroProtein },
   Rejected: { bg: '#FDE7E9', text: colors.macroProtein },
@@ -40,12 +41,12 @@ export default function StatusBadge({ status }: { status: string }) {
 const styles = StyleSheet.create({
   badge: {
     borderRadius: radii.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontWeight: '700',
   },
 });

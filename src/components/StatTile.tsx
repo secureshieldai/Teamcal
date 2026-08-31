@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing, typography } from '../theme';
 
@@ -8,18 +8,19 @@ type Props = {
   label: string;
   value: string;
   goal: string;
+  onPress?: () => void;
 };
 
-export default function StatTile({ icon, label, value, goal }: Props) {
+export default function StatTile({ icon, label, value, goal, onPress }: Props) {
   return (
-    <View style={[styles.tile, shadow.soft]}>
+    <TouchableOpacity style={[styles.tile, shadow.soft]} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
       <View style={styles.iconCircle}>
         <Ionicons name={icon} size={18} color={colors.primary} />
       </View>
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
       <Text style={styles.goal}>{goal}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 

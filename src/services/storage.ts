@@ -15,5 +15,10 @@ export const storage = {
   setUser: (user: object) => AsyncStorage.setItem(USER_KEY, JSON.stringify(user)),
   removeUser: () => AsyncStorage.removeItem(USER_KEY),
 
+  setSession: (token: string, user: object) => AsyncStorage.multiSet([
+    [TOKEN_KEY, token],
+    [USER_KEY, JSON.stringify(user)],
+  ]),
+
   clear: () => AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]),
 };

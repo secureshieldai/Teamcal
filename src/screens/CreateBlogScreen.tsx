@@ -203,9 +203,19 @@ export default function CreateBlogScreen() {
 
       <View style={styles.footer}>
         {step === 7 ? (
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.replace('BlogDashboard', { blogId: createdBlogId })} activeOpacity={0.85}>
-            <Text style={styles.primaryBtnText}>Go to Blog Dashboard</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.replace('ArticleEditor', { blogId: createdBlogId })} activeOpacity={0.85}>
+              <Text style={styles.primaryBtnText}>Create New Blog Post</Text>
+            </TouchableOpacity>
+            <View style={styles.orRow}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>OR</Text>
+              <View style={styles.orLine} />
+            </View>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.replace('BlogDashboard', { blogId: createdBlogId })} activeOpacity={0.85}>
+              <Text style={styles.secondaryBtnText}>Go to Blog Dashboard</Text>
+            </TouchableOpacity>
+          </>
         ) : (
           <TouchableOpacity style={styles.primaryBtn} onPress={goNext} activeOpacity={0.85} disabled={creating}>
             <Text style={styles.primaryBtnText}>{creating ? 'Creating your blog…' : step === STEP_COUNT - 1 ? 'Create Blog' : 'Continue'}</Text>
@@ -301,4 +311,9 @@ const styles = StyleSheet.create({
   footer: { padding: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border },
   primaryBtn: { backgroundColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.md, alignItems: 'center' },
   primaryBtnText: { color: colors.white, fontWeight: '700', fontSize: 14 },
+  secondaryBtn: { borderWidth: 1.5, borderColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.md, alignItems: 'center' },
+  secondaryBtnText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
+  orRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.md, gap: spacing.sm },
+  orLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  orText: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
 });

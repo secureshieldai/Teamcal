@@ -218,3 +218,119 @@ alter table stripe_refunds add constraint stripe_refunds_requested_by_fkey forei
 
 -- Migration 015: Persist the guided community workflow settings.
 alter table if exists groups add column if not exists metadata jsonb not null default '{}';
+
+-- Migration 016: Live streaming tables.
+create table if not exists live_streams (
+  id               uuid primary key default gen_random_uuid(),
+  host_id          uuid not null references users(id) on delete cascade,
+  title            text not null check (char_length(trim(title)) between 1 and 200),
+  description      text,
+  cover_image      text,
+  visibility       text not null default 'public' check (visibility in ('public','followers','community')),
+  community_id     uuid references groups(id) on delete set null,
+  allow_comments   boolean not null default true,
+  allow_reactions  boolean not null default true,
+  status           text not null default 'live' check (status in ('live','ended','removed')),
+  viewer_count     int not null default 0,
+  peak_viewers     int not null default 0,
+  total_viewers    int not null default 0,
+  comment_count    int not null default 0,
+  reaction_count   int not null default 0,
+  new_followers    int not null default 0,
+  replay_saved     boolean not null default false,
+  started_at       timestamptz not null default now(),
+  ended_at         timestamptz,
+  duration_seconds int,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+create index if not exists idx_live_streams_host   on live_streams(host_id, started_at desc);
+create index if not exists idx_live_streams_status on live_streams(status, viewer_count desc);
+do $ begin create trigger trg_live_streams_updated_at before update on live_streams for each row execute function set_updated_at(); exception when duplicate_object then null; end $;
+
+create table if not exists live_comments (
+  id         uuid primary key default gen_random_uuid(),
+  stream_id  uuid not null references live_streams(id) on delete cascade,
+  user_id    uuid not null references users(id) on delete cascade,
+  text       text not null check (char_length(trim(text)) between 1 and 500),
+  pinned     boolean not null default false,
+  deleted_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_live_comments_stream on live_comments(stream_id, created_at);
+
+create table if not exists live_muted_viewers (
+  stream_id  uuid not null references live_streams(id) on delete cascade,
+  user_id    uuid not null references users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (stream_id, user_id)
+);
+
+create table if not exists live_reports (
+  id          uuid primary key default gen_random_uuid(),
+  stream_id   uuid not null references live_streams(id) on delete cascade,
+  reporter_id uuid not null references users(id) on delete cascade,
+  reason      text not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists idx_live_reports_stream on live_reports(stream_id, created_at desc);
+
+-- Helper RPC used by the controller to atomically increment counters
+create or replace function increment_live_field(stream_id uuid, field_name text, amount int default 1)
+returns void language plpgsql as $$
+begin
+  execute format('update live_streams set %I = coalesce(%I,0) + $1 where id = $2', field_name, field_name)
+  using amount, stream_id;
+end;
+$$;
+
+-- follows table (used by live notification fan-out; may already exist)
+create table if not exists follows (
+  follower_id  uuid not null references users(id) on delete cascade,
+  following_id uuid not null references users(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  primary key (follower_id, following_id)
+);
+create index if not exists idx_follows_following on follows(following_id, follower_id);
+
+alter table live_streams      enable row level security;
+alter table live_comments     enable row level security;
+alter table live_muted_viewers enable row level security;
+alter table live_reports      enable row level security;
+
+-- Migration 017: Social events + registrations (for /api/social/events).
+create table if not exists social_events (
+  id               uuid primary key default gen_random_uuid(),
+  host_id          uuid not null references users(id) on delete cascade,
+  title            text not null check (char_length(trim(title)) between 1 and 200),
+  description      text default '',
+  cover_image      text,
+  event_type       text default 'online' check (event_type in ('online','in-person','hybrid')),
+  location         text,
+  starts_at        timestamptz not null,
+  ends_at          timestamptz,
+  capacity         int,
+  status           text not null default 'upcoming' check (status in ('upcoming','live','ended','cancelled')),
+  community_id     uuid references groups(id) on delete set null,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+create index if not exists idx_social_events_starts_at on social_events(starts_at, status);
+create index if not exists idx_social_events_host     on social_events(host_id, created_at desc);
+do $ begin
+  create trigger trg_social_events_updated_at
+    before update on social_events for each row execute function set_updated_at();
+exception when duplicate_object then null; end $;
+
+create table if not exists social_event_registrations (
+  id         uuid primary key default gen_random_uuid(),
+  event_id   uuid not null references social_events(id) on delete cascade,
+  user_id    uuid not null references users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (event_id, user_id)
+);
+create index if not exists idx_social_event_regs_event on social_event_registrations(event_id);
+create index if not exists idx_social_event_regs_user  on social_event_registrations(user_id);
+
+alter table social_events                enable row level security;
+alter table social_event_registrations   enable row level security;

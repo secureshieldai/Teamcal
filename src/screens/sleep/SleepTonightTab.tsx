@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
@@ -7,6 +7,8 @@ import { colors, radii, shadow, spacing } from '../../theme';
 import { useSleepNow } from '../../hooks/useSleepNow';
 import { useApiQuery } from '../../hooks/useApiQuery';
 import { sleepService, type SleepAnalytics, type SleepAlarmPrefs } from '../../services/api/sleep.service';
+import WindDownRoutineEditor from '../../components/sleep/WindDownRoutineEditor';
+import { useWindDownRoutine } from '../../hooks/useWindDownRoutine';
 
 const RING_SIZE = 190;
 const RING_STROKE = 14;
@@ -24,6 +26,11 @@ function formatBedtime(wakeTime: string, goalHours: number) {
   const hh = Math.floor(total / 60);
   const mm = Math.round(total % 60);
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function formatRoutineTime(time: string) {
+  const [hour, minute] = time.split(':').map(Number);
+  return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
 function ScoreRing({ score, active }: { score: number; active: boolean }) {
@@ -58,7 +65,9 @@ function ScoreRing({ score, active }: { score: number; active: boolean }) {
 }
 
 export default function SleepTonightTab() {
+  const [editingRoutine, setEditingRoutine] = useState(false);
   const { active, lastNight, busy, elapsedHours, start, stop } = useSleepNow();
+  const { activities, save: saveRoutine } = useWindDownRoutine();
   const { data: analytics } = useApiQuery(() => sleepService.getAnalytics(14), null as SleepAnalytics | null, []);
   const { data: alarmPrefs } = useApiQuery(() => sleepService.getAlarmPrefs(), null as SleepAlarmPrefs | null, []);
 
@@ -119,14 +128,34 @@ export default function SleepTonightTab() {
         </View>
       </View>
 
-      <View style={[styles.routineCard, shadow.soft]}>
+      {false && <View style={[styles.routineCard, shadow.soft]}>
         <Text style={styles.routineTitle}>Wind-down routine</Text>
         {WIND_DOWN_ROUTINE.map((step) => (
           <Text key={step.time} style={styles.routineRow}>
             · {step.time} — {step.label}
           </Text>
         ))}
+      </View>}
+
+      <View style={[styles.routineCard, shadow.soft]}>
+        <View style={styles.routineHeader}>
+          <Text style={styles.routineTitle}>Wind-down routine</Text>
+          <TouchableOpacity style={styles.editRoutineButton} onPress={() => setEditingRoutine(true)}>
+            <Ionicons name="create-outline" size={15} color={colors.primary} />
+            <Text style={styles.editRoutineText}>Edit Routine</Text>
+          </TouchableOpacity>
+        </View>
+        {activities.length ? activities.map((step) => (
+          <View key={step.id} style={styles.personalRoutineRow}>
+            <View style={[styles.routineDot, !step.reminderEnabled && styles.routineDotOff]} />
+            <Text style={styles.routineTime}>{formatRoutineTime(step.time)}</Text>
+            <Text style={styles.routineLabel}>{step.title}</Text>
+            <Ionicons name={step.reminderEnabled ? 'notifications-outline' : 'notifications-off-outline'} size={15} color={step.reminderEnabled ? colors.primary : colors.textMuted} />
+          </View>
+        )) : <Text style={styles.emptyRoutine}>No activities yet. Tap Edit Routine to add one.</Text>}
       </View>
+
+      <WindDownRoutineEditor visible={editingRoutine} activities={activities} onClose={() => setEditingRoutine(false)} onSave={saveRoutine} />
     </ScrollView>
   );
 }
@@ -169,4 +198,13 @@ const styles = StyleSheet.create({
   routineCard: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg },
   routineTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.sm },
   routineRow: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
+  routineHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+  editRoutineButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 8, borderRadius: radii.pill, backgroundColor: '#FFF3EC' },
+  editRoutineText: { fontSize: 11.5, fontWeight: '800', color: colors.primary },
+  personalRoutineRow: { flexDirection: 'row', alignItems: 'center', minHeight: 34, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm },
+  routineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.primary },
+  routineDotOff: { backgroundColor: colors.textMuted },
+  routineTime: { width: 68, fontSize: 12, fontWeight: '700', color: colors.textPrimary },
+  routineLabel: { flex: 1, fontSize: 13, color: colors.textSecondary },
+  emptyRoutine: { fontSize: 12.5, color: colors.textSecondary, paddingVertical: spacing.md },
 });

@@ -4,11 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing, typography } from '../../../theme';
 import { audienceEngineFormats, audienceEngineObjectives } from '../../../data/earnData';
 
+import { TextInput } from 'react-native';
+
 const POST_PRESETS = [10, 20, 40, 50, 100];
 
 type Props = {
   postsCount: number;
   setPostsCount: (n: number) => void;
+  customPostCount: number;
+  setCustomPostCount: (n: number) => void;
   formats: string[];
   toggleFormat: (key: string) => void;
   objective: string;
@@ -17,7 +21,7 @@ type Props = {
   onBack: () => void;
 };
 
-export default function CustomizeStep({ postsCount, setPostsCount, formats, toggleFormat, objective, setObjective, onNext, onBack }: Props) {
+export default function CustomizeStep({ postsCount, setPostsCount, customPostCount, setCustomPostCount, formats, toggleFormat, objective, setObjective, onNext, onBack }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Customize Your Campaign</Text>
@@ -26,10 +30,32 @@ export default function CustomizeStep({ postsCount, setPostsCount, formats, togg
       <Text style={styles.fieldLabel}>1. How many posts do you want to generate?</Text>
       <View style={styles.chipWrap}>
         {POST_PRESETS.map((n) => (
-          <TouchableOpacity key={n} style={[styles.chip, postsCount === n && styles.chipActive]} onPress={() => setPostsCount(n)}>
-            <Text style={[styles.chipText, postsCount === n && styles.chipTextActive]}>{n} Posts</Text>
+          <TouchableOpacity key={n} style={[styles.chip, postsCount === n && !customPostCount && styles.chipActive]} onPress={() => { setPostsCount(n); setCustomPostCount(0); }}>
+            <Text style={[styles.chipText, postsCount === n && !customPostCount && styles.chipTextActive]}>{n} Posts</Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      <View style={styles.customPostWrap}>
+        <Text style={styles.customPostLabel}>Custom number:</Text>
+        <View style={styles.customPostInput}>
+          <TextInput
+            placeholder="Enter number"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="number-pad"
+            value={customPostCount > 0 ? String(customPostCount) : ''}
+            onChangeText={(v) => {
+              const n = parseInt(v, 10);
+              if (!isNaN(n) && n > 0) {
+                setCustomPostCount(n);
+                setPostsCount(n);
+              } else {
+                setCustomPostCount(0);
+              }
+            }}
+            style={styles.customPostInputText}
+          />
+        </View>
       </View>
 
       <Text style={styles.fieldLabel}>2. Content Formats (Select one or more)</Text>
@@ -88,6 +114,10 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { fontSize: 12.5, fontWeight: '700', color: colors.textSecondary },
   chipTextActive: { color: colors.white },
+  customPostWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md, backgroundColor: colors.card, borderRadius: radii.lg, padding: spacing.md },
+  customPostLabel: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
+  customPostInput: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md, paddingHorizontal: spacing.sm, height: 36, backgroundColor: colors.background },
+  customPostInputText: { flex: 1, fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
   formatGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   formatCard: { width: '48%', backgroundColor: colors.card, borderRadius: radii.lg, borderWidth: 1.5, borderColor: colors.border, padding: spacing.md },
   formatCardActive: { borderColor: colors.primary, backgroundColor: '#FFF6F1' },

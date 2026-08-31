@@ -6,7 +6,22 @@ import * as TaskManager from 'expo-task-manager';
 import { trackerService } from './api/tracker.service';
 
 const ENABLED_KEY = 'step_sync_enabled';
+const CONNECTIONS_KEY = 'step_source_connections';
 const TASK = 'teamcal-step-sync';
+
+export type StepSourceId = 'phone-motion' | 'apple-health' | 'health-connect';
+export type StepSourceConnection = { connected: boolean; lastSyncedAt?: number; error?: string };
+export type StepConnections = Partial<Record<StepSourceId, StepSourceConnection>>;
+
+export async function getStepConnections(): Promise<StepConnections> {
+  const raw = await AsyncStorage.getItem(CONNECTIONS_KEY);
+  try { return raw ? JSON.parse(raw) : {}; } catch { return {}; }
+}
+async function setConnection(source: StepSourceId, value?: StepSourceConnection) {
+  const all = await getStepConnections();
+  if (value) all[source] = value; else delete all[source];
+  await AsyncStorage.setItem(CONNECTIONS_KEY, JSON.stringify(all));
+}
 
 function todayRange() {
   const start = new Date(); start.setHours(0, 0, 0, 0);
@@ -16,7 +31,12 @@ function todayRange() {
 async function readHealthKit(requestPermission: boolean) {
   const health = require('@kingstinct/react-native-healthkit') as typeof import('@kingstinct/react-native-healthkit');
   if (!(await health.isHealthDataAvailableAsync())) throw new Error('Apple Health is unavailable on this device.');
-  if (requestPermission) await health.requestAuthorization({ toRead: ['HKQuantityTypeIdentifierStepCount'] });
+  if (requestPermission) await health.requestAuthorization({ toRead: [
+    'HKQuantityTypeIdentifierStepCount',
+    'HKQuantityTypeIdentifierDistanceWalkingRunning',
+    'HKQuantityTypeIdentifierActiveEnergyBurned',
+    'HKQuantityTypeIdentifierAppleExerciseTime',
+  ] });
   const { start, end } = todayRange();
   const result = await health.queryStatisticsForQuantity(
     'HKQuantityTypeIdentifierStepCount', ['cumulativeSum'],
@@ -31,6 +51,8 @@ async function readHealthConnect(requestPermission: boolean) {
   if (requestPermission) {
     await health.requestPermission([
       { accessType: 'read', recordType: 'Steps' },
+      { accessType: 'read', recordType: 'Distance' },
+      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
       { accessType: 'read', recordType: 'BackgroundAccessPermission' },
     ]);
   }
@@ -46,10 +68,50 @@ async function readPedometer() {
   const available = await Pedometer.isAvailableAsync();
   if (!available) throw new Error('This device has no supported pedometer.');
   const permission = await Pedometer.getPermissionsAsync();
-  if (!permission.granted) await Pedometer.requestPermissionsAsync();
-  if (Platform.OS !== 'ios') throw new Error('Android historical steps require Health Connect.');
+  const granted = permission.granted ? permission : await Pedometer.requestPermissionsAsync();
+  if (!granted.granted) throw new Error('Physical activity permission was not granted. Enable it in device settings and try again.');
+  if (Platform.OS !== 'ios') return 0;
   const { start, end } = todayRange();
   return (await Pedometer.getStepCountAsync(start, end)).steps;
+}
+
+export async function syncStepSource(source: StepSourceId, requestPermission = false) {
+  if (Platform.OS === 'web') throw new Error('Step sources are available in the iOS and Android apps.');
+  let steps = 0;
+  if (source === 'phone-motion') steps = await readPedometer();
+  else if (source === 'apple-health') {
+    if (Platform.OS !== 'ios') throw new Error('Apple Watch is available on iOS only.');
+    steps = await readHealthKit(requestPermission);
+  } else {
+    if (Platform.OS !== 'android') throw new Error('Health Connect is available on Android only.');
+    steps = await readHealthConnect(requestPermission);
+  }
+  const syncedAt = Date.now();
+  await trackerService.syncDailySteps(steps, source);
+  await setConnection(source, { connected: true, lastSyncedAt: syncedAt });
+  await AsyncStorage.setItem(ENABLED_KEY, 'true');
+  await registerStepBackgroundSync();
+  return { steps, source, syncedAt };
+}
+
+export async function connectStepSource(source: StepSourceId) {
+  try { return await syncStepSource(source, true); }
+  catch (error) { await setConnection(source, { connected: false, error: (error as Error).message }); throw error; }
+}
+
+export async function disconnectStepSource(source: StepSourceId) {
+  await setConnection(source);
+  if (!Object.values(await getStepConnections()).some((item) => item?.connected)) await disableStepSync();
+}
+
+export async function openStepSourcePermissions(source: StepSourceId) {
+  if (source === 'health-connect' && Platform.OS === 'android') {
+    const health = require('react-native-health-connect') as typeof import('react-native-health-connect');
+    health.openHealthConnectSettings();
+    return;
+  }
+  const { Linking } = require('react-native') as typeof import('react-native');
+  await Linking.openSettings();
 }
 
 export async function syncSteps(requestPermission = false) {
@@ -66,6 +128,13 @@ export async function syncSteps(requestPermission = false) {
   return { steps, source, syncedAt: Date.now() };
 }
 
+export async function syncConnectedStepSources() {
+  const connections = await getStepConnections();
+  const connected = (Object.keys(connections) as StepSourceId[]).filter((key) => connections[key]?.connected);
+  if (!connected.length) throw new Error('No step source is connected.');
+  return Promise.all(connected.map((source) => syncStepSource(source, false)));
+}
+
 export async function enableStepSync() {
   const result = await syncSteps(true);
   await AsyncStorage.setItem(ENABLED_KEY, 'true');
@@ -75,6 +144,7 @@ export async function enableStepSync() {
 
 export async function disableStepSync() {
   await AsyncStorage.removeItem(ENABLED_KEY);
+  await AsyncStorage.removeItem(CONNECTIONS_KEY);
   if (await TaskManager.isTaskRegisteredAsync(TASK)) await BackgroundTask.unregisterTaskAsync(TASK);
 }
 
@@ -90,7 +160,7 @@ export async function registerStepBackgroundSync() {
 TaskManager.defineTask(TASK, async () => {
   try {
     if (!(await isStepSyncEnabled())) return BackgroundTask.BackgroundTaskResult.Success;
-    await syncSteps(false);
+    await syncConnectedStepSources();
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;
@@ -112,8 +182,8 @@ export function startForegroundStepSync() {
   };
   const refresh = async () => {
     if (!(await isStepSyncEnabled())) return;
-    const result = await syncSteps(false);
-    baseSteps = result.steps;
+    const results = await syncConnectedStepSources();
+    baseSteps = results.find((item) => item.source === 'phone-motion')?.steps ?? 0;
     await startLivePedometer();
   };
   const subscription = AppState.addEventListener('change', state => {

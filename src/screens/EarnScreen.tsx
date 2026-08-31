@@ -63,23 +63,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   title: {
     ...typography.h1,
-    fontSize: 21,
+    fontSize: 26,
     color: colors.navy,
   },
   balanceBox: {
     alignItems: 'flex-end',
   },
   balanceLabel: {
-    fontSize: 10.5,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '600',
   },
   balanceValue: {
-    fontSize: 17,
+    fontSize: 22,
     fontWeight: '800',
     color: colors.primary,
     marginTop: 2,
@@ -87,5 +88,6 @@ const styles = StyleSheet.create({
   tabsWrap: {
     paddingHorizontal: spacing.lg,
     marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
 });

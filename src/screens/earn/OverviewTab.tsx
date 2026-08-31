@@ -76,7 +76,7 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
         {earnQuickActions.map((action) => (
           <TouchableOpacity key={action.key} style={styles.quickAction} onPress={() => handleQuickAction(action.key)} activeOpacity={0.8}>
             <View style={styles.quickActionIcon}>
-              <Ionicons name={action.icon as keyof typeof Ionicons.glyphMap} size={20} color={colors.primary} />
+              <Ionicons name={action.icon as keyof typeof Ionicons.glyphMap} size={24} color={colors.primary} />
             </View>
             <Text style={styles.quickActionLabel}>{action.label}</Text>
           </TouchableOpacity>
@@ -88,7 +88,7 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
           <Text style={styles.cardTitle}>Earnings by Source</Text>
         </View>
         <View style={styles.sourceRow}>
-          <DonutChart segments={personalSources.map((s) => ({ value: s.value, color: s.color }))} size={100} strokeWidth={16} />
+          <DonutChart segments={personalSources.map((s) => ({ value: s.value, color: s.color }))} size={120} strokeWidth={18} />
           <View style={styles.legend}>
             {personalSources.map((source) => (
               <View key={source.key} style={styles.legendRow}>
@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h2,
+    fontSize: 18,
     color: colors.textPrimary,
     marginTop: spacing.xl,
     marginBottom: spacing.md,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   seeAll: {
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.primary,
   },
@@ -230,22 +231,22 @@ const styles = StyleSheet.create({
   },
   quickAction: {
     alignItems: 'center',
-    width: 78,
+    width: 90,
   },
   quickActionIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#FFEDE3',
     alignItems: 'center',
     justifyContent: 'center',
   },
   quickActionLabel: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.textPrimary,
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 7,
   },
   card: {
     backgroundColor: colors.card,
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -270,26 +271,26 @@ const styles = StyleSheet.create({
   },
   legend: {
     flex: 1,
-    gap: 6,
+    gap: 8,
   },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
   },
   legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   legendLabel: {
     flex: 1,
-    fontSize: 11.5,
+    fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '600',
   },
   legendValue: {
-    fontSize: 11.5,
+    fontSize: 13,
     color: colors.textPrimary,
     fontWeight: '700',
   },
@@ -351,25 +352,25 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   txIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFEDE3',
     alignItems: 'center',
     justifyContent: 'center',
   },
   txTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
   },
   txMeta: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
   },
   txAmount: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: colors.success,
     marginBottom: 4,
@@ -388,25 +389,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   payoutTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
   },
   payoutMeta: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     color: colors.textSecondary,
     marginTop: 2,
   },
   payoutExplain: {
-    fontSize: 11.5,
+    fontSize: 13,
     color: colors.textSecondary,
     marginTop: spacing.md,
-    lineHeight: 17,
+    lineHeight: 19,
   },
   primaryBtn: {
     backgroundColor: colors.primary,
     borderRadius: radii.pill,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
     alignItems: 'center',
     marginTop: spacing.md,
   },
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: colors.white,
     fontWeight: '700',
-    fontSize: 13.5,
+    fontSize: 15,
   },
   withdrawStatRow: {
     flexDirection: 'row',
@@ -424,17 +425,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   withdrawLabel: {
-    fontSize: 12.5,
+    fontSize: 13.5,
     color: colors.textSecondary,
     fontWeight: '600',
   },
   withdrawValue: {
-    fontSize: 13.5,
+    fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   withdrawValueMuted: {
-    fontSize: 13.5,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textSecondary,
   },
@@ -445,12 +446,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    fontSize: 13,
+    fontSize: 15,
     color: colors.textPrimary,
     marginTop: spacing.sm,
   },
   disabledHint: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.sm,

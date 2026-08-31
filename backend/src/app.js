@@ -37,6 +37,12 @@ const marketplaceRoutes = require("./routes/marketplace.routes");
 const personalRoutes = require("./routes/personal.routes");
 const stripeRoutes = require("./routes/stripe.routes");
 const socialAuthRoutes = require("./routes/socialAuth.routes");
+const showcaseRoutes = require("./routes/showcase.routes");
+const liveRoutes = require("./routes/live.routes");
+const channelRoutes = require("./routes/channel.routes");
+const channelPostRoutes = require("./routes/channel-post.routes");
+const channelAnalyticsRoutes = require("./routes/channel-analytics.routes");
+const channelMonetizationRoutes = require("./routes/channel-monetization.routes");
 
 const app = express();
 
@@ -83,11 +89,15 @@ app.use(
   "/api",
   rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-    // The authenticated dashboard polls several independent live resources.
-    // Credential endpoints have their own stricter failed-attempt limiter.
-    max: Number(process.env.RATE_LIMIT_MAX) || 1000,
+    // Mobile apps poll multiple endpoints simultaneously (dashboard, notifications,
+    // tracker, fasting, social, etc.). A generous limit prevents false positives
+    // during normal continuous use while still protecting against abuse.
+    max: Number(process.env.RATE_LIMIT_MAX) || 5000,
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip rate limiting for authenticated users hitting read-only GET endpoints
+    // to avoid blocking normal polling behaviour.
+    skip: (req) => req.method === 'GET' && !!req.headers.authorization,
     message: { success: false, message: "Too many requests, please slow down." },
   })
 );
@@ -127,6 +137,12 @@ app.use("/api/workouts", workoutRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/personal", personalRoutes);
 app.use("/api/social-auth", socialAuthRoutes);
+app.use("/api/showcase", showcaseRoutes);
+app.use("/api/live", liveRoutes);
+app.use("/api/channels", channelRoutes);
+app.use("/api/channels", channelPostRoutes);
+app.use("/api/channels", channelAnalyticsRoutes);
+app.use("/api/channels", channelMonetizationRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));

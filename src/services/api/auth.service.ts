@@ -15,7 +15,7 @@ export const authService = {
       verificationToken,
       code,
     });
-    await storage.setToken(data.token);
+    await storage.setSession(data.token, data.user);
     await storage.setUser(data.user);
     return data;
   },
@@ -30,14 +30,14 @@ export const authService = {
 
   async login(email: string, password: string) {
     const { data } = await apiClient.post<AuthResponse>('/auth/login', { email, password });
-    await storage.setToken(data.token);
+    await storage.setSession(data.token, data.user);
     await storage.setUser(data.user);
     return data;
   },
 
   async firebase(idToken: string) {
     const { data } = await apiClient.post<AuthResponse>('/auth/firebase', { idToken });
-    await storage.setToken(data.token);
+    await storage.setSession(data.token, data.user);
     await storage.setUser(data.user);
     return data;
   },

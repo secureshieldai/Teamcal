@@ -1,9 +1,11 @@
-import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import StoriesRow from '../../components/StoriesRow';
+import StoryComposer from '../../components/social/StoryComposer';
 import PostCard from '../../components/PostCard';
 import SegmentedControl from '../../components/SegmentedControl';
 import BlogCard from '../../components/social/BlogCard';
@@ -36,6 +38,11 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [activeStoryId, setActiveStoryId] = useState<string | null>(null);
+  const [storyLikes, setStoryLikes] = useState<Record<string, { liked: boolean; likes: number }>>({});
+  const [storyReply, setStoryReply] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [replySent, setReplySent] = useState(false);
+  const insets = useSafeAreaInsets();
   const {user}=useAuth();
   const socialBlogs=useApiQuery(()=>socialService.getSocialBlogs(),[],[]);
   const socialVideos=useApiQuery(()=>socialService.getSocialVideos(),[],[]);
@@ -66,10 +73,51 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   }));
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.image}));
   const activeStory=activeStoryId ? socialStories.data.find(item=>item.id===activeStoryId) : undefined;
-  const addStory=async()=>{try{const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8});if(result.canceled)return;const asset=result.assets[0];const url=await postsService.uploadImage({uri:asset.uri,mimeType:asset.mimeType,fileName:asset.fileName});await postsService.create({text:'',image:url,community:'story'});await socialStories.refetch();}catch(e){Alert.alert('Unable to add story',(e as Error).message);}};
+  const [storyComposerOpen, setStoryComposerOpen] = useState(false);
 
+  // Reset transient reply/like UI whenever a different story opens.
+  useEffect(() => {
+    if (!activeStory) return;
+    setStoryLikes(prev => prev[activeStory.id] ? prev : { ...prev, [activeStory.id]: { liked: activeStory.liked, likes: activeStory.likes } });
+    setStoryReply('');
+    setReplySent(false);
+  }, [activeStoryId]);
+
+  const activeStoryLike = activeStory ? storyLikes[activeStory.id] ?? { liked: activeStory.liked, likes: activeStory.likes } : { liked: false, likes: 0 };
+
+  const toggleStoryLike = async () => {
+    if (!activeStory) return;
+    const prev = activeStoryLike;
+    const optimistic = { liked: !prev.liked, likes: prev.likes + (prev.liked ? -1 : 1) };
+    setStoryLikes(s => ({ ...s, [activeStory.id]: optimistic }));
+    try {
+      const result = await postsService.toggleLike(activeStory.id);
+      setStoryLikes(s => ({ ...s, [activeStory.id]: { liked: result.liked, likes: result.likes } }));
+    } catch (e) {
+      setStoryLikes(s => ({ ...s, [activeStory.id]: prev }));
+      Alert.alert('Unable to like story', (e as Error).message);
+    }
+  };
+
+  const sendStoryReply = async () => {
+    if (!activeStory || !storyReply.trim() || sendingReply) return;
+    setSendingReply(true);
+    try {
+      await postsService.addComment(activeStory.id, storyReply.trim());
+      setStoryReply('');
+      setReplySent(true);
+      setTimeout(() => setReplySent(false), 2000);
+    } catch (e) {
+      Alert.alert('Unable to send reply', (e as Error).message);
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  // useApiQuery already polls every 15s on its own; refetch on focus for an immediate refresh.
   useFocusEffect(useCallback(() => {
     refetch();
+    socialStories.refetch();
   }, [refetch]));
 
   const chooseImages = async () => {
@@ -101,7 +149,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   return (
     <View style={styles.flex}>
       <View style={styles.storiesWrap}>
-        <StoriesRow currentUserAvatar={user?.avatar||''} stories={storyCards} onAddStory={addStory} onPressStory={setActiveStoryId} />
+        <StoriesRow currentUserAvatar={user?.avatar||''} stories={storyCards} onAddStory={() => setStoryComposerOpen(true)} onPressStory={setActiveStoryId} />
       </View>
 
       <View style={styles.subTabsWrap}>
@@ -130,17 +178,18 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} />}
+          renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+          ItemSeparatorComponent={() => null}
           ListEmptyComponent={
             <Text style={styles.empty}>
               {feedLoading ? 'Loading posts…' : feedError ? `Unable to load posts: ${feedError}` : 'No posts yet. Share the first update.'}
             </Text>
           }
           ListHeaderComponent={
-            <View style={styles.composer}>
+            <View style={styles.composerWrap}>
+              <View style={styles.composer}>
               <TextInput
                 style={styles.composerInput}
                 value={draft}
@@ -178,6 +227,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
                 </TouchableOpacity>
               </View>
             </View>
+            </View>
           }
         />
       )}
@@ -189,7 +239,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
       />
 
       <Modal visible={Boolean(activeStory)} animationType="fade" transparent onRequestClose={() => setActiveStoryId(null)}>
-        <View style={styles.storyViewer}>
+        <KeyboardAvoidingView style={styles.storyViewer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.storyHeader}>
             <Image source={{ uri: activeStory?.user?.avatar || activeStory?.image }} style={styles.storyAvatar} />
             <Text style={styles.storyAuthor} numberOfLines={1}>{activeStory?.user?.name || 'Story'}</Text>
@@ -198,8 +248,45 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
             </TouchableOpacity>
           </View>
           {activeStory?.image ? <Image source={{ uri: activeStory.image }} style={styles.storyImage} resizeMode="contain" /> : null}
-        </View>
+
+          {activeStory && (
+            <View style={[styles.storyReplyBar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
+              {replySent ? (
+                <View style={styles.storyReplySentPill}>
+                  <Ionicons name="checkmark-circle" size={15} color={colors.white} />
+                  <Text style={styles.storyReplySentText}>Reply sent</Text>
+                </View>
+              ) : (
+                <View style={styles.storyReplyRow}>
+                  <TextInput
+                    style={styles.storyReplyInput}
+                    value={storyReply}
+                    onChangeText={setStoryReply}
+                    placeholder={`Reply to ${activeStory.user?.name || 'this story'}…`}
+                    placeholderTextColor="rgba(255,255,255,0.65)"
+                    onSubmitEditing={sendStoryReply}
+                    returnKeyType="send"
+                  />
+                  {storyReply.trim().length > 0 && (
+                    <TouchableOpacity accessibilityLabel="Send reply" onPress={sendStoryReply} disabled={sendingReply} style={styles.storySendBtn}>
+                      {sendingReply ? <ActivityIndicator size="small" color={colors.white} /> : <Ionicons name="send" size={17} color={colors.white} />}
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity accessibilityLabel={activeStoryLike.liked ? 'Unlike story' : 'Like story'} onPress={toggleStoryLike} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.storyLikeBtn}>
+                    <Ionicons name={activeStoryLike.liked ? 'heart' : 'heart-outline'} size={26} color={activeStoryLike.liked ? colors.primary : colors.white} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+        </KeyboardAvoidingView>
       </Modal>
+
+      <StoryComposer
+        visible={storyComposerOpen}
+        onClose={() => setStoryComposerOpen(false)}
+        onPosted={() => socialStories.refetch()}
+      />
     </View>
   );
 }
@@ -216,13 +303,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   list: {
-    padding: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   composer: {
     backgroundColor: colors.card,
     borderRadius: radii.xl,
     padding: spacing.md,
     marginBottom: spacing.md,
+  },
+  composerWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   composerInput: {
     minHeight: 64,
@@ -259,4 +352,17 @@ const styles = StyleSheet.create({
   storyAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.border },
   storyAuthor: { flex: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
   storyImage: { width: '100%', height: '100%' },
+  storyReplyBar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.md, paddingTop: spacing.sm },
+  storyReplyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  storyReplyInput: {
+    flex: 1, color: colors.white, fontSize: 14, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.4)',
+    borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: 10,
+  },
+  storySendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  storyLikeBtn: { padding: 2 },
+  storyReplySentPill: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radii.pill, paddingVertical: 10,
+  },
+  storyReplySentText: { color: colors.white, fontSize: 13, fontWeight: '700' },
 });

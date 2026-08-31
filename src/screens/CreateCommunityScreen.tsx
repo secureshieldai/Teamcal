@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { groupsService } from '../services/api/groups.service';
+import { earnService } from '../services/api/earn.service';
 import { postsService } from '../services/api/posts.service';
 import { colors, radii, spacing, typography } from '../theme';
 
@@ -142,7 +143,8 @@ function SelectRow({
 }
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
-export default function CreateCommunityScreen({ navigation }: Props) {
+export default function CreateCommunityScreen({ navigation, route }: Props) {
+  const isMembership = route.params?.mode === 'membership';
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
 
@@ -157,8 +159,8 @@ export default function CreateCommunityScreen({ navigation }: Props) {
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [questions, setQuestions] = useState(['', '', '', '', '']);
 
-  // Step 3
-  const [pricing, setPricing] = useState<PricingModel>('free');
+  // Step 3 — default to 'recurring' when creating a membership
+  const [pricing, setPricing] = useState<PricingModel>(isMembership ? 'recurring' : 'free');
   const [amount, setAmount] = useState('9');
   const [interval, setInterval] = useState(INTERVAL_OPTIONS[0]);
   const [trial, setTrial] = useState(TRIAL_OPTIONS[0]);
@@ -210,7 +212,6 @@ export default function CreateCommunityScreen({ navigation }: Props) {
         description: description.trim(),
         isPrivate: visibility === 'private',
         cover: displayCover || undefined,
-        // Extra metadata stored as JSON in description prefix (backend stores freely)
         meta: {
           category,
           visibility,
@@ -224,16 +225,42 @@ export default function CreateCommunityScreen({ navigation }: Props) {
           adPixels: { meta: metaPixel, tiktok: tiktokPixel, snap: snapPixel, google: googleTag },
         },
       });
-      navigation.replace('PowerSquad', { groupId: group.id });
+
+      if (isMembership) {
+        // Also create an earnService membership asset so it appears in Memberships tab
+        const pricingModelKey = pricing === 'recurring' ? 'recurring' : pricing === 'one-time' ? 'lifetime' : pricing === 'pwyw' ? 'lifetime' : 'free';
+        const asset = await earnService.createAsset({
+          kind: 'membership',
+          subtype: pricingModelKey,
+          title: name.trim(),
+          description: description.trim(),
+          image: displayCover || undefined,
+          status: 'published',
+          price: pricing !== 'free' ? Number(amount) || 0 : 0,
+          currency: 'USD',
+          metadata: {
+            groupId: group.id,
+            category,
+            pricingModel: pricingModelKey,
+            monthlyPrice: pricing === 'recurring' ? Number(amount) || 0 : undefined,
+            lifetimePrice: pricing === 'one-time' ? Number(amount) || 0 : undefined,
+            trial,
+            privacy: visibility === 'private' ? 'Private community' : 'Public community',
+          },
+        });
+        navigation.replace('MembershipDashboard', { membershipId: asset.id });
+      } else {
+        navigation.replace('PowerSquad', { groupId: group.id });
+      }
     } catch (e) {
-      Alert.alert('Unable to create community', (e as Error).message);
+      Alert.alert('Unable to create', (e as Error).message);
     } finally {
       setBusy(false);
     }
   };
 
   const continueLabel = step === TOTAL_STEPS
-    ? (busy ? 'Creating…' : 'Create community')
+    ? (busy ? 'Creating…' : isMembership ? 'Create Paid Community' : 'Create community')
     : 'Continue';
 
   return (
@@ -243,7 +270,7 @@ export default function CreateCommunityScreen({ navigation }: Props) {
         <TouchableOpacity style={s.backCircle} onPress={goBack} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Create community</Text>
+        <Text style={s.headerTitle}>{isMembership ? 'Create paid community' : 'Create community'}</Text>
         <Text style={s.stepLabel}>Step {step}/{TOTAL_STEPS}</Text>
       </View>
 

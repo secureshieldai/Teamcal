@@ -44,6 +44,12 @@ export const postsService = {
     return data.posts;
   },
 
+  /** GET /api/posts/user/:id — any user's public post grid, for their profile page */
+  async getUserPosts(userId: string) {
+    const { data } = await apiClient.get<{ success: boolean; posts: Post[] }>(`/posts/user/${userId}`);
+    return data.posts;
+  },
+
   /**
    * POST /api/posts
    * Body: { text, image?, images?, community? } — images (up to 10) takes precedence; image is the legacy single-photo fallback.

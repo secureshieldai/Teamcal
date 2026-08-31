@@ -2,6 +2,7 @@ const express = require("express");
 const { protect } = require("../middleware/auth");
 const { getFeed, searchUsers, getProfile, getLeaderboard, toggleFriend, getFriends, getFriendsProgress, toggleFollow, getCreators, reportContent, toggleBlockUser, getSocialBlogs, getSocialBlog, getSocialVideos, getStories, articleEngagement, toggleArticleLike, addArticleComment, toggleArticleCommentLike, deleteArticleComment, toggleBlogFollow } = require("../controllers/social.controller");
 const { listConversations, listRequests, getMessages, sendMessage, actOnRequest } = require('../controllers/message.controller');
+const { getLiveStreams, getEvents, registerEvent } = require("../controllers/social.events.controller");
 
 const router = express.Router();
 
@@ -29,6 +30,9 @@ router.get("/leaderboard", getLeaderboard);
 router.get("/friends", getFriends);
 router.get("/friends/progress", getFriendsProgress);
 router.get("/creators", getCreators);
+router.get("/live", getLiveStreams);
+router.get("/events", getEvents);
+router.post("/events/:eventId/register", registerEvent);
 router.post("/users/:id/friend", toggleFriend);
 router.post("/users/:id/follow", toggleFollow);
 router.post("/users/:id/block", toggleBlockUser);

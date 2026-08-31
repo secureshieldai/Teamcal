@@ -3,12 +3,16 @@ import {
   Modal, ScrollView, StyleSheet, Text, TextInput,
   TouchableOpacity, View, Switch, Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, radii, spacing, typography } from '../../../theme';
 import {
   MONETIZATION_OPTIONS, PREVIEW_OPTIONS, VIDEO_CATEGORIES, LANGUAGES,
   type MonetizationType, type PreviewType,
 } from './videoData';
+import type { RootStackParamList } from '../../../navigation/types';
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
@@ -101,6 +105,7 @@ export function Field({
 
 export function CategoryDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
+  const insets = useSafeAreaInsets();
   return (
     <View style={sw.field}>
       <Text style={sw.fieldLabel}>Category <Text style={{ color: colors.primary }}>*</Text></Text>
@@ -112,10 +117,10 @@ export function CategoryDropdown({ value, onChange }: { value: string; onChange:
       </TouchableOpacity>
       <Modal visible={open} transparent animationType="slide">
         <TouchableOpacity style={sw.modalOverlay} onPress={() => setOpen(false)} activeOpacity={1}>
-          <View style={sw.modalSheet}>
+          <View style={[sw.modalSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={sw.modalHandle} />
             <Text style={sw.modalTitle}>Select Category</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
               {VIDEO_CATEGORIES.map(cat => (
                 <TouchableOpacity
                   key={cat}
@@ -138,6 +143,7 @@ export function CategoryDropdown({ value, onChange }: { value: string; onChange:
 
 export function LanguageDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
+  const insets = useSafeAreaInsets();
   return (
     <View style={sw.field}>
       <Text style={sw.fieldLabel}>Language</Text>
@@ -147,10 +153,10 @@ export function LanguageDropdown({ value, onChange }: { value: string; onChange:
       </TouchableOpacity>
       <Modal visible={open} transparent animationType="slide">
         <TouchableOpacity style={sw.modalOverlay} onPress={() => setOpen(false)} activeOpacity={1}>
-          <View style={sw.modalSheet}>
+          <View style={[sw.modalSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={sw.modalHandle} />
             <Text style={sw.modalTitle}>Select Language</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
               {LANGUAGES.map(lang => (
                 <TouchableOpacity
                   key={lang}
@@ -176,14 +182,12 @@ export function MonetizationStep({
   allowComments, onAllowComments,
   allowLikes, onAllowLikes,
   addToShowcase, onAddToShowcase,
-  dropContent, onDropContent,
 }: {
   selected: MonetizationType; onSelect: (v: MonetizationType) => void;
   price: string; onPrice: (v: string) => void;
   allowComments: boolean; onAllowComments: (v: boolean) => void;
   allowLikes: boolean; onAllowLikes: (v: boolean) => void;
   addToShowcase: boolean; onAddToShowcase: (v: boolean) => void;
-  dropContent: boolean; onDropContent: (v: boolean) => void;
 }) {
   return (
     <ScrollView contentContainerStyle={sw.stepContent} keyboardShouldPersistTaps="handled">
@@ -209,7 +213,7 @@ export function MonetizationStep({
         </TouchableOpacity>
       ))}
 
-      {(selected === 'paid' || selected === 'ppv' || selected === 'earn-per-complete') && (
+      {(selected === 'paid' || selected === 'ppv') && (
         <View style={sw.priceRow}>
           <Text style={sw.fieldLabel}>Set Your Price / Rate</Text>
           <View style={sw.priceInputRow}>
@@ -231,8 +235,7 @@ export function MonetizationStep({
       <Text style={[sw.fieldLabel, { marginTop: spacing.lg }]}>Additional Options</Text>
       <ToggleRow label="Allow Comments" value={allowComments} onChange={onAllowComments} />
       <ToggleRow label="Allow Likes" value={allowLikes} onChange={onAllowLikes} />
-      <ToggleRow label="Add to Showcase" value={addToShowcase} onChange={onAddToShowcase} />
-      <ToggleRow label="Drop Content (Schedule)" value={dropContent} onChange={onDropContent} />
+      <ToggleRow label="Add to Showcase" value={addToShowcase} onChange={() => onAddToShowcase(!addToShowcase)} />
     </ScrollView>
   );
 }
@@ -247,7 +250,6 @@ export function PreviewStep({
   allowComments, onAllowComments,
   allowLikes, onAllowLikes,
   addToShowcase, onAddToShowcase,
-  dropContent, onDropContent,
   previewThumbUri,
 }: {
   previewType: PreviewType; onPreviewType: (v: PreviewType) => void;
@@ -257,7 +259,6 @@ export function PreviewStep({
   allowComments: boolean; onAllowComments: (v: boolean) => void;
   allowLikes: boolean; onAllowLikes: (v: boolean) => void;
   addToShowcase: boolean; onAddToShowcase: (v: boolean) => void;
-  dropContent: boolean; onDropContent: (v: boolean) => void;
   previewThumbUri?: string;
 }) {
   return (
@@ -319,8 +320,7 @@ export function PreviewStep({
       <Text style={[sw.fieldLabel, { marginTop: spacing.lg }]}>Additional Settings</Text>
       <ToggleRow label="Allow Comments" value={allowComments} onChange={onAllowComments} />
       <ToggleRow label="Allow Likes" value={allowLikes} onChange={onAllowLikes} />
-      <ToggleRow label="Add to Showcase" value={addToShowcase} onChange={onAddToShowcase} />
-      <ToggleRow label="Drop Content (Schedule)" value={dropContent} onChange={onDropContent} />
+      <ToggleRow label="Add to Showcase" value={addToShowcase} onChange={() => onAddToShowcase(!addToShowcase)} />
     </ScrollView>
   );
 }
@@ -379,7 +379,7 @@ export function ToggleRow({ label, value, onChange }: { label: string; value: bo
 
 // ─── Thumbnail Picker ─────────────────────────────────────────────────────────
 
-export function ThumbnailPicker({ uri, onPick }: { uri: string; onPick: () => void }) {
+export function ThumbnailPicker({ uri, onPick, onAiHelper }: { uri: string; onPick: () => void; onAiHelper?: () => void }) {
   return (
     <View style={sw.field}>
       <Text style={sw.fieldLabel}>Thumbnail</Text>
@@ -391,9 +391,18 @@ export function ThumbnailPicker({ uri, onPick }: { uri: string; onPick: () => vo
             <Text style={sw.thumbHint}>JPG, PNG · 16:9 recommended</Text>
           </>}
       </TouchableOpacity>
-      <TouchableOpacity onPress={onPick}>
-        <Text style={sw.changeThumbnailText}>Change Thumbnail</Text>
-      </TouchableOpacity>
+      <View style={sw.thumbActions}>
+        <TouchableOpacity style={sw.thumbActionBtn} onPress={onPick}>
+          <Ionicons name="cloud-upload-outline" size={14} color={colors.primary} />
+          <Text style={sw.thumbActionText}>Upload Thumbnail</Text>
+        </TouchableOpacity>
+        {onAiHelper && (
+          <TouchableOpacity style={[sw.thumbActionBtn, sw.thumbActionAi]} onPress={onAiHelper}>
+            <Ionicons name="sparkles-outline" size={14} color="#fff" />
+            <Text style={[sw.thumbActionText, { color: '#fff' }]}>AI Helper</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -492,6 +501,10 @@ export const sw = StyleSheet.create({
   thumbImage: { width: '100%', height: '100%' },
   thumbHint: { fontSize: 10, color: colors.textMuted },
   changeThumbnailText: { fontSize: 12, fontWeight: '700', color: colors.primary, textAlign: 'center', marginTop: spacing.xs },
+  thumbActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  thumbActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: colors.primary, borderRadius: radii.pill, paddingVertical: 7 },
+  thumbActionAi: { backgroundColor: colors.primary, borderColor: colors.primary },
+  thumbActionText: { fontSize: 12, fontWeight: '700', color: colors.primary },
 
   // Publish
   publishCheck: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },

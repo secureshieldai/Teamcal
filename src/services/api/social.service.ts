@@ -16,7 +16,8 @@ export type DirectMessage={id:string;conversationId:string;senderId:string;recip
 export type SocialBlog={id:string;blog_id:string;title:string;cover?:string;body:string;category?:string;read_minutes:number;views:number;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
 export type ArticleComment={id:string;name:string;avatar:string;time:string;text:string;likes:number;liked:boolean;userId:string;parentCommentId:string|null;verified?:boolean};
 export type SocialVideo={id:string;title:string;description?:string;image?:string;subtype?:string;metrics?:Record<string,number>;metadata?:Record<string,unknown>;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
-export type SocialStory={id:string;image:string;created_at:string;user:{id:string;name:string;avatar:string|null}};
+export type SocialStory={id:string;image:string;created_at:string;likes:number;liked:boolean;comments_count:number;user:{id:string;name:string;avatar:string|null}};
+export type PublicProfile={id:string;name:string;bio:string|null;avatar:string|null;verified:boolean;level:number;xp:number;coins:number;created_at:string;postCount:number;followersCount:number;followingCount:number;isFollowing:boolean;isSelf:boolean};
 
 export const socialService = {
   async report(targetType:'post'|'comment'|'user'|'article'|'video',targetId:string,reason:string){const {data}=await apiClient.post('/social/reports',{targetType,targetId,reason});return data;},
@@ -36,6 +37,7 @@ export const socialService = {
   async toggleBlogFollow(blogId:string){const {data}=await apiClient.post<{success:boolean;following:boolean}>(`/social/content/blogs/${blogId}/follow`);return data.following;},
   async getSocialVideos(){const {data}=await apiClient.get<{success:boolean;videos:SocialVideo[]}>('/social/content/videos');return data.videos;},
   async getStories(){const {data}=await apiClient.get<{success:boolean;stories:SocialStory[]}>('/social/stories');return data.stories;},
+  async getProfile(userId:string){const {data}=await apiClient.get<{success:boolean;user:PublicProfile}>(`/social/users/${userId}`);return data.user;},
   /**
    * GET /api/social/leaderboard?limit=20
    * Backend returns { users } ordered by XP descending.

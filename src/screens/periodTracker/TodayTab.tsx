@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ export default function TodayTab() {
     fertileEnd,
     ovulationDay,
   } = usePeriodTracker();
+  const insets = useSafeAreaInsets();
 
   const info = PHASE_INFO[phase];
   const percent = Math.min(100, (cycleDay / settings.cycleLength) * 100);
@@ -32,7 +34,7 @@ export default function TodayTab() {
   const strokeDashoffset = circumference * (1 - percent / 100);
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} showsVerticalScrollIndicator={false}>
       <LinearGradient colors={[info.bgFrom, '#FFFFFF']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.ringCard}>
         <View style={{ width: RING_SIZE, height: RING_SIZE }}>
           <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotateZ: '-90deg' }] }}>

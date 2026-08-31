@@ -1,29 +1,35 @@
-import React from 'react';
-import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, radii, shadow, spacing, typography } from '../../theme';
 import { useApiQuery } from '../../hooks/useApiQuery';
-import { socialService } from '../../services/api/social.service';
+import { liveService, type LiveStream } from '../../services/api/live.service';
+import type { RootStackParamList } from '../../navigation/types';
 
-type LiveStream = {
-  id: string; title: string; category: string;
-  creator: string; creatorAvatar: string; thumbnail: string;
-  viewers: number; bookmarked: boolean;
-};
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SocialLiveTab() {
-  const liveStreams = useApiQuery<LiveStream[]>(() =>
-    socialService.getLiveStreams?.() ?? Promise.resolve([]), [], []);
+  const navigation = useNavigation<Nav>();
+  const streams = useApiQuery<LiveStream[]>(() => liveService.listStreams(), [], []);
+
+  // Join discover room for real-time viewer count updates
+  useEffect(() => {
+    liveService.joinDiscoverRoom().catch(() => {});
+  }, []);
 
   return (
     <FlatList
-      data={liveStreams.data}
+      data={streams.data}
       keyExtractor={item => item.id}
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={<GoLiveCard />}
+      onRefresh={streams.refetch}
+      refreshing={streams.loading}
+      ListHeaderComponent={<GoLiveCard onPress={() => navigation.navigate('LiveSetup')} />}
       ListEmptyComponent={
-        !liveStreams.loading ? (
+        !streams.loading ? (
           <View style={s.empty}>
             <Ionicons name="radio-outline" size={44} color={colors.textMuted} />
             <Text style={s.emptyTitle}>No one is live right now</Text>
@@ -31,14 +37,16 @@ export default function SocialLiveTab() {
           </View>
         ) : null
       }
-      renderItem={({ item }) => <LiveCard stream={item} />}
+      renderItem={({ item }) => (
+        <LiveCard stream={item} onPress={() => navigation.navigate('LiveViewer', { streamId: item.id })} />
+      )}
     />
   );
 }
 
-function GoLiveCard() {
+function GoLiveCard({ onPress }: { onPress: () => void }) {
   return (
-    <TouchableOpacity style={s.goLiveCard} activeOpacity={0.85} onPress={() => Alert.alert('Go Live', 'Live streaming coming soon.')}>
+    <TouchableOpacity style={s.goLiveCard} activeOpacity={0.85} onPress={onPress}>
       <View style={s.goLiveLeft}>
         <View style={s.goLiveIcon}>
           <Ionicons name="radio" size={22} color={colors.primary} />
@@ -48,35 +56,41 @@ function GoLiveCard() {
           <Text style={s.goLiveSub}>Go live and connect with your audience</Text>
         </View>
       </View>
-      <TouchableOpacity style={s.startLiveBtn} onPress={() => Alert.alert('Go Live', 'Live streaming coming soon.')}>
+      <TouchableOpacity style={s.startLiveBtn} onPress={onPress}>
         <Text style={s.startLiveBtnText}>Start Live</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
 }
 
-function LiveCard({ stream }: { stream: LiveStream }) {
+function LiveCard({ stream, onPress }: { stream: LiveStream; onPress: () => void }) {
   return (
-    <TouchableOpacity style={[s.liveCard, shadow.soft]} activeOpacity={0.85}>
+    <TouchableOpacity style={[s.liveCard, shadow.soft]} activeOpacity={0.85} onPress={onPress}>
       <View style={s.thumbnailWrap}>
-        <Image source={{ uri: stream.thumbnail || `https://picsum.photos/seed/${stream.id}/400/220` }} style={s.thumbnail} />
+        <Image
+          source={{ uri: stream.cover_image || `https://picsum.photos/seed/${stream.id}/400/220` }}
+          style={s.thumbnail}
+        />
         <View style={s.livePill}>
           <View style={s.liveDot} />
           <Text style={s.livePillText}>LIVE</Text>
         </View>
         <View style={s.viewerBadge}>
           <Ionicons name="eye-outline" size={12} color="#fff" />
-          <Text style={s.viewerText}>{stream.viewers}</Text>
+          <Text style={s.viewerText}>{stream.viewer_count}</Text>
         </View>
-        <TouchableOpacity style={s.bookmarkBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name={stream.bookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color="#fff" />
-        </TouchableOpacity>
       </View>
       <View style={s.liveInfo}>
-        <Image source={{ uri: stream.creatorAvatar || `https://picsum.photos/seed/${stream.id}a/40/40` }} style={s.creatorAvatar} />
+        {stream.host?.avatar ? (
+          <Image source={{ uri: stream.host.avatar }} style={s.creatorAvatar} />
+        ) : (
+          <View style={[s.creatorAvatar, { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }]}>
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{stream.host?.name?.[0] ?? '?'}</Text>
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={s.liveTitle} numberOfLines={1}>{stream.title}</Text>
-          <Text style={s.liveCreator}>{stream.creator} · {stream.category}</Text>
+          <Text style={s.liveCreator}>{stream.host?.name ?? 'Unknown'}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -98,9 +112,8 @@ const s = StyleSheet.create({
   livePill: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FF4444', borderRadius: radii.pill, paddingHorizontal: 8, paddingVertical: 3 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   livePillText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
-  viewerBadge: { position: 'absolute', top: 10, right: 40, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radii.pill, paddingHorizontal: 7, paddingVertical: 3 },
+  viewerBadge: { position: 'absolute', top: 10, right: 12, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radii.pill, paddingHorizontal: 7, paddingVertical: 3 },
   viewerText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  bookmarkBtn: { position: 'absolute', top: 8, right: 10 },
   liveInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
   creatorAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.border },
   liveTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },

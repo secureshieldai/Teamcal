@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, ScrollView, StyleSheet, Text, TextInput,
+  ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput,
   TouchableOpacity, View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { usePeriodTracker } from '../../hooks/usePeriodTracker';
@@ -58,12 +59,18 @@ function ChipRow({ children }: { children: React.ReactNode }) {
 
 // ─── main ─────────────────────────────────────────────────────────────────────
 
-export default function LogTab() {
+export default function LogTab({ presetDate }: { presetDate?: number } = {}) {
   const { logs, refetch } = usePeriodTracker();
+  const insets = useSafeAreaInsets();
 
-  // Selected date (default = today)
-  const [selectedDay, setSelectedDay] = useState(startOfDay(Date.now()));
+  // Selected date (default = today, or a date handed in from the Predict tab)
+  const [selectedDay, setSelectedDay] = useState(startOfDay(presetDate ?? Date.now()));
   const isToday = selectedDay === startOfDay(Date.now());
+
+  // Jump to the date the user tapped in the Predict calendar's "Log symptoms" action
+  useEffect(() => {
+    if (presetDate !== undefined) setSelectedDay(startOfDay(presetDate));
+  }, [presetDate]);
 
   // Local state for this day's log
   const [periodStatus, setPeriodStatus] = useState<'none' | 'period'>('none');
@@ -291,13 +298,15 @@ export default function LogTab() {
         </SectionCard>
 
         {/* spacer for sticky button */}
-        <View style={{ height: 80 }} />
+        <View style={{ height: 90 + insets.bottom }} />
       </ScrollView>
 
       {/* ── Save button (sticky bottom) ── */}
-      <View style={s.saveWrap}>
+      <View style={[s.saveWrap, { paddingBottom: insets.bottom + spacing.md }]}>
         <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving} activeOpacity={0.85}>
-          <Text style={s.saveBtnText}>{saving ? 'Saving…' : isToday ? "Save today's log" : `Save log for ${formatDate(selectedDay)}`}</Text>
+          {saving
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={s.saveBtnText}>{isToday ? "Save today's log" : `Save log for ${formatDate(selectedDay)}`}</Text>}
         </TouchableOpacity>
       </View>
     </View>

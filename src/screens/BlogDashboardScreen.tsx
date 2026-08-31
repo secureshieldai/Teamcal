@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActionSheetIOS, Alert, Image, Platform, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import SegmentedControl from '../components/SegmentedControl';
 import StatusBadge from './earn/components/StatusBadge';
 import { colors, radii, shadow, spacing, typography } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { blogsService } from '../services/api/blogs.service';
+import { postsService } from '../services/api/posts.service';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BlogDashboard'>;
 
@@ -16,7 +18,7 @@ const DASHBOARD_TABS = ['Dashboard', 'Posts'];
 const comingSoon = (feature: string) => Alert.alert('Coming soon', `${feature} isn't available yet.`);
 
 type BlogView={id:string;name:string;description:string;category:string;url:string;cover:string;status:string;posts:number;views:number;earned:number;followers:number;updated:string};
-type PostView={id:string;blogId:string;title:string;status:'Published'|'Draft'|'Scheduled';views:number;readTime:string;earned:number;date:string;thumbnail:string};
+type PostView={id:string;blogId:string;title:string;status:string;views:number;readTime:string;earned:number;date:string;thumbnail:string};
 
 const QUICK_LINKS = [
   { key: 'blog-settings', label: 'Blog Settings', icon: 'settings-outline' },
@@ -27,7 +29,56 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
   const [blog,setBlog]=useState<BlogView>({id:blogId,name:'',description:'',category:'',url:'',cover:'',status:'Draft',posts:0,views:0,earned:0,followers:0,updated:''});
   const [posts,setPosts]=useState<PostView[]>([]);
   const [tab, setTab] = useState(DASHBOARD_TABS[0]);
-  useEffect(()=>{const load=()=>Promise.all([blogsService.sites(),blogsService.articles(blogId),blogsService.analytics(blogId)]).then(([sites,articles,analytics])=>{const site=sites.find(x=>x.id===blogId);if(!site)throw new Error('Blog not found');setBlog({id:site.id,name:site.name,url:`${site.slug}.teamcal.blog`,category:site.category||'',cover:site.cover||'',status:site.status||'Draft',posts:analytics.posts,views:analytics.views,earned:analytics.earned,followers:analytics.followers,updated:new Date(site.created_at).toLocaleDateString(),description:site.description||''});setPosts(articles.map(x=>({id:x.id,blogId:x.blog_id,title:x.title,status:(x.status.charAt(0).toUpperCase()+x.status.slice(1)) as 'Published'|'Draft'|'Scheduled',views:Number(x.views||0),readTime:`${x.read_minutes||1}m`,earned:Number(x.earned||0),date:new Date(x.created_at).toLocaleDateString(),thumbnail:x.cover||''})));}).catch(e=>Alert.alert('Unable to load blog',e.message));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
+  useEffect(()=>{const load=()=>Promise.all([blogsService.sites(),blogsService.articles(blogId),blogsService.analytics(blogId)]).then(([sites,articles,analytics])=>{const site=sites.find(x=>x.id===blogId);if(!site)throw new Error('Blog not found');setBlog({id:site.id,name:site.name,url:`${site.slug}.teamcal.blog`,category:site.category||'',cover:site.cover||'',status:site.status||'Draft',posts:analytics.posts,views:analytics.views,earned:analytics.earned,followers:analytics.followers,updated:new Date(site.created_at).toLocaleDateString(),description:site.description||''});setPosts(articles.map(x=>({id:x.id,blogId:x.blog_id,title:x.title,status:x.status.charAt(0).toUpperCase()+x.status.slice(1),views:Number(x.views||0),readTime:`${x.read_minutes||1}m`,earned:Number(x.earned||0),date:new Date(x.created_at).toLocaleDateString(),thumbnail:x.cover||''})));}).catch(e=>Alert.alert('Unable to load blog',e.message));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
+
+  const pickAndUploadBanner = async () => {
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true, aspect: [16, 5] });
+    if (picked.canceled) return;
+    setUploadingBanner(true);
+    try {
+      const asset = picked.assets[0];
+      const url = await postsService.uploadImage({ uri: asset.uri, mimeType: asset.mimeType || 'image/jpeg', fileName: asset.fileName || 'banner.jpg' });
+      await blogsService.updateSite(blogId, { cover: url });
+      setBlog(b => ({ ...b, cover: url }));
+    } catch (e) {
+      Alert.alert('Upload failed', (e as Error).message);
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const openPost = (post: PostView) => {
+    if (post.status === 'Draft') navigation.navigate('ArticleEditor', { blogId, articleId: post.id });
+    else navigation.navigate('ArticleDetail', { articleId: post.id, blogId, isOwner: true });
+  };
+
+  const deleteBanner = () =>
+    Alert.alert('Delete banner photo?', 'Are you sure you want to delete this banner photo?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete Photo', style: 'destructive', onPress: async () => {
+        try { await blogsService.updateSite(blogId, { cover: null }); setBlog(b => ({ ...b, cover: '' })); }
+        catch (e) { Alert.alert('Error', (e as Error).message); }
+      }},
+    ]);
+
+  const showBannerOptions = () => {
+    const hasBanner = !!blog.cover;
+    if (Platform.OS === 'ios') {
+      const options = hasBanner ? ['Upload Photo', 'Replace Photo', 'Reposition Photo', 'Delete Photo', 'Cancel'] : ['Upload Photo', 'Cancel'];
+      ActionSheetIOS.showActionSheetWithOptions({ options, cancelButtonIndex: options.length - 1, destructiveButtonIndex: hasBanner ? 3 : undefined, title: 'Blog Banner' }, idx => {
+        if (idx === options.length - 1) return;
+        if (hasBanner && idx === 3) { deleteBanner(); return; }
+        pickAndUploadBanner();
+      });
+    } else {
+      const btns: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [{ text: 'Upload Photo', onPress: pickAndUploadBanner }];
+      if (hasBanner) btns.push({ text: 'Replace Photo', onPress: pickAndUploadBanner }, { text: 'Delete Photo', style: 'destructive', onPress: deleteBanner });
+      btns.push({ text: 'Cancel', style: 'cancel' });
+      Alert.alert('Blog Banner', undefined, btns);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -46,7 +97,24 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: blog.cover }} style={styles.cover} />
+        {/* Banner */}
+        <View style={styles.bannerContainer}>
+          {blog.cover ? (
+            <Image source={{ uri: blog.cover }} style={styles.cover} resizeMode="cover" />
+          ) : (
+            <TouchableOpacity style={[styles.cover, styles.coverPlaceholder]} onPress={showBannerOptions} activeOpacity={0.85}>
+              <Ionicons name="camera-outline" size={26} color={colors.textMuted} />
+              <Text style={styles.uploadBannerText}>Upload Banner Photo</Text>
+            </TouchableOpacity>
+          )}
+          {uploadingBanner ? (
+            <View style={styles.bannerBusyOverlay}><Text style={styles.bannerBusyText}>Uploading…</Text></View>
+          ) : blog.cover ? (
+            <TouchableOpacity style={styles.bannerEditBtn} onPress={showBannerOptions} activeOpacity={0.85}>
+              <Ionicons name="camera" size={14} color={colors.white} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
         <View style={[styles.blogHeaderCard, shadow.card]}>
           <View style={styles.blogTopRow}>
             <Text style={styles.blogName}>{blog.name}</Text>
@@ -61,7 +129,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
           </View>
           <Text style={styles.blogUrl}>{blog.url}</Text>
           <View style={styles.blogActionsRow}>
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => navigation.navigate('BlogDetail',{blogId})}>
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => navigation.navigate('BlogPublic',{blogId,isOwner:true})}>
               <Text style={styles.outlineBtnText}>View Blog</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.outlineBtn} onPress={() => Share.share({ message: `Check out my blog: ${blog.url}` })}>
@@ -93,7 +161,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
             <View style={[styles.card, shadow.card]}>
               {posts.length === 0 && <Text style={styles.emptyText}>No posts yet for this blog.</Text>}
               {posts.map((post, i) => (
-                <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ArticleEditor',{blogId,articleId:post.id})}>
+                <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => openPost(post)}>
                   <Image source={{ uri: post.thumbnail }} style={styles.postThumb} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.postTitle} numberOfLines={1}>
@@ -146,7 +214,7 @@ export default function BlogDashboardScreen({ route, navigation }: Props) {
         {tab === 'Posts' && (
           <View style={[styles.card, shadow.card, { marginTop: spacing.lg, marginBottom: spacing.xxl }]}>
             {posts.map((post, i) => (
-              <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ArticleEditor',{blogId,articleId:post.id})}>
+              <TouchableOpacity key={post.id} style={[styles.postRow, i === posts.length - 1 && { borderBottomWidth: 0 }]} onPress={() => openPost(post)}>
                 <Image source={{ uri: post.thumbnail }} style={styles.postThumb} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.postTitle} numberOfLines={1}>
@@ -187,7 +255,13 @@ const styles = StyleSheet.create({
   pageTitle: { ...typography.h2, color: colors.textPrimary, flex: 1, textAlign: 'center' },
   tabsWrap: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
   content: { padding: spacing.lg, paddingTop: 0, paddingBottom: spacing.xxl },
-  cover: { width: '100%', height: 120, borderRadius: radii.xl, backgroundColor: colors.border },
+  bannerContainer: { position: 'relative' },
+  cover: { width: '100%', height: 130, borderRadius: radii.xl, backgroundColor: colors.border },
+  coverPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F0F4', gap: 6 },
+  uploadBannerText: { fontSize: 12, fontWeight: '600', color: colors.textMuted },
+  bannerEditBtn: { position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  bannerBusyOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.xl, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  bannerBusyText: { color: colors.white, fontSize: 12, fontWeight: '700' },
   blogHeaderCard: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg, marginTop: -30, marginHorizontal: spacing.sm },
   blogTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   blogName: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },

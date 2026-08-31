@@ -65,6 +65,7 @@ export default function SocialMeTab({ navigation }: Props) {
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{profileUser.name || 'You'}</Text>
           <Text style={styles.handle}>{profileUser.handle}</Text>
+          {profileUser.bio ? <Text style={styles.bio}>{profileUser.bio}</Text> : null}
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.edit}>Edit</Text>
@@ -129,6 +130,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  bio: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginTop: 4,
+    lineHeight: 18,
   },
   edit: {
     ...typography.caption,

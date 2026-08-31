@@ -1,5 +1,6 @@
 const { supabase } = require("../config/supabase");
 const { notifySafely } = require("../services/notification.service");
+const { enrichPosts } = require("./post.controller");
 
 /** GET /api/social/feed?limit=20&skip=0 */
 async function getFeed(req, res, next) {
@@ -53,13 +54,24 @@ async function getProfile(req, res, next) {
 
     if (error || !user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const { count: postCount } = await supabase
-      .from("posts")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .is("deleted_at", null);
+    const [{ count: postCount }, { count: followersCount }, { count: followingCount }, { data: myFollow }] = await Promise.all([
+      supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("deleted_at", null),
+      supabase.from("tracker_entries").select("*", { count: "exact", head: true }).eq("tracker", "following").contains("meta", { targetId: user.id }),
+      supabase.from("tracker_entries").select("*", { count: "exact", head: true }).eq("tracker", "following").eq("user_id", user.id),
+      supabase.from("tracker_entries").select("id").eq("tracker", "following").eq("user_id", req.user.id).contains("meta", { targetId: user.id }).maybeSingle(),
+    ]);
 
-    res.json({ success: true, user: { ...user, postCount: postCount || 0 } });
+    res.json({
+      success: true,
+      user: {
+        ...user,
+        postCount: postCount || 0,
+        followersCount: followersCount || 0,
+        followingCount: followingCount || 0,
+        isFollowing: Boolean(myFollow),
+        isSelf: req.user.id === user.id,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -170,7 +182,7 @@ async function toggleBlockUser(req,res,next){try{const targetId=req.params.id;if
 async function getSocialBlogs(req,res,next){try{const {data,error}=await supabase.from('articles').select('id,blog_id,title,cover,body,category,read_minutes,views,earned,created_at,user:user_id(id,name,avatar,verified)').eq('status','published').order('created_at',{ascending:false}).limit(50);if(error)throw error;res.json({success:true,blogs:data||[]});}catch(e){next(e);}}
 async function getSocialBlog(req,res,next){try{const {data,error}=await supabase.from('articles').select('id,blog_id,title,cover,body,category,read_minutes,views,earned,created_at,user:user_id(id,name,avatar,verified)').eq('id',req.params.id).eq('status','published').maybeSingle();if(error)throw error;if(!data)return res.status(404).json({success:false,message:'Blog article not found'});res.json({success:true,blog:data});}catch(e){next(e);}}
 async function getSocialVideos(req,res,next){try{const {data,error}=await supabase.from('user_records').select('id,user_id,data,status,created_at').eq('kind','earn-video').eq('status','published').order('created_at',{ascending:false}).limit(50);if(error)throw error;const ids=[...new Set((data||[]).map(x=>x.user_id))];const {data:users,error:userError}=ids.length?await supabase.from('users').select('id,name,avatar,verified').in('id',ids):{data:[],error:null};if(userError)throw userError;const byId=Object.fromEntries((users||[]).map(x=>[x.id,x]));res.json({success:true,videos:(data||[]).map(x=>({id:x.id,...x.data,status:x.status,created_at:x.created_at,user:byId[x.user_id]}))});}catch(e){next(e);}}
-async function getStories(req,res,next){try{const cutoff=new Date(Date.now()-86400000).toISOString();const {data,error}=await supabase.from('posts').select('id,image,created_at,user:user_id(id,name,avatar)').eq('community','story').not('image','is',null).is('deleted_at',null).gte('created_at',cutoff).order('created_at',{ascending:false}).limit(30);if(error)throw error;const seen=new Set();const stories=(data||[]).filter(item=>{const userId=item.user?.id;if(!userId||seen.has(userId))return false;seen.add(userId);return true;});res.json({success:true,stories});}catch(e){next(e);}}
+async function getStories(req,res,next){try{const cutoff=new Date(Date.now()-86400000).toISOString();const {data,error}=await supabase.from('posts').select('id,image,created_at,user:user_id(id,name,avatar)').eq('community','story').not('image','is',null).is('deleted_at',null).gte('created_at',cutoff).order('created_at',{ascending:false}).limit(30);if(error)throw error;const seen=new Set();const deduped=(data||[]).filter(item=>{const userId=item.user?.id;if(!userId||seen.has(userId))return false;seen.add(userId);return true;});const stories=await enrichPosts(deduped,req.user.id);res.json({success:true,stories});}catch(e){next(e);}}
 
 async function articleEngagement(req,res,next){try{const articleId=req.params.id;const {data:entries,error}=await supabase.from('tracker_entries').select('*').in('tracker',['article-like','article-comment','article-comment-like']).contains('meta',{articleId}).order('ts',{ascending:false});if(error)throw error;const comments=(entries||[]).filter(x=>x.tracker==='article-comment');const commentLikes=(entries||[]).filter(x=>x.tracker==='article-comment-like');const ids=[...new Set(comments.map(x=>x.user_id))];const {data:users}=ids.length?await supabase.from('users').select('id,name,avatar,verified').in('id',ids):{data:[]};const byId=Object.fromEntries((users||[]).map(x=>[x.id,x]));const likes=(entries||[]).filter(x=>x.tracker==='article-like');res.json({success:true,likes:likes.length,liked:likes.some(x=>x.user_id===req.user.id),comments:comments.map(x=>{const ownLikes=commentLikes.filter(l=>l.meta?.commentId===x.id);return{id:x.id,name:byId[x.user_id]?.name||'Member',avatar:byId[x.user_id]?.avatar||'',verified:Boolean(byId[x.user_id]?.verified),time:new Date(x.ts).toLocaleString(),text:x.meta.text,likes:ownLikes.length,liked:ownLikes.some(l=>l.user_id===req.user.id),userId:x.user_id,parentCommentId:x.meta.parentCommentId||null};})});}catch(e){next(e);}}
 async function toggleArticleLike(req,res,next){try{const articleId=req.params.id;const {data:existing}=await supabase.from('tracker_entries').select('id').eq('user_id',req.user.id).eq('tracker','article-like').contains('meta',{articleId}).maybeSingle();if(existing)await supabase.from('tracker_entries').delete().eq('id',existing.id);else await supabase.from('tracker_entries').insert({user_id:req.user.id,tracker:'article-like',ts:Date.now(),value:1,meta:{articleId}});const {data:likes}=await supabase.from('tracker_entries').select('id').eq('tracker','article-like').contains('meta',{articleId});res.json({success:true,liked:!existing,likes:(likes||[]).length});}catch(e){next(e);}}

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Alert, Modal, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import StatCard from './components/StatCard';
@@ -32,9 +32,19 @@ export default function ReferralsTab() {
   const [range, setRange] = useState<DateRangeKey>('30d');
   const [realReferrals,setRealReferrals]=useState<Referral[]>([]);
   const [loadError,setLoadError]=useState('');
+  const [loadingReferrals,setLoadingReferrals]=useState(true);
   const [termsOpen,setTermsOpen]=useState(false);
   const {user}=useAuth();
-  useFocusEffect(useCallback(()=>{let active=true;const load=()=>earnService.getReferrals().then(rows=>{if(active){setRealReferrals(rows);setLoadError('')}}).catch(e=>active&&setLoadError((e as Error).message));load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer)};},[]));
+  const loadReferrals=useCallback(async()=>{
+    setLoadingReferrals(true);
+    setLoadError('');
+    try{setRealReferrals(await earnService.getReferrals());}
+    catch{setLoadError('We could not refresh your referrals right now. Please try again in a moment.');}
+    finally{setLoadingReferrals(false);}
+  },[]);
+  // Refresh once when the tab is opened. Referrals do not need aggressive polling,
+  // which previously generated unnecessary requests and could trigger rate limits.
+  useFocusEffect(useCallback(()=>{loadReferrals();},[loadReferrals]));
   const realEarnings=useMemo(()=>realReferrals.reduce((sum,item)=>sum+Number(item.reward||0),0),[realReferrals]);
   const converted=realReferrals.filter(item=>item.status==='joined'||item.status==='converted').length;
   const referralCode=user?.referral_code||'';
@@ -99,9 +109,10 @@ export default function ReferralsTab() {
 
       <Text style={styles.sectionTitle}>Your Referrals</Text>
       <View style={[styles.card, shadow.card]}>
-        {loadError?<Text style={styles.refMeta}>Could not load referrals: {loadError}</Text>:null}
+        {loadingReferrals?<View style={styles.loadingRow}><ActivityIndicator size="small" color={colors.primary}/><Text style={styles.loadingText}>Loading your referrals…</Text></View>:null}
+        {!loadingReferrals&&loadError?<View style={styles.errorBox}><Ionicons name="cloud-offline-outline" size={22} color={colors.textSecondary}/><Text style={styles.errorText}>{loadError}</Text><TouchableOpacity style={styles.retryButton} onPress={loadReferrals}><Text style={styles.retryText}>Try Again</Text></TouchableOpacity></View>:null}
         {realReferrals.map((ref,i)=><View key={ref.id} style={[styles.refRow,i===realReferrals.length-1&&{borderBottomWidth:0}]}><View style={{flex:1}}><Text style={styles.refName}>{ref.name}</Text><Text style={styles.refMeta}>Invited {new Date(ref.created_at).toLocaleDateString()}</Text></View><StatusBadge status={ref.status}/></View>)}
-        {!loadError&&!realReferrals.length?<Text style={styles.refMeta}>No personal referrals yet. Share your code to invite someone.</Text>:null}
+        {!loadingReferrals&&!loadError&&!realReferrals.length?<Text style={styles.refMeta}>No personal referrals yet. Share your code to invite someone.</Text>:null}
       </View>
 
       <Text style={styles.sectionTitle}>Referral Program Details</Text>
@@ -205,6 +216,12 @@ const styles = StyleSheet.create({
   },
   refName: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   refMeta: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  loadingRow:{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:spacing.sm,paddingVertical:spacing.lg},
+  loadingText:{fontSize:12,color:colors.textSecondary},
+  errorBox:{alignItems:'center',paddingVertical:spacing.md,gap:spacing.sm},
+  errorText:{fontSize:12,color:colors.textSecondary,textAlign:'center',lineHeight:18},
+  retryButton:{backgroundColor:colors.primary,borderRadius:radii.pill,paddingHorizontal:spacing.lg,paddingVertical:spacing.sm},
+  retryText:{color:colors.white,fontSize:12,fontWeight:'800'},
   detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   detailCard: { width: '48%', backgroundColor: colors.card, borderRadius: radii.lg, padding: spacing.md },
   detailIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFEDE3', alignItems: 'center', justifyContent: 'center' },

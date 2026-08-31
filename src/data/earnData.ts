@@ -23,10 +23,17 @@ export const earnQuickActions=[
   {key:'create-store',label:'Create Store',icon:'storefront-outline'},{key:'create-membership',label:'Create Membership',icon:'ribbon-outline'},
 ] as const;
 export const audienceEngineTemplates=[
-  {key:'educational',label:'Educational',posts:50,icon:'school-outline'},{key:'product-launch',label:'Product Launch',posts:40,icon:'rocket-outline'},
-  {key:'drive-traffic',label:'Drive Traffic',posts:30,icon:'trending-up-outline'},{key:'engagement',label:'Engagement Boost',posts:50,icon:'heart-outline'},
-  {key:'community',label:'Community Growth',posts:30,icon:'people-outline'},
+  {key:'content-repurposing',label:'Content Repurposing Pack',posts:30,icon:'shuffle-outline',description:'Turn one piece of content into multiple text posts, graphics, carousels, and short-video scripts.'},
+  {key:'product-launch',label:'Product Launch Campaign',posts:40,icon:'rocket-outline',description:'Create announcement, feature, benefits, use cases, social proof, urgency and sales posts.'},
+  {key:'membership-growth',label:'Membership Growth Campaign',posts:35,icon:'people-outline',description:'Promote community through benefit posts, highlights, member outcomes, FAQs, testimonials.'},
+  {key:'blog-traffic',label:'Blog Traffic Campaign',posts:30,icon:'trending-up-outline',description:'Create hooks, lessons, excerpts, curiosity, quote graphics, carousels, and read-more CTAs.'},
+  {key:'pdf-ebook',label:'PDF or eBook Promotion',posts:25,icon:'book-outline',description:'Educational previews, takeaways, quote cards, carousels, problem-solution, download CTAs.'},
+  {key:'video-promotion',label:'Video Promotion Pack',posts:28,icon:'videocam-outline',description:'Teasers, key-moment posts, clip suggestions, quote graphics, captions, watch-now CTAs.'},
+  {key:'30day-calendar',label:'30-Day Content Calendar',posts:30,icon:'calendar-outline',description:'Balanced mix of educational, conversational, promotional, engagement, authority content.'},
+  {key:'lead-generation',label:'Lead Generation Campaign',posts:32,icon:'megaphone-outline',description:'Problem-awareness, helpful tips, lead-magnet promos, FAQs, trust-building, action CTAs.'},
+  {key:'sales-conversion',label:'Sales and Conversion Campaign',posts:35,icon:'cart-outline',description:'Benefit-led, use cases, comparisons, objection handling, customer results, urgency, purchase CTAs.'},
 ];
+export const audienceEngineTemplatesByKey=Object.fromEntries(audienceEngineTemplates.map(t=>([t.key,t])));
 export const contentSourceOptions=[
   {key:'blog-post',label:'Blog Post',icon:'document-text-outline'},{key:'full-blog',label:'Full Blog',icon:'newspaper-outline'},
   {key:'pdf',label:'PDF / eBook',icon:'book-outline'},{key:'video',label:'Video',icon:'videocam-outline'},
@@ -38,12 +45,14 @@ export const audienceEngineTones=[
   {key:'professional',label:'Professional',icon:'briefcase-outline'},{key:'inspirational',label:'Inspirational',icon:'star-outline'},{key:'bold',label:'Bold',icon:'flash-outline'},
 ];
 export const audienceEngineObjectives=[
-  {key:'views',label:'Generate Views',icon:'eye-outline'},{key:'sales',label:'Generate Sales',icon:'cart-outline'},
-  {key:'subscribers',label:'Attract Subscribers',icon:'people-outline'},{key:'community',label:'Grow Community',icon:'people-circle-outline'},
+  {key:'views',label:'Generate Views',icon:'eye-outline'},{key:'traffic',label:'Drive Traffic',icon:'open-outline'},{key:'sales',label:'Generate Sales',icon:'cart-outline'},
+  {key:'subscribers',label:'Attract Subscribers',icon:'people-outline'},{key:'community',label:'Grow Community',icon:'people-circle-outline'},{key:'engagement',label:'Increase Engagement',icon:'heart-outline'},
+  {key:'awareness',label:'Build Awareness',icon:'megaphone-outline'},{key:'leads',label:'Generate Leads',icon:'target-outline'},
 ];
 export const audienceEngineFormats=[
-  {key:'text',label:'Text Post',count:20},{key:'image',label:'Single Image',count:10},{key:'graphic',label:'Graphic',count:10},
-  {key:'carousel',label:'Carousel',count:5},{key:'video-script',label:'Short Video Script',count:5},
+  {key:'text',label:'Text Post',count:20},{key:'image',label:'Single Image Post',count:10},{key:'graphic',label:'Designed Graphic',count:10},
+  {key:'carousel',label:'Carousel',count:5},{key:'video-script',label:'Short Video Script',count:5},{key:'quote',label:'Quote or Testimonial Card',count:8},
+  {key:'poll',label:'Poll or Engagement Post',count:5},
 ];
 export const blogCreateTypes=[
   {key:'standard',label:'Standard Blog',description:'Articles, guides, news and ideas.',icon:'document-text-outline'},

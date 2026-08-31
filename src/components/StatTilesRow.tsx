@@ -10,13 +10,14 @@ type Tile = {
   label: string;
   value: string;
   goal: string;
+  onPress?: () => void;
 };
 
 export default function StatTilesRow({ tiles }: { tiles: Tile[] }) {
   return (
     <View style={styles.row}>
       {tiles.map((tile) => (
-        <StatTile key={tile.id} icon={tile.icon} label={tile.label} value={tile.value} goal={tile.goal} />
+        <StatTile key={tile.id} icon={tile.icon} label={tile.label} value={tile.value} goal={tile.goal} onPress={tile.onPress} />
       ))}
     </View>
   );

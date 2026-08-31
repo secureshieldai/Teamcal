@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import StatCard from './components/StatCard';
@@ -12,35 +12,28 @@ import { useEarnAssets } from '../../hooks/useEarnAssets';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
-const UPLOAD_OPTIONS = [
-  { key: 'upload', label: 'Upload an existing PDF', icon: 'cloud-upload-outline' },
-  { key: 'create', label: 'Create inside the app', icon: 'document-outline' },
-  { key: 'ai', label: 'Generate using AI', icon: 'sparkles-outline' },
-  { key: 'import', label: 'Import a document', icon: 'download-outline' },
-  { key: 'blog', label: 'Convert a blog post', icon: 'newspaper-outline' },
-  { key: 'combine', label: 'Combine blog posts', icon: 'copy-outline' },
-  { key: 'manuscript', label: 'Format a manuscript', icon: 'book-outline' },
-] as const;
-
 export default function PDFsTab({ navigation }: Props) {
   const [range, setRange] = useState<DateRangeKey>('30d');
+  const [showArchived, setShowArchived] = useState(false);
   const userAssets=useEarnAssets('pdf');
+  const activePdfs = userAssets.assets.filter(p=>p.status!=='archived');
+  const archivedPdfs = userAssets.assets.filter(p=>p.status==='archived');
 
   const metric=(asset:(typeof userAssets.assets)[number],key:string)=>Number(asset.metrics?.[range==='lifetime'||range==='custom'?key:`${range}_${key}`]??asset.metrics?.[key]??0);
 
   const totals = useMemo(
     () => ({
-      count: userAssets.assets.length,
-      previewViews: userAssets.assets.reduce((s, p) => s + metric(p,'views'), 0),
-      purchases: userAssets.assets.reduce((s, p) => s + metric(p,'purchases'), 0),
-      readers: userAssets.assets.reduce((s, p) => s + metric(p,'readers'), 0),
-      earnings: userAssets.assets.reduce((s, p) => s + metric(p,'earned'), 0),
-      downloads: userAssets.assets.reduce((s, p) => s + metric(p,'downloads'), 0),
-      conversion: userAssets.assets.reduce((s, p) => s + metric(p,'views'), 0)
-        ? userAssets.assets.reduce((s, p) => s + metric(p,'purchases'), 0) / userAssets.assets.reduce((s, p) => s + metric(p,'views'), 0) * 100
+      count: activePdfs.length,
+      previewViews: activePdfs.reduce((s, p) => s + metric(p,'views'), 0),
+      purchases: activePdfs.reduce((s, p) => s + metric(p,'purchases'), 0),
+      readers: activePdfs.reduce((s, p) => s + metric(p,'readers'), 0),
+      earnings: activePdfs.reduce((s, p) => s + metric(p,'earned'), 0),
+      downloads: activePdfs.reduce((s, p) => s + metric(p,'downloads'), 0),
+      conversion: activePdfs.reduce((s, p) => s + metric(p,'views'), 0)
+        ? activePdfs.reduce((s, p) => s + metric(p,'purchases'), 0) / activePdfs.reduce((s, p) => s + metric(p,'views'), 0) * 100
         : 0,
     }),
-    [userAssets.assets,range]
+    [activePdfs,range]
   );
 
   return (
@@ -70,23 +63,15 @@ export default function PDFsTab({ navigation }: Props) {
         <DateRangeDropdown value={range} onChange={setRange} />
       </View>
 
-      <TouchableOpacity style={styles.createCard} onPress={() => navigation.navigate('UploadPdf')}>
-        <View style={{flex:1}}><Text style={styles.createTitle}>Upload or Create a PDF</Text><Text style={styles.createSubtitle}>Publish a book, guide or digital resource</Text></View><Ionicons name="add-circle" size={30} color={colors.white}/>
-      </TouchableOpacity>
-      <View style={styles.optionsGrid}>
-        {UPLOAD_OPTIONS.map((opt) => (
-          <TouchableOpacity key={opt.key} style={styles.optionItem} onPress={() => {
-            if (opt.key === 'upload') return navigation.navigate('UploadPdf');
-            if (opt.key === 'create') return navigation.navigate('CreatePdf');
-            if (opt.key === 'ai') return navigation.navigate('AiGeneratePdf');
-            navigation.navigate('PdfEditor', { mode: opt.key });
-          }}>
-            <View style={styles.optionIcon}>
-              <Ionicons name={opt.icon as keyof typeof Ionicons.glyphMap} size={18} color={colors.primary} />
-            </View>
-            <Text style={styles.optionLabel}>{opt.label}</Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.createRow}>
+        <TouchableOpacity style={styles.createBtn} onPress={() => navigation.navigate('CreatePdf')} activeOpacity={0.85}>
+          <Ionicons name="document-text-outline" size={20} color={colors.white} />
+          <Text style={styles.createBtnText}>Create a PDF</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.uploadBtn} onPress={() => navigation.navigate('UploadPdf')} activeOpacity={0.85}>
+          <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+          <Text style={styles.uploadBtnText}>Upload a PDF</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.sectionHeaderRow}>
@@ -94,9 +79,39 @@ export default function PDFsTab({ navigation }: Props) {
       </View>
       {userAssets.error?<Text style={styles.itemMeta}>Could not load your PDFs: {userAssets.error}</Text>:null}
       <View style={{ gap: spacing.md }}>
-        {userAssets.assets.map((pdf)=>{const views=Number(pdf.metrics?.views||0),purchases=Number(pdf.metrics?.purchases||0);return <TouchableOpacity key={pdf.id} style={[styles.itemCard,shadow.soft]} onPress={()=>navigation.navigate('PdfDashboard',{pdfId:pdf.id})}><Image source={{uri:pdf.image||`https://picsum.photos/seed/${pdf.id}/300/400`}} style={styles.pdfCover}/><View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{pdf.title}</Text><StatusBadge status={pdf.status}/></View><Text style={styles.itemMeta}>{String(pdf.metadata?.author||'Creator')} · {String(pdf.metadata?.category||pdf.subtype)} · {pdf.currency} {Number(pdf.price).toFixed(2)}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{views} previews</Text><Text style={styles.itemStat}>{purchases} purchases</Text><Text style={styles.itemStat}>{views?(purchases/views*100).toFixed(1):'0.0'}%</Text><Text style={styles.itemStat}>${pdf.metrics?.earned||0}</Text><Text style={styles.itemStat}>★ {Number(pdf.metrics?.rating||0).toFixed(1)}</Text></View><Text style={styles.itemMeta}>Published {new Date(pdf.created_at).toLocaleDateString()}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.textMuted}/></TouchableOpacity>})}
-        {!userAssets.loading&&!userAssets.assets.length?<Text style={styles.itemMeta}>No personal PDFs yet. Create one above.</Text>:null}
+        {activePdfs.map((pdf)=>{const views=Number(pdf.metrics?.views||0),purchases=Number(pdf.metrics?.purchases||0);return (
+          <TouchableOpacity key={pdf.id} style={[styles.itemCard,shadow.soft]} onPress={()=>navigation.navigate('PdfDashboard',{pdfId:pdf.id})} activeOpacity={0.85}>
+            <Image source={{uri:pdf.image||`https://picsum.photos/seed/${pdf.id}/300/400`}} style={styles.pdfCover}/>
+            <View style={{flex:1}}><View style={styles.itemTopRow}><Text style={styles.itemName} numberOfLines={1}>{pdf.title}</Text><StatusBadge status={pdf.status}/></View><Text style={styles.itemMeta}>{String(pdf.metadata?.author||'Creator')} · {String(pdf.metadata?.category||pdf.subtype)} · {pdf.currency} {Number(pdf.price).toFixed(2)}</Text><View style={styles.itemStatsRow}><Text style={styles.itemStat}>{views} previews</Text><Text style={styles.itemStat}>{purchases} purchases</Text><Text style={styles.itemStat}>{views?(purchases/views*100).toFixed(1):'0.0'}%</Text><Text style={styles.itemStat}>${pdf.metrics?.earned||0}</Text><Text style={styles.itemStat}>★ {Number(pdf.metrics?.rating||0).toFixed(1)}</Text></View><Text style={styles.itemMeta}>Published {new Date(pdf.created_at).toLocaleDateString()}</Text></View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>
+          </TouchableOpacity>
+        );})}
+        {!userAssets.loading&&!activePdfs.length?<Text style={styles.itemMeta}>No personal PDFs yet. Create one above.</Text>:null}
       </View>
+
+      {archivedPdfs.length>0 && (
+        <View style={{marginTop:spacing.xl}}>
+          <TouchableOpacity style={styles.sectionHeaderRow} onPress={()=>setShowArchived(v=>!v)}>
+            <Text style={styles.sectionTitle}>Archived PDFs ({archivedPdfs.length})</Text>
+            <Ionicons name={showArchived?'chevron-up':'chevron-down'} size={18} color={colors.textSecondary}/>
+          </TouchableOpacity>
+          {showArchived && (
+            <View style={{ gap: spacing.md }}>
+              {archivedPdfs.map(pdf=>(
+                <View key={pdf.id} style={[styles.itemCard,shadow.soft,{opacity:0.7}]}>
+                  <TouchableOpacity style={{flex:1,flexDirection:'row',gap:spacing.md,alignItems:'center'}} onPress={()=>navigation.navigate('PdfDashboard',{pdfId:pdf.id})}>
+                    <Image source={{uri:pdf.image||`https://picsum.photos/seed/${pdf.id}/300/400`}} style={styles.pdfCover}/>
+                    <View style={{flex:1}}><Text style={styles.itemName} numberOfLines={1}>{pdf.title}</Text><Text style={styles.itemMeta}>Archived · {String(pdf.metadata?.category||pdf.subtype)}</Text></View>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.restoreBtn} onPress={async()=>{try{await userAssets.update(pdf.id,{status:'draft'});}catch(e){Alert.alert('Error',(e as Error).message);}}}>
+                    <Text style={styles.restoreBtnText}>Restore</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -121,14 +136,15 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
   sectionTitle: { ...typography.h2, fontSize: 15, color: colors.textPrimary, marginTop: spacing.xl, marginBottom: spacing.md },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl, marginBottom: spacing.md },
-  optionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  createCard:{marginTop:spacing.xl,backgroundColor:colors.primary,borderRadius:radii.xl,padding:spacing.lg,flexDirection:'row',alignItems:'center'},
-  createTitle:{fontSize:16,fontWeight:'800',color:colors.white},
-  createSubtitle:{fontSize:11,color:'rgba(255,255,255,.85)',marginTop:3},
-  optionItem: { width: '31%', backgroundColor: colors.card, borderRadius: radii.lg, paddingVertical: spacing.md, alignItems: 'center' },
-  optionIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#FFEDE3', alignItems: 'center', justifyContent: 'center' },
-  optionLabel: { fontSize: 10, fontWeight: '700', color: colors.textPrimary, marginTop: 6, textAlign: 'center' },
-  itemCard: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md },
+  createRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl },
+  createBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radii.xl, paddingVertical: spacing.lg },
+  createBtnText: { fontSize: 14, fontWeight: '800', color: colors.white },
+  uploadBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radii.xl, paddingVertical: spacing.lg, borderWidth: 1.5, borderColor: colors.primary },
+  uploadBtnText: { fontSize: 14, fontWeight: '800', color: colors.primary },
+  itemCard: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md, alignItems: 'center' },
+  deleteBtn: { padding: spacing.xs },
+  restoreBtn: { borderWidth: 1, borderColor: colors.primary, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  restoreBtnText: { fontSize: 11, fontWeight: '700', color: colors.primary },
   pdfCover: { width: 52, height: 68, borderRadius: radii.md, backgroundColor: colors.border },
   itemTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   itemName: { fontSize: 13.5, fontWeight: '800', color: colors.textPrimary, flexShrink: 1 },

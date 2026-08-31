@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Image, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
-import { colors, radii, shadow, spacing } from '../theme';
+import { colors, radii, spacing } from '../theme';
 import { postsService } from '../services/api/posts.service';
 import { personalService } from '../services/api/personal.service';
 import { socialService } from '../services/api/social.service';
@@ -22,7 +22,7 @@ export type Post = {
   liked?: boolean;
 };
 
-export default function PostCard({ post, onComment, onDelete }: { post: Post; onComment?: (id: string) => void;onDelete?: (id:string)=>void }) {
+export default function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void }) {
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
@@ -32,13 +32,15 @@ export default function PostCard({ post, onComment, onDelete }: { post: Post; on
   const toggleSaved = async () => { const previous=saved;setSaved(!saved);try{setSaved(await personalService.toggle('saved-post',post.id,{caption:post.caption,authorName:post.authorName,photos:post.photos}));}catch(error){setSaved(previous);Alert.alert('Unable to save post',(error as Error).message);} };
   const openMenu=()=>{if(onDelete)return Alert.alert('Post options',undefined,[{text:'Delete Post',style:'destructive',onPress:()=>Alert.alert('Delete post','This cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:()=>onDelete(post.id)}])},{text:'Cancel',style:'cancel'}]);const actions:any[]=[{text:'Report Post',onPress:async()=>{try{await socialService.report('post',post.id,'Community guidelines violation');Alert.alert('Report received','Thank you. TeamCal will review this post.');}catch(error){Alert.alert('Unable to report',(error as Error).message);}}}];if(post.authorId&&post.authorId!==user?.id)actions.push({text:'Block User',style:'destructive',onPress:()=>Alert.alert(`Block ${post.authorName}?`,'You will no longer see this user’s posts.',[{text:'Cancel',style:'cancel'},{text:'Block',style:'destructive',onPress:async()=>{try{await socialService.blockUser(post.authorId!);Alert.alert('User blocked');}catch(error){Alert.alert('Unable to block',(error as Error).message);}}}])});actions.push({text:'Cancel',style:'cancel'});Alert.alert('Post options',undefined,actions);};
   return (
-    <View style={[styles.card, shadow.card]}>
+    <View style={styles.card}>
       <View style={styles.header}>
-        <Avatar uri={post.authorAvatar} size={38} />
-        <View style={styles.headerInfo}>
-          <Text style={styles.name}>{post.authorName}</Text>
-          <Text style={styles.time}>{post.time}</Text>
-        </View>
+        <TouchableOpacity style={styles.headerTouchable} onPress={onPressAuthor} disabled={!onPressAuthor} activeOpacity={onPressAuthor ? 0.7 : 1}>
+          <Avatar uri={post.authorAvatar} size={38} />
+          <View style={styles.headerInfo}>
+            <Text style={styles.name}>{post.authorName}</Text>
+            <Text style={styles.time}>{post.time}</Text>
+          </View>
+        </TouchableOpacity>
         <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={openMenu}>
           <Ionicons name="ellipsis-horizontal" size={18} color={colors.textMuted} />
         </TouchableOpacity>
@@ -81,10 +83,17 @@ export default function PostCard({ post, onComment, onDelete }: { post: Post; on
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radii.xl,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTouchable: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },

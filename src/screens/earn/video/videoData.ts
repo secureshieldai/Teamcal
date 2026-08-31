@@ -13,13 +13,12 @@ export const VIDEO_CATEGORIES = [
 
 export type VideoCategory = typeof VIDEO_CATEGORIES[number];
 
-export type MonetizationType = 'paid' | 'ad-based' | 'ppv' | 'earn-per-complete';
+export type MonetizationType = 'paid' | 'ad-based' | 'ppv';
 
 export const MONETIZATION_OPTIONS: { key: MonetizationType; label: string; description: string; icon: string }[] = [
   { key: 'paid', label: 'Paid Video (One-Time Purchase)', description: 'Viewers pay once to unlock and watch the full video.', icon: 'lock-closed' },
   { key: 'ad-based', label: 'Ad-Based Earnings', description: 'Earn money from ads shown during your video.', icon: 'play-circle' },
   { key: 'ppv', label: 'Pay Per View (PPV)', description: 'Charge a set amount every time someone watches your video.', icon: 'eye' },
-  { key: 'earn-per-complete', label: 'Earn Per Complete View', description: 'Earn a fixed amount when viewers watch the video to the end.', icon: 'checkmark-circle' },
 ];
 
 export type PreviewType = 'none' | 'first-30' | 'custom-range' | 'custom-upload';

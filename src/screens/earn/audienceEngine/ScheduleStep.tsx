@@ -3,12 +3,11 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, shadow, spacing } from '../../../theme';
 
-type SchedulingOption = 'smart' | 'custom' | 'queue';
+type SchedulingOption = 'smart' | 'custom';
 
 const SCHEDULING_OPTIONS: { key: SchedulingOption; label: string; description: string; icon: string }[] = [
   { key: 'smart', label: 'Smart Schedule', description: 'AI picks the best times to maximize reach and engagement.', icon: 'sparkles-outline' },
   { key: 'custom', label: 'Custom Dates & Times', description: 'Choose specific dates and times for each post manually.', icon: 'calendar-outline' },
-  { key: 'queue', label: 'Queue Mode', description: "Add posts to a queue and we'll publish in order at the best times.", icon: 'time-outline' },
 ];
 
 type Props = {

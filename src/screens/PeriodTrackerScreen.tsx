@@ -28,6 +28,9 @@ export default function PeriodTrackerScreen() {
   const { settings, saveSettings } = usePeriodTracker();
   const [tab, setTab] = useState('Today');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [logPresetDate, setLogPresetDate] = useState<number | undefined>(undefined);
+
+  const jumpToLog = (d: Date) => { setLogPresetDate(d.getTime()); setTab('Log'); };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -62,7 +65,7 @@ export default function PeriodTrackerScreen() {
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
-            <TouchableOpacity key={t.id} style={[styles.tab, active && styles.tabActive]} onPress={() => setTab(t.id)}>
+            <TouchableOpacity key={t.id} style={[styles.tab, active && styles.tabActive]} onPress={() => { setLogPresetDate(undefined); setTab(t.id); }}>
               <Ionicons name={t.icon} size={16} color={active ? colors.white : colors.textSecondary} />
               <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
             </TouchableOpacity>
@@ -71,8 +74,8 @@ export default function PeriodTrackerScreen() {
       </ScrollView>
 
       {tab === 'Today' && <TodayTab />}
-      {tab === 'Predict' && <PredictTab />}
-      {tab === 'Log' && <LogTab />}
+      {tab === 'Predict' && <PredictTab onLogDate={jumpToLog} />}
+      {tab === 'Log' && <LogTab presetDate={logPresetDate} />}
       {tab === 'Trends' && <TrendsTab />}
       {tab === 'Coach' && <CoachTab />}
 

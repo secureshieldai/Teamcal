@@ -5,13 +5,15 @@ import Avatar from '../Avatar';
 import { colors, radii, shadow, spacing } from '../../theme';
 import type { SocialConversation } from '../../services/api/social.service';
 
-export default function ChatRow({ conversation, onPress }: { conversation: SocialConversation; onPress?: () => void }) {
+export default function ChatRow({ conversation, onPress, onPressProfile }: { conversation: SocialConversation; onPress?: () => void; onPressProfile?: () => void }) {
   return (
     <TouchableOpacity style={[styles.card, shadow.card]} activeOpacity={0.85} onPress={onPress}>
-      <Avatar uri={conversation.user.avatar||''} size={52} />
+      <TouchableOpacity disabled={!onPressProfile} onPress={onPressProfile} hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
+        <Avatar uri={conversation.user.avatar||''} size={52} />
+      </TouchableOpacity>
       <View style={styles.info}>
         <View style={styles.nameRow}>
-          <Text style={styles.name}>{conversation.user.name}</Text>
+          <Text style={styles.name} onPress={onPressProfile}>{conversation.user.name}</Text>
         </View>
         <Text style={styles.summary}>{conversation.summary}</Text>
       </View>

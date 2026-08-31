@@ -58,7 +58,7 @@ export default function SocialChatsTab({navigation}:{navigation:NativeStackNavig
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<TouchableOpacity onPress={()=>navigation.navigate('GlobalSearch')}><Text style={styles.empty}>{loading?'Loading conversations…':error?`Unable to load chats: ${error}`:'No conversations yet. Tap to find someone.'}</Text></TouchableOpacity>}
-          renderItem={({ item }) => <ChatRow conversation={item} onPress={()=>navigation.navigate('DirectMessage',{userId:item.user.id,name:item.user.name,avatar:item.user.avatar})} />}
+          renderItem={({ item }) => <ChatRow conversation={item} onPress={()=>navigation.navigate('DirectMessage',{userId:item.user.id,name:item.user.name,avatar:item.user.avatar})} onPressProfile={()=>navigation.navigate('UserProfile',{userId:item.user.id,username:item.user.name})} />}
         />
       )}
     </View>

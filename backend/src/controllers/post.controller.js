@@ -88,6 +88,25 @@ async function myPosts(req, res, next) {
   }
 }
 
+/** GET /api/posts/user/:id — any user's public post grid, for their profile page */
+async function getUserPosts(req, res, next) {
+  try {
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select("*, user:user_id (id, name, avatar, verified)")
+      .eq("user_id", req.params.id)
+      .is("deleted_at", null)
+      .or("community.is.null,community.neq.story")
+      .order("created_at", { ascending: false })
+      .limit(60);
+
+    if (error) throw error;
+    res.json({ success: true, posts: await enrichPosts(posts, req.user.id) });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** GET /api/posts/feed?limit=20&skip=0 */
 async function getFeed(req, res, next) {
   try {
@@ -201,4 +220,4 @@ async function deleteComment(req, res, next) {
   catch (err) { next(err); }
 }
 
-module.exports = { createPost, uploadPostImage, myPosts, getFeed, likePost, deletePost, getComments, addComment, deleteComment };
+module.exports = { createPost, uploadPostImage, myPosts, getUserPosts, getFeed, likePost, deletePost, getComments, addComment, deleteComment, enrichPosts };

@@ -56,6 +56,71 @@ async function discoverGroups(req, res, next) {
   }
 }
 
+/**
+ * GET /api/groups/stories — "Group Updates" for the homepage stories row.
+ * Distinct from personal stories (GET /api/social/stories): this returns recent
+ * posts from groups/communities the user has joined, grouped by group, not by person.
+ */
+async function getGroupStories(req, res, next) {
+  try {
+    const { data: memberships, error: mErr } = await supabase
+      .from("group_members")
+      .select("group_id")
+      .eq("user_id", req.user.id);
+    if (mErr) throw mErr;
+
+    const groupIds = memberships.map((m) => m.group_id);
+    if (!groupIds.length) return res.json({ success: true, groups: [] });
+
+    const cutoff = new Date(Date.now() - 86400000).toISOString();
+    const { data: posts, error: postsError } = await supabase
+      .from("posts")
+      .select("id, text, image, image_urls, community, created_at, user:user_id (id, name, avatar)")
+      .in("community", groupIds)
+      .is("deleted_at", null)
+      .gte("created_at", cutoff)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (postsError) throw postsError;
+
+    const postsByGroup = new Map();
+    for (const post of posts || []) {
+      if (!postsByGroup.has(post.community)) postsByGroup.set(post.community, []);
+      postsByGroup.get(post.community).push(post);
+    }
+    const activeGroupIds = [...postsByGroup.keys()];
+    if (!activeGroupIds.length) return res.json({ success: true, groups: [] });
+
+    const { data: groups, error: groupsError } = await supabase
+      .from("groups")
+      .select("id, name, cover, avatar")
+      .in("id", activeGroupIds);
+    if (groupsError) throw groupsError;
+
+    const groupById = Object.fromEntries((groups || []).map((g) => [g.id, g]));
+    const result = activeGroupIds
+      .map((id) => {
+        const group = groupById[id];
+        const groupPosts = postsByGroup.get(id).slice(0, 10);
+        return group
+          ? {
+              groupId: id,
+              groupName: group.name,
+              groupImage: group.cover || group.avatar || null,
+              latestPostAt: groupPosts[0].created_at,
+              posts: groupPosts,
+            }
+          : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.latestPostAt).getTime() - new Date(a.latestPostAt).getTime());
+
+    res.json({ success: true, groups: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** GET /api/groups/:id */
 async function getGroup(req, res, next) {
   try {
@@ -210,10 +275,42 @@ async function joinGroup(req, res, next) {
       .update({ member_count: (group.member_count || 0) + 1 })
       .eq("id", group.id);
 
+    await sendAutoDmIfConfigured(group.id, req.user.id).catch(() => {});
+
     res.json({ success: true, message: "Joined group" });
   } catch (err) {
     next(err);
   }
+}
+
+/** Fires the community owner's configured Auto-DM (Membership Manager → Plugins) to a
+ *  newly-joined member, exactly once, if the linked membership has it enabled. */
+async function sendAutoDmIfConfigured(groupId, newMemberId) {
+  const { data: owner } = await supabase
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", groupId)
+    .eq("role", "owner")
+    .maybeSingle();
+  if (!owner || owner.user_id === newMemberId) return;
+
+  const { data: memberships } = await supabase
+    .from("user_records")
+    .select("data")
+    .eq("user_id", owner.user_id)
+    .eq("kind", "earn-membership");
+  const asset = (memberships || []).find((m) => m.data?.metadata?.groupId === groupId);
+  const dm = asset?.data?.metadata?.autoDmMessage;
+  if (!dm || !dm.enabled || !String(dm.text || "").trim()) return;
+
+  const conversationId = [owner.user_id, newMemberId].sort().join(":");
+  await supabase.from("tracker_entries").insert({
+    user_id: owner.user_id,
+    tracker: "direct-message",
+    ts: Date.now(),
+    value: 0,
+    meta: { conversationId, recipientId: newMemberId, text: dm.text, status: "accepted", read: false, autoDm: true },
+  });
 }
 
 /** DELETE /api/groups/:id/join */
@@ -292,7 +389,7 @@ async function updateGroupMember(req,res,next){try{const {data:actor}=await supa
 async function removeGroupMember(req,res,next){try{const {data:actor}=await supabase.from("group_members").select("role").eq("group_id",req.params.id).eq("user_id",req.user.id).maybeSingle();if(!actor||!["owner","admin"].includes(actor.role))return res.status(403).json({success:false,message:"Not authorized"});const {data:target}=await supabase.from("group_members").select("role").eq("group_id",req.params.id).eq("user_id",req.params.userId).maybeSingle();if(target?.role==="owner")return res.status(400).json({success:false,message:"Owner cannot be removed"});const {error}=await supabase.from("group_members").delete().eq("group_id",req.params.id).eq("user_id",req.params.userId);if(error)throw error;const {data:group}=await supabase.from("groups").select("member_count").eq("id",req.params.id).single();if(group)await supabase.from("groups").update({member_count:Math.max(1,(group.member_count||1)-1)}).eq("id",req.params.id);res.json({success:true});}catch(e){next(e)}}
 
 module.exports = {
-  getMyGroups, discoverGroups, getGroup, createGroup, updateGroup,
+  getMyGroups, discoverGroups, getGroupStories, getGroup, createGroup, updateGroup,
   joinGroup, leaveGroup, getGroupActivity,
   updateGroupMember, removeGroupMember,
 };

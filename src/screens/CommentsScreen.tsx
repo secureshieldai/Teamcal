@@ -60,9 +60,19 @@ export default function CommentsScreen({ route, navigation }: Props) {
         ListEmptyComponent={<Text style={styles.empty}>Be the first to comment.</Text>}
         renderItem={({ item }) => (
           <View style={styles.row}>
-            <Avatar uri={item.user?.avatar || ''} size={36} />
+            <TouchableOpacity
+              disabled={!item.user?.id}
+              onPress={() => item.user?.id && navigation.navigate('UserProfile', { userId: item.user.id, username: item.user.name })}
+            >
+              <Avatar uri={item.user?.avatar || ''} size={36} />
+            </TouchableOpacity>
             <View style={styles.bubble}>
-              <Text style={styles.name}>{item.user?.name || 'Member'}</Text>
+              <TouchableOpacity
+                disabled={!item.user?.id}
+                onPress={() => item.user?.id && navigation.navigate('UserProfile', { userId: item.user.id, username: item.user.name })}
+              >
+                <Text style={styles.name}>{item.user?.name || 'Member'}</Text>
+              </TouchableOpacity>
               <Text style={styles.comment}>{item.meta.text}</Text>
               <Text style={styles.time}>{new Date(item.ts).toLocaleString()}</Text>
             </View>
