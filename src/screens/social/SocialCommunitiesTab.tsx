@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchBar from '../../components/SearchBar';
@@ -9,8 +9,6 @@ import SocialChannelsTab from './SocialChannelsTab';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { communitiesSubTabs } from '../../data/communityData';
 import { useDiscoverGroups, useGroups } from '../../hooks/useCommunity';
-import { useChallenges } from '../../hooks/useChallenges';
-import { challengesService } from '../../services/api/challenges.service';
 import type { RootStackParamList } from '../../navigation/types';
 import {groupsService} from '../../services/api/groups.service';
 
@@ -23,7 +21,7 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const { groups: myGroups,refetch:refetchMine } = useGroups();
   const { groups: discoverGroups, loading: discoverLoading, error: discoverError,refetch:refetchDiscover } = useDiscoverGroups();
-  const { challenges, loading: challengesLoading } = useChallenges('discover');
+  
   const changeSubTab = (nextTab: string) => {
     if (nextTab === 'Challenges') {
       navigation.navigate('Challenges');
@@ -51,38 +49,6 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
 
       {subTab === 'Channels' ? (
         <SocialChannelsTab navigation={navigation} />
-      ) : subTab === 'Challenges' ? (
-
-      ) : null}
-
-      {subTab === 'Challenges' && subTab !== 'Channels' ? (
-        <FlatList
-          data={challenges}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<SectionHeader title="Challenges" actionLabel="See All" onPressAction={() => navigation.navigate('Challenges')} />}
-          ListEmptyComponent={<Text style={styles.empty}>{challengesLoading ? 'Loading challenges…' : 'No challenges to discover right now.'}</Text>}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.groupCard, shadow.card]}
-              activeOpacity={0.85}
-              onPress={async () => {
-                try {
-                  await challengesService.join(item.id);
-                } catch (e) {
-                  Alert.alert('Unable to join', (e as Error).message);
-                }
-              }}
-            >
-              <View style={styles.groupInfo}>
-                <Text style={styles.groupName}>{item.title}</Text>
-                <Text style={styles.groupMeta}>{item.duration_days} days · {item.joined_count ?? 0} joined</Text>
-              </View>
-              <Text style={styles.openText}>Join</Text>
-            </TouchableOpacity>
-          )}
-        />
       ) : subTab === 'Me' ? (
         <FlatList
           data={myGroups}
