@@ -1,11 +1,11 @@
 const express = require('express');
 const channelMonetizationController = require('../controllers/channel-monetization.controller');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { channelOwner } = require('../middleware/channel-permissions');
 
 const router = express.Router();
 
-router.use(authenticateToken);
+router.use(protect);
 
 router.post('/:channelId/monetization/apply', channelOwner, channelMonetizationController.applyForMonetization);
 router.get('/:channelId/monetization/status', channelOwner, channelMonetizationController.getMonetizationStatus);

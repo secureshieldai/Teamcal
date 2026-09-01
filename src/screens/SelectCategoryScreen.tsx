@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ export default function SelectCategoryScreen({ navigation, route }: Props) {
   }, [query]);
 
   const apply = () => {
+    if (!selected) return;
     navigation.navigate('ArticleEditor', { blogId, articleId, pickedCategory: selected });
   };
 
@@ -31,11 +32,10 @@ export default function SelectCategoryScreen({ navigation, route }: Props) {
           <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>Select Category</Text>
-        <View style={{ width: 22 }} />
       </View>
 
       <View style={styles.searchWrap}>
-        <Ionicons name="search" size={17} color={colors.textMuted} />
+        <Ionicons name="search-outline" size={18} color={colors.textMuted} />
         <TextInput
           style={styles.searchInput}
           value={query}

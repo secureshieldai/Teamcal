@@ -1,11 +1,11 @@
 const express = require('express');
 const channelPostController = require('../controllers/channel-post.controller');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { channelPermission } = require('../middleware/channel-permissions');
 
 const router = express.Router();
 
-router.use(authenticateToken);
+router.use(protect);
 
 // Posts
 router.post('/channels/:channelId/posts', channelPermission('can_post'), channelPostController.createPost);

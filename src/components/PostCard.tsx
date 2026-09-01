@@ -66,23 +66,28 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
             console.warn('PostCard: Empty image URI at index', i, 'in post', post.id);
           }
           
+          const single = post.photos.length === 1;
+          const wrapStyle = single ? styles.photoWrapSingle : styles.photoWrapGrid;
+          const sizeStyle = single ? styles.photoSingle : styles.photoGrid;
+          const aspectStyle = single ? styles.aspectSingle : styles.aspectGrid;
+
           if (!uri || imageErrors[i]) {
             return (
               <View
                 key={`error-${post.id}-${i}`}
-                style={[styles.photo, styles.photoError, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}
+                style={[styles.photo, styles.photoError, wrapStyle, aspectStyle]}
               >
                 <Ionicons name="image-outline" size={32} color={colors.textMuted} />
                 <Text style={styles.errorText}>Unable to load</Text>
               </View>
             );
           }
-          
+
           return (
-            <View key={`${uri}-${i}`} style={[styles.photo, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}>
+            <View key={`${uri}-${i}`} style={[styles.photo, wrapStyle]}>
               <Image
                 source={{ uri }}
-                style={StyleSheet.absoluteFill}
+                style={sizeStyle}
                 resizeMode="cover"
                 onError={(error) => {
                   console.log('Image load error for post', post.id, 'image', i, ':', uri, error.nativeEvent?.error);
@@ -196,12 +201,28 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 4,
   },
+  // Wrappers only set width. The <Image> child carries width + aspectRatio so it
+  // resolves its own height (Yoga will not back-compute height from aspectRatio
+  // on a plain View that has a percentage width inside a wrapping row — it
+  // collapses to 0, which was rendering the feed blank on native).
+  photoWrapSingle: {
+    width: '100%',
+  },
+  photoWrapGrid: {
+    width: '49%',
+  },
   photoSingle: {
     width: '100%',
     aspectRatio: 16 / 10,
   },
   photoGrid: {
-    width: '49%',
+    width: '100%',
+    aspectRatio: 1,
+  },
+  aspectSingle: {
+    aspectRatio: 16 / 10,
+  },
+  aspectGrid: {
     aspectRatio: 1,
   },
   badge: {

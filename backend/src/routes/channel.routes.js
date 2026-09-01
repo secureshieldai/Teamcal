@@ -1,6 +1,6 @@
 const express = require('express');
 const channelController = require('../controllers/channel.controller');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { channelOwner, channelAdmin, channelPermission } = require('../middleware/channel-permissions');
 
 const router = express.Router();
@@ -14,7 +14,7 @@ router.get('/:id', channelController.getChannel);
 router.get('/:id/posts', channelController.getChannelPosts);
 
 // Protected routes
-router.use(authenticateToken);
+router.use(protect);
 
 router.post('/', channelController.createChannel);
 router.get('/my/channels', channelController.getMyChannels);
