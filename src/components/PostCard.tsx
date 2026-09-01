@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
 import { colors, radii, spacing } from '../theme';
@@ -27,7 +27,17 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
   const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
   const {user}=useAuth();
+  
+  useEffect(() => {
+    // Initialize loading state for all images
+    const initialLoading: Record<number, boolean> = {};
+    post.photos.forEach((_, index) => {
+      initialLoading[index] = true;
+    });
+    setImageLoading(initialLoading);
+  }, [post.photos]);
   useEffect(() => { personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {}); }, [post.id]);
   const toggleLike = async () => { const previous = { likes, liked }; setLiked(!liked); setLikes(Math.max(0, likes + (liked ? -1 : 1))); try { const result = await postsService.toggleLike(post.id); setLikes(result.likes); setLiked(result.liked); } catch (e) { setLikes(previous.likes); setLiked(previous.liked); Alert.alert('Unable to like post', (e as Error).message); } };
   const toggleSaved = async () => { const previous=saved;setSaved(!saved);try{setSaved(await personalService.toggle('saved-post',post.id,{caption:post.caption,authorName:post.authorName,photos:post.photos}));}catch(error){setSaved(previous);Alert.alert('Unable to save post',(error as Error).message);} };
@@ -69,21 +79,32 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
           }
           
           return (
-            <Image
-              key={`${uri}-${i}`}
-              source={{ uri }}
-              style={[styles.photo, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}
-              resizeMode="cover"
-              onError={(error) => {
-                console.log('Image load error for post', post.id, 'image', i, ':', uri, error.nativeEvent?.error);
-                setImageErrors(prev => ({ ...prev, [i]: true }));
-              }}
-              onLoad={() => {
-                if (__DEV__) {
-                  console.log('Image loaded successfully:', uri.substring(0, 60) + '...');
-                }
-              }}
-            />
+            <View key={`${uri}-${i}`} style={[styles.photo, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}>
+              <Image
+                source={{ uri }}
+                style={StyleSheet.absoluteFill}
+                resizeMode="cover"
+                onError={(error) => {
+                  console.log('Image load error for post', post.id, 'image', i, ':', uri, error.nativeEvent?.error);
+                  setImageErrors(prev => ({ ...prev, [i]: true }));
+                  setImageLoading(prev => ({ ...prev, [i]: false }));
+                }}
+                onLoadStart={() => {
+                  setImageLoading(prev => ({ ...prev, [i]: true }));
+                }}
+                onLoadEnd={() => {
+                  setImageLoading(prev => ({ ...prev, [i]: false }));
+                  if (__DEV__) {
+                    console.log('Image loaded successfully:', uri.substring(0, 60) + '...');
+                  }
+                }}
+              />
+              {imageLoading[i] && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
+            </View>
           );
         })}
         {post.badge ? (
@@ -157,9 +178,16 @@ const styles = StyleSheet.create({
   },
   photo: {
     backgroundColor: '#000',
+    overflow: 'hidden',
   },
   photoError: {
     backgroundColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
