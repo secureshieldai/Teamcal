@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { channelsService } from '../services/api/channels.service';
+import { postsService } from '../services/api/posts.service';
 import type { PostContentType } from '../types/channels';
 import { colors, radii, spacing } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -43,10 +44,26 @@ export default function CreateChannelPostScreen() {
 
     setPosting(true);
     try {
+      // Upload image/video to server if mediaUri exists
+      let uploadedMediaUrl = null;
+      if (mediaUri && contentType === 'image') {
+        try {
+          const result = await postsService.uploadImage(mediaUri);
+          uploadedMediaUrl = result.url;
+        } catch (uploadError) {
+          Alert.alert('Upload Failed', 'Could not upload image. Please try again.');
+          setPosting(false);
+          return;
+        }
+      } else if (mediaUri && contentType === 'video') {
+        // For video, use the local URI for now (in production, upload to CDN)
+        uploadedMediaUrl = mediaUri;
+      }
+
       await channelsService.createPost(channelId, {
         content_type: contentType,
         text_content: textContent.trim() || null,
-        media_url: mediaUri,
+        media_url: uploadedMediaUrl,
         is_announcement: isAnnouncement,
       });
 

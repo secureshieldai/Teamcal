@@ -107,7 +107,20 @@ export default function ChannelFeedScreen() {
 
       {item.text_content && <Text style={styles.postText}>{item.text_content}</Text>}
 
-      {item.media_url && <Image source={{ uri: item.media_url }} style={styles.postImage} resizeMode="cover" />}
+      {item.media_url && item.content_type === 'image' && (
+        item.media_url.startsWith('http') ? (
+          <Image 
+            source={{ uri: item.media_url }} 
+            style={styles.postImage} 
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.postImage, { backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }]}>
+            <Ionicons name="image-outline" size={48} color={colors.border} />
+            <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: spacing.sm }}>Image unavailable</Text>
+          </View>
+        )
+      )}
 
       {item.link_url && (
         <View style={styles.linkPreview}>
