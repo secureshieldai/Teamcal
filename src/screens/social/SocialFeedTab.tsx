@@ -136,12 +136,20 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   const publish = async () => {
     if (!draft.trim() && !selectedImages.length) return;
     try {
-      const imageUrls = await Promise.all(selectedImages.map(asset => postsService.uploadImage({ uri: asset.uri, mimeType: asset.mimeType, fileName: asset.fileName })));
+      console.log('Publishing post with', selectedImages.length, 'images');
+      const imageUrls = await Promise.all(selectedImages.map(async (asset, index) => {
+        console.log(`Uploading image ${index + 1}/${selectedImages.length}:`, asset.uri.substring(0, 60));
+        const url = await postsService.uploadImage({ uri: asset.uri, mimeType: asset.mimeType, fileName: asset.fileName });
+        console.log(`Image ${index + 1} uploaded, URL:`, url);
+        return url;
+      }));
+      console.log('All images uploaded, URLs:', imageUrls);
       await createPost(draft.trim(), imageUrls);
       setDraft('');
       setSelectedImages([]);
       await refetch();
     } catch (e) {
+      console.error('Error publishing post:', e);
       Alert.alert('Unable to post', (e as Error).message);
     }
   };

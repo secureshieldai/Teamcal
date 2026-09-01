@@ -7,6 +7,14 @@ export const postsService = {
   async uploadImage(input: string | { uri: string; mimeType?: string | null; fileName?: string | null }) {
     const asset = typeof input === 'string' ? { uri: input } : input;
     const form = new FormData();
+    
+    // Debug logging
+    if (__DEV__) {
+      console.log('PostsService uploadImage - URI:', asset.uri?.substring(0, 60));
+      console.log('PostsService uploadImage - mimeType:', asset.mimeType);
+      console.log('PostsService uploadImage - fileName:', asset.fileName);
+    }
+    
     if (asset.uri.startsWith('data:')) {
       const blob = await (await fetch(asset.uri)).blob();
       form.append('image', blob, asset.fileName || 'social-image.jpg');
@@ -17,10 +25,17 @@ export const postsService = {
         name: asset.fileName || 'social-image.jpg',
       } as never);
     }
+    
     const { data } = await apiClient.post<{ success: boolean; url: string }>('/posts/image', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 30_000,
     });
+    
+    // Debug logging
+    if (__DEV__) {
+      console.log('PostsService uploadImage - returned URL:', data.url);
+    }
+    
     return data.url;
   },
   /**

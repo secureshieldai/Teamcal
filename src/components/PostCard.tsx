@@ -26,6 +26,7 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const {user}=useAuth();
   useEffect(() => { personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {}); }, [post.id]);
   const toggleLike = async () => { const previous = { likes, liked }; setLiked(!liked); setLikes(Math.max(0, likes + (liked ? -1 : 1))); try { const result = await postsService.toggleLike(post.id); setLikes(result.likes); setLiked(result.liked); } catch (e) { setLikes(previous.likes); setLiked(previous.liked); Alert.alert('Unable to like post', (e as Error).message); } };
@@ -49,13 +50,42 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
       <Text style={styles.caption}>{post.caption}</Text>
 
       <View style={styles.photoRow}>
-        {post.photos.map((uri, i) => (
-          <Image
-            key={uri + i}
-            source={{ uri }}
-            style={[styles.photo, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}
-          />
-        ))}
+        {post.photos.map((uri, i) => {
+          // Debug logging for troubleshooting
+          if (__DEV__ && !uri) {
+            console.warn('PostCard: Empty image URI at index', i, 'in post', post.id);
+          }
+          
+          if (!uri || imageErrors[i]) {
+            return (
+              <View
+                key={`error-${post.id}-${i}`}
+                style={[styles.photo, styles.photoError, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}
+              >
+                <Ionicons name="image-outline" size={32} color={colors.textMuted} />
+                <Text style={styles.errorText}>Unable to load</Text>
+              </View>
+            );
+          }
+          
+          return (
+            <Image
+              key={`${uri}-${i}`}
+              source={{ uri }}
+              style={[styles.photo, post.photos.length === 1 ? styles.photoSingle : styles.photoGrid]}
+              resizeMode="cover"
+              onError={(error) => {
+                console.log('Image load error for post', post.id, 'image', i, ':', uri, error.nativeEvent?.error);
+                setImageErrors(prev => ({ ...prev, [i]: true }));
+              }}
+              onLoad={() => {
+                if (__DEV__) {
+                  console.log('Image loaded successfully:', uri.substring(0, 60) + '...');
+                }
+              }}
+            />
+          );
+        })}
         {post.badge ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{post.badge}</Text>
@@ -126,7 +156,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photo: {
+    backgroundColor: '#000',
+  },
+  photoError: {
     backgroundColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 4,
   },
   photoSingle: {
     width: '100%',
