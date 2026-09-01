@@ -39,11 +39,16 @@ create table if not exists channels (
   updated_at            timestamptz default now()
 );
 
+drop index if exists idx_channels_owner;
+drop index if exists idx_channels_username;
+drop index if exists idx_channels_category;
+drop index if exists idx_channels_public;
 create index idx_channels_owner on channels(owner_id);
 create index idx_channels_username on channels(username);
 create index idx_channels_category on channels(category);
 create index idx_channels_public on channels(is_public) where is_public = true;
 
+drop trigger if exists channels_updated_at on channels;
 create trigger channels_updated_at before update on channels
 for each row execute function set_updated_at();
 
@@ -69,6 +74,9 @@ create table if not exists channel_members (
   unique(channel_id, user_id)
 );
 
+drop index if exists idx_channel_members_channel;
+drop index if exists idx_channel_members_user;
+drop index if exists idx_channel_members_role;
 create index idx_channel_members_channel on channel_members(channel_id);
 create index idx_channel_members_user on channel_members(user_id);
 create index idx_channel_members_role on channel_members(channel_id, role);
@@ -105,10 +113,14 @@ create table if not exists channel_posts (
   updated_at      timestamptz default now()
 );
 
+drop index if exists idx_channel_posts_channel;
+drop index if exists idx_channel_posts_author;
+drop index if exists idx_channel_posts_pinned;
 create index idx_channel_posts_channel on channel_posts(channel_id, created_at desc);
 create index idx_channel_posts_author on channel_posts(author_id);
 create index idx_channel_posts_pinned on channel_posts(channel_id, is_pinned) where is_pinned = true;
 
+drop trigger if exists channel_posts_updated_at on channel_posts;
 create trigger channel_posts_updated_at before update on channel_posts
 for each row execute function set_updated_at();
 
@@ -125,6 +137,8 @@ create table if not exists channel_post_reactions (
   unique(post_id, user_id)
 );
 
+drop index if exists idx_post_reactions_post;
+drop index if exists idx_post_reactions_user;
 create index idx_post_reactions_post on channel_post_reactions(post_id);
 create index idx_post_reactions_user on channel_post_reactions(user_id);
 
@@ -141,10 +155,14 @@ create table if not exists channel_post_comments (
   updated_at   timestamptz default now()
 );
 
+drop index if exists idx_post_comments_post;
+drop index if exists idx_post_comments_user;
+drop index if exists idx_post_comments_parent;
 create index idx_post_comments_post on channel_post_comments(post_id, created_at);
 create index idx_post_comments_user on channel_post_comments(user_id);
 create index idx_post_comments_parent on channel_post_comments(parent_id);
 
+drop trigger if exists channel_post_comments_updated_at on channel_post_comments;
 create trigger channel_post_comments_updated_at before update on channel_post_comments
 for each row execute function set_updated_at();
 
@@ -172,6 +190,7 @@ create table if not exists channel_analytics (
   unique(channel_id, date)
 );
 
+drop index if exists idx_channel_analytics_channel_date;
 create index idx_channel_analytics_channel_date on channel_analytics(channel_id, date desc);
 
 -- ─────────────────────────────────────────────────────────────
@@ -190,6 +209,8 @@ create table if not exists channel_reports (
   created_at  timestamptz default now()
 );
 
+drop index if exists idx_channel_reports_status;
+drop index if exists idx_channel_reports_channel;
 create index idx_channel_reports_status on channel_reports(status, created_at);
 create index idx_channel_reports_channel on channel_reports(channel_id);
 
@@ -224,6 +245,8 @@ create table if not exists ad_impressions (
   created_at   timestamptz default now()
 );
 
+drop index if exists idx_ad_impressions_campaign;
+drop index if exists idx_ad_impressions_channel;
 create index idx_ad_impressions_campaign on ad_impressions(campaign_id, created_at);
 create index idx_ad_impressions_channel on ad_impressions(channel_id, created_at);
 
@@ -242,6 +265,9 @@ create table if not exists channel_withdrawals (
   transaction_id  text
 );
 
+drop index if exists idx_channel_withdrawals_channel;
+drop index if exists idx_channel_withdrawals_user;
+drop index if exists idx_channel_withdrawals_status;
 create index idx_channel_withdrawals_channel on channel_withdrawals(channel_id);
 create index idx_channel_withdrawals_user on channel_withdrawals(user_id);
 create index idx_channel_withdrawals_status on channel_withdrawals(status);
@@ -276,6 +302,7 @@ begin
 end;
 $$;
 
+drop trigger if exists channel_member_added on channel_members;
 create trigger channel_member_added after insert on channel_members
 for each row execute function increment_channel_followers();
 
@@ -288,6 +315,7 @@ begin
 end;
 $$;
 
+drop trigger if exists channel_member_removed on channel_members;
 create trigger channel_member_removed after delete on channel_members
 for each row execute function decrement_channel_followers();
 
@@ -300,6 +328,7 @@ begin
 end;
 $$;
 
+drop trigger if exists channel_post_added on channel_posts;
 create trigger channel_post_added after insert on channel_posts
 for each row execute function increment_channel_posts();
 
@@ -316,6 +345,7 @@ begin
 end;
 $$;
 
+drop trigger if exists post_reaction_changed on channel_post_reactions;
 create trigger post_reaction_changed after insert or delete on channel_post_reactions
 for each row execute function update_post_reaction_count();
 
@@ -332,5 +362,6 @@ begin
 end;
 $$;
 
+drop trigger if exists post_comment_changed on channel_post_comments;
 create trigger post_comment_changed after insert or delete on channel_post_comments
 for each row execute function update_post_comment_count();
