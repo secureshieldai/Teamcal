@@ -1,19 +1,19 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ENV } from '../../app/config/env';
+import { APP_CONFIG } from '../../app/config/constants';
 
-// Point this at your backend. For local dev, use your machine's LAN IP (not localhost).
-// e.g. 'http://192.168.1.10:3001/api'
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://teamcal-mr7g.onrender.com/api';
+const BASE_URL = ENV.API_URL;
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 15_000,
+  timeout: APP_CONFIG.API.TIMEOUT,
   headers: { 'Content-Type': 'application/json' },
 });
 
 // Attach JWT to every request
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const token = await AsyncStorage.getItem('auth_token');
+  const token = await AsyncStorage.getItem(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

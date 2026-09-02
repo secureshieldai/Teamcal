@@ -381,3 +381,44 @@ create index if not exists idx_dm_messages_unread on dm_messages(conversation_id
 
 alter table dm_conversations enable row level security;
 alter table dm_messages      enable row level security;
+
+-- Migration 019: Connections (LinkedIn-style mutual relationship request).
+-- Sending a request also creates a one-way follow (handled in the app layer via
+-- tracker_entries tracker='following'); accepting creates the reciprocal follow.
+-- This table replaces the old tracker_entries tracker='friend' rows: an accepted
+-- connection IS a "friend" everywhere the app previously used that concept.
+create table if not exists connections (
+  id            uuid primary key default gen_random_uuid(),
+  requester_id  uuid not null references users(id) on delete cascade,
+  addressee_id  uuid not null references users(id) on delete cascade,
+  status        text not null default 'pending' check (status in ('pending','accepted','declined')),
+  note          text default '',
+  created_at    timestamptz not null default now(),
+  responded_at  timestamptz,
+  updated_at    timestamptz not null default now(),
+  check (requester_id <> addressee_id),
+  unique (requester_id, addressee_id)
+);
+create index if not exists idx_connections_addressee on connections(addressee_id, status, created_at desc);
+create index if not exists idx_connections_requester on connections(requester_id, status, created_at desc);
+do $$ begin
+  create trigger trg_connections_updated_at
+    before update on connections for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;
+
+alter table connections enable row level security;
+
+-- Backfill: turn every existing mutual tracker_entries 'friend' pair into an
+-- accepted connection so nobody loses their friends list on deploy.
+insert into connections (requester_id, addressee_id, status, responded_at)
+select distinct on (least(a.user_id, (a.meta->>'targetId')::uuid), greatest(a.user_id, (a.meta->>'targetId')::uuid))
+       a.user_id,
+       (a.meta->>'targetId')::uuid,
+       'accepted',
+       now()
+from tracker_entries a
+where a.tracker = 'friend'
+  and a.meta ? 'targetId'
+  and (a.meta->>'targetId') ~ '^[0-9a-f-]{36}$'
+  and exists (select 1 from users u where u.id = (a.meta->>'targetId')::uuid)
+on conflict (requester_id, addressee_id) do nothing;

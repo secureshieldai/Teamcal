@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/api/auth.service';
-import { storage } from '../services/storage';
+import { storage } from '../services/auth/secureStorage';
 import type { User } from '../types/api';
 import { getFirebaseIdToken, type SocialProvider } from '../services/firebaseAuth';
 

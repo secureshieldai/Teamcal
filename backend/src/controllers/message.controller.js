@@ -4,6 +4,33 @@ const { emitToUser } = require("../realtime");
 const { uploadPublicImage, uploadPublicAudio } = require("../services/storage.service");
 
 const REQUEST_LIMIT = 3;
+// New message requests a user may start in any rolling 7-day window. Existing /
+// accepted conversations are never affected by this.
+const WEEKLY_REQUEST_LIMIT = 5;
+
+async function newRequestsThisWeek(me) {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { count, error } = await supabase
+    .from("dm_conversations")
+    .select("*", { count: "exact", head: true })
+    .eq("initiator_id", me)
+    .gte("created_at", since);
+  if (error) throw error;
+  return count || 0;
+}
+
+// Returns a 409 body when starting a brand-new request would exceed the weekly
+// cap, or null when the send may proceed. `existingConvo` is the already-loaded
+// conversation row (or null) so we don't double-query.
+async function weeklyQuotaBlock(me, existingConvo) {
+  if (existingConvo) return null;
+  if ((await newRequestsThisWeek(me)) < WEEKLY_REQUEST_LIMIT) return null;
+  return {
+    success: false,
+    code: "WEEKLY_REQUEST_LIMIT",
+    message: `You can start ${WEEKLY_REQUEST_LIMIT} new message requests per week. Try again in a few days.`,
+  };
+}
 
 // Canonical ordering so a pair of users maps to exactly one conversation row.
 const pair = (a, b) => (a < b ? { user_lo: a, user_hi: b } : { user_lo: b, user_hi: a });
@@ -237,7 +264,11 @@ async function sendMessage(req, res, next) {
     const { data: recipient } = await supabase.from("users").select("id").eq("id", recipientId).maybeSingle();
     if (!recipient) return res.status(404).json({ success: false, message: "User not found" });
 
-    const convo = await getOrCreateConversation(me, recipientId);
+    const existingConvo = await findConversation(me, recipientId);
+    const quota = await weeklyQuotaBlock(me, existingConvo);
+    if (quota) return res.status(409).json(quota);
+
+    const convo = existingConvo || (await getOrCreateConversation(me, recipientId));
     const blocked = guardSend(convo, me);
     if (blocked) return res.status(blocked.code).json(blocked.body || { success: false, message: blocked.message });
 
@@ -263,7 +294,11 @@ async function sendMediaMessage(req, res, next) {
     const { data: recipient } = await supabase.from("users").select("id").eq("id", recipientId).maybeSingle();
     if (!recipient) return res.status(404).json({ success: false, message: "User not found" });
 
-    const convo = await getOrCreateConversation(me, recipientId);
+    const existingConvo = await findConversation(me, recipientId);
+    const quota = await weeklyQuotaBlock(me, existingConvo);
+    if (quota) return res.status(409).json(quota);
+
+    const convo = existingConvo || (await getOrCreateConversation(me, recipientId));
     const blocked = guardSend(convo, me);
     if (blocked) return res.status(blocked.code).json(blocked.body || { success: false, message: blocked.message });
 

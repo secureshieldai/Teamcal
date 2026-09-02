@@ -4,6 +4,7 @@ const { getFeed, searchUsers, getProfile, getLeaderboard, toggleFriend, getFrien
 const { listConversations, listRequests, getMessages, sendMessage, sendMediaMessage, transcribeAudio, markRead, logCall, actOnRequest } = require('../controllers/message.controller');
 const { audioUpload, dmMediaUpload } = require('../middleware/upload');
 const { getLiveStreams, getEvents, registerEvent } = require("../controllers/social.events.controller");
+const { sendRequest, acceptRequest, declineRequest, removeConnection, listConnections } = require("../controllers/connection.controller");
 
 const router = express.Router();
 
@@ -38,6 +39,11 @@ router.get("/creators", getCreators);
 router.get("/live", getLiveStreams);
 router.get("/events", getEvents);
 router.post("/events/:eventId/register", registerEvent);
+router.get("/connections", listConnections);
+router.post("/connections/:id/accept", acceptRequest);
+router.post("/connections/:id/decline", declineRequest);
+router.post("/connections/:id", sendRequest);
+router.delete("/connections/:id", removeConnection);
 router.post("/users/:id/friend", toggleFriend);
 router.post("/users/:id/follow", toggleFollow);
 router.post("/users/:id/block", toggleBlockUser);

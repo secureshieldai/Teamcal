@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +43,9 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [showcase, setShowcase] = useState<ShowcaseSectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [followBusy, setFollowBusy] = useState(false);
+  const [connectBusy, setConnectBusy] = useState(false);
+  const [noteModal, setNoteModal] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -79,6 +82,78 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       setFollowBusy(false);
     }
   };
+
+  const patchConn = (status: PublicProfile['connectionStatus'], id?: string | null) =>
+    setProfile(prev => (prev ? { ...prev, connectionStatus: status, connectionId: id === undefined ? prev.connectionId : id } : prev));
+
+  const submitConnectRequest = async () => {
+    if (!profile || connectBusy) return;
+    setConnectBusy(true);
+    setNoteModal(false);
+    const note = noteText.trim();
+    // Sending a request also follows them.
+    patchConn('pending_outgoing');
+    setProfile(prev => (prev ? { ...prev, isFollowing: true } : prev));
+    try {
+      const res = await socialService.sendConnectRequest(userId, note);
+      patchConn(res.connectionStatus, res.connectionId);
+      setNoteText('');
+    } catch (e) {
+      patchConn('none');
+      Alert.alert('Unable to send request', (e as Error).message);
+    } finally {
+      setConnectBusy(false);
+    }
+  };
+
+  const acceptConnect = async () => {
+    if (connectBusy) return;
+    setConnectBusy(true);
+    patchConn('connected');
+    try {
+      const res = await socialService.acceptConnection(userId);
+      patchConn(res.connectionStatus, res.connectionId);
+    } catch (e) {
+      patchConn('pending_incoming');
+      Alert.alert('Unable to accept', (e as Error).message);
+    } finally {
+      setConnectBusy(false);
+    }
+  };
+
+  const removeConnect = (verb: 'Cancel request' | 'Remove connection') =>
+    Alert.alert(`${verb}?`, verb === 'Cancel request'
+      ? 'Your connection request will be withdrawn. You will still be following them.'
+      : 'You will no longer be connected. You will still be following them.', [
+      { text: 'Keep', style: 'cancel' },
+      {
+        text: verb === 'Cancel request' ? 'Withdraw' : 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          setConnectBusy(true);
+          patchConn('none', null);
+          try {
+            await socialService.removeConnection(userId);
+          } catch (e) {
+            Alert.alert('Something went wrong', (e as Error).message);
+          } finally {
+            setConnectBusy(false);
+          }
+        },
+      },
+    ]);
+
+  const onConnectPress = () => {
+    if (!profile) return;
+    if (profile.connectionStatus === 'none') { setNoteText(''); setNoteModal(true); }
+    else if (profile.connectionStatus === 'pending_incoming') acceptConnect();
+    else if (profile.connectionStatus === 'pending_outgoing') removeConnect('Cancel request');
+    else if (profile.connectionStatus === 'connected') removeConnect('Remove connection');
+  };
+
+  const connectLabel = profile
+    ? { none: 'Connect', pending_outgoing: 'Requested', pending_incoming: 'Accept', connected: 'Connected' }[profile.connectionStatus]
+    : 'Connect';
 
   const handle = `@${(profile?.name || username || 'member').replace(/\s+/g, '').toLowerCase()}`;
   const hasShowcase = showcase.some(s => s.items.some(i => i.published));
@@ -133,25 +208,49 @@ export default function UserProfileScreen({ route, navigation }: Props) {
                 <Text style={styles.editBtnText}>Edit Profile</Text>
               </TouchableOpacity>
             ) : (
-              <View style={styles.actionRow}>
+              <>
+                <View style={styles.actionRow}>
+                  <TouchableOpacity
+                    style={[styles.followBtn, profile.isFollowing && styles.followingBtn]}
+                    onPress={toggleFollow}
+                    disabled={followBusy}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.followBtnText, profile.isFollowing && styles.followingBtnText]}>
+                      {profile.isFollowing ? 'Following' : 'Follow'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.connectBtn,
+                      (profile.connectionStatus === 'connected' || profile.connectionStatus === 'pending_outgoing') && styles.connectBtnMuted,
+                    ]}
+                    onPress={onConnectPress}
+                    disabled={connectBusy}
+                    activeOpacity={0.8}
+                  >
+                    {profile.connectionStatus === 'connected' && (
+                      <Ionicons name="checkmark" size={14} color={colors.textPrimary} style={{ marginRight: 4 }} />
+                    )}
+                    <Text
+                      style={[
+                        styles.connectBtnText,
+                        (profile.connectionStatus === 'connected' || profile.connectionStatus === 'pending_outgoing') && styles.connectBtnTextMuted,
+                      ]}
+                    >
+                      {connectLabel}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  style={[styles.followBtn, profile.isFollowing && styles.followingBtn]}
-                  onPress={toggleFollow}
-                  disabled={followBusy}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.followBtnText, profile.isFollowing && styles.followingBtnText]}>
-                    {profile.isFollowing ? 'Following' : 'Follow'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.messageBtn}
+                  style={styles.messageBtnFull}
                   onPress={() => navigation.navigate('DirectMessage', { userId, name: profile.name, avatar: profile.avatar })}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.messageBtnText}>Message</Text>
+                  <Ionicons name="chatbubble-outline" size={15} color={colors.primary} style={{ marginRight: 6 }} />
+                  <Text style={styles.messageBtnText}>Send Message</Text>
                 </TouchableOpacity>
-              </View>
+              </>
             )}
           </View>
 
@@ -203,6 +302,32 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           )}
         </>
       )}
+
+      <Modal visible={noteModal} transparent animationType="fade" onRequestClose={() => setNoteModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Connect with {profile?.name || 'this person'}</Text>
+            <Text style={styles.modalSub}>Sending a request also follows them. Add a note (optional).</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={noteText}
+              onChangeText={setNoteText}
+              placeholder="Hi — I'd like to connect…"
+              placeholderTextColor={colors.textMuted}
+              multiline
+              maxLength={500}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setNoteModal(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSend} onPress={submitConnectRequest} disabled={connectBusy}>
+                <Text style={styles.modalSendText}>Send request</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -311,7 +436,22 @@ const styles = StyleSheet.create({
   followBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   followingBtnText: { color: colors.textPrimary },
   messageBtn: { flex: 1, borderWidth: 1.5, borderColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center' },
+  messageBtnFull: { flexDirection: 'row', width: '100%', marginTop: spacing.sm, borderWidth: 1.5, borderColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center', justifyContent: 'center' },
   messageBtnText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
+  connectBtn: { flex: 1, flexDirection: 'row', backgroundColor: colors.navy, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center', justifyContent: 'center' },
+  connectBtnMuted: { backgroundColor: colors.border },
+  connectBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
+  connectBtnTextMuted: { color: colors.textPrimary },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  modalCard: { width: '100%', backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.sm },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  modalSub: { fontSize: 12.5, color: colors.textSecondary, lineHeight: 18 },
+  modalInput: { minHeight: 80, backgroundColor: colors.background, borderRadius: radii.md, padding: spacing.md, color: colors.textPrimary, textAlignVertical: 'top', marginTop: spacing.xs },
+  modalActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  modalCancel: { flex: 1, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center', backgroundColor: colors.border },
+  modalCancelText: { color: colors.textPrimary, fontWeight: '700', fontSize: 13 },
+  modalSend: { flex: 1, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center', backgroundColor: colors.primary },
+  modalSendText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   editBtn: { backgroundColor: colors.border, borderRadius: radii.pill, paddingHorizontal: spacing.xl, paddingVertical: spacing.sm, marginTop: spacing.md, minWidth: 140, alignItems: 'center' },
   editBtnText: { color: colors.textPrimary, fontWeight: '700', fontSize: 13 },
   tabsContainer: { flexDirection: 'row', marginTop: spacing.lg, paddingHorizontal: spacing.lg, gap: spacing.sm },

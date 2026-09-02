@@ -117,6 +117,8 @@ export default function DirectMessageScreen({ route, navigation }: Props) {
     if (err.code === 'REQUEST_LIMIT') {
       load();
       Alert.alert('Message limit reached', `You can send up to 3 messages until ${name} accepts your request.`);
+    } else if (err.code === 'WEEKLY_REQUEST_LIMIT') {
+      Alert.alert('Weekly request limit reached', `You can start 5 new message requests per week. You can still reply in conversations you've already started. Try again in a few days.`);
     } else {
       Alert.alert('Unable to send', err.message);
     }

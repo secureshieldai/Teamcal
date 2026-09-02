@@ -693,3 +693,25 @@ create index if not exists idx_dm_messages_conversation on dm_messages(conversat
 create index if not exists idx_dm_messages_unread on dm_messages(conversation_id, sender_id) where read_at is null;
 alter table dm_conversations enable row level security;
 alter table dm_messages      enable row level security;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- CONNECTIONS  (LinkedIn-style mutual relationship request; an accepted
+-- connection is what the app calls a "friend"). Sending a request also creates
+-- a one-way follow; accepting creates the reciprocal follow.
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists connections (
+  id            uuid primary key default gen_random_uuid(),
+  requester_id  uuid not null references users(id) on delete cascade,
+  addressee_id  uuid not null references users(id) on delete cascade,
+  status        text not null default 'pending' check (status in ('pending','accepted','declined')),
+  note          text default '',
+  created_at    timestamptz not null default now(),
+  responded_at  timestamptz,
+  updated_at    timestamptz not null default now(),
+  check (requester_id <> addressee_id),
+  unique (requester_id, addressee_id)
+);
+create index if not exists idx_connections_addressee on connections(addressee_id, status, created_at desc);
+create index if not exists idx_connections_requester on connections(requester_id, status, created_at desc);
+do $$ begin create trigger trg_connections_updated_at before update on connections for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
+alter table connections enable row level security;

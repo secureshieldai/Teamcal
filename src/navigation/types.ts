@@ -102,6 +102,7 @@ export type RootStackParamList = {
   MembershipCheckout: { membershipId:string; tierId?:string };
   DirectMessage: { userId: string; name: string; avatar?: string | null };
   DiscoverPeople: undefined;
+  Connections: undefined;
   Call: {
     userId: string;
     name: string;

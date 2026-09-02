@@ -21,7 +21,9 @@ export type SocialBlog={id:string;blog_id:string;title:string;cover?:string;body
 export type ArticleComment={id:string;name:string;avatar:string;time:string;text:string;likes:number;liked:boolean;userId:string;parentCommentId:string|null;verified?:boolean};
 export type SocialVideo={id:string;title:string;description?:string;image?:string;subtype?:string;metrics?:Record<string,number>;metadata?:Record<string,unknown>;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
 export type SocialStory={id:string;image:string;created_at:string;likes:number;liked:boolean;comments_count:number;user:{id:string;name:string;avatar:string|null}};
-export type PublicProfile={id:string;name:string;bio:string|null;avatar:string|null;verified:boolean;level:number;xp:number;coins:number;created_at:string;postCount:number;followersCount:number;followingCount:number;isFollowing:boolean;isSelf:boolean};
+export type ConnectionStatus='none'|'pending_outgoing'|'pending_incoming'|'connected';
+export type PublicProfile={id:string;name:string;bio:string|null;avatar:string|null;verified:boolean;level:number;xp:number;coins:number;created_at:string;postCount:number;followersCount:number;followingCount:number;isFollowing:boolean;isSelf:boolean;connectionStatus:ConnectionStatus;connectionId:string|null};
+export type ConnectionSummary={id:string;user:{id:string;name:string;avatar:string|null;bio?:string|null;verified?:boolean;level?:number};note:string;status:'pending'|'accepted'|'declined';direction:'incoming'|'outgoing';createdAt:string};
 
 export const socialService = {
   async report(targetType:'post'|'comment'|'user'|'article'|'video',targetId:string,reason:string){const {data}=await apiClient.post('/social/reports',{targetType,targetId,reason});return data;},
@@ -94,6 +96,12 @@ export const socialService = {
   async getFriendsProgress() { const { data } = await apiClient.get<{ success: boolean; friends: FriendProgress[] }>('/social/friends/progress'); return data.friends; },
   async getCreators() { const { data } = await apiClient.get<{ success: boolean; creators: CreatorUser[] }>('/social/creators'); return data.creators; },
   async toggleFollow(userId: string) { const { data } = await apiClient.post<{ success: boolean; following: boolean }>(`/social/users/${userId}/follow`); return data.following; },
+  // ── Connections (LinkedIn-style request; sending one also follows the person) ──
+  async sendConnectRequest(userId: string, note?: string) { const { data } = await apiClient.post<{ success: boolean; connectionStatus: ConnectionStatus; connectionId: string | null }>(`/social/connections/${userId}`, { note: note || '' }); return data; },
+  async acceptConnection(userId: string) { const { data } = await apiClient.post<{ success: boolean; connectionStatus: ConnectionStatus; connectionId: string | null }>(`/social/connections/${userId}/accept`); return data; },
+  async declineConnection(userId: string) { const { data } = await apiClient.post<{ success: boolean; connectionStatus: ConnectionStatus }>(`/social/connections/${userId}/decline`); return data; },
+  async removeConnection(userId: string) { const { data } = await apiClient.delete<{ success: boolean; connectionStatus: ConnectionStatus }>(`/social/connections/${userId}`); return data; },
+  async getConnections(box: 'incoming' | 'outgoing' | 'accepted' = 'accepted') { const { data } = await apiClient.get<{ success: boolean; connections: ConnectionSummary[] }>('/social/connections', { params: { box } }); return data.connections; },
   async getLiveStreams() { try { const { data } = await apiClient.get<{ success: boolean; streams: unknown[] }>('/social/live'); return data.streams as any[]; } catch { return []; } },
   async getEvents() { try { const { data } = await apiClient.get<{ success: boolean; events: unknown[] }>('/social/events'); return data.events as any[]; } catch { return []; } },
   async registerEvent(eventId: string) { const { data } = await apiClient.post(`/social/events/${eventId}/register`); return data; },

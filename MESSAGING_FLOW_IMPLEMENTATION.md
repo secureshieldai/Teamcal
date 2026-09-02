@@ -31,6 +31,31 @@ streaming is stubbed until `react-native-webrtc` is added.
 - [x] **Wiring** — `Call` + `DiscoverPeople` routes in `types.ts` / `RootNavigator.tsx`;
       `client.ts` interceptor now preserves `error.code` / `error.status`.
 
+## Connect + weekly request limit — built (spec §1–4)
+
+- [x] **DB** — `connections` table (Migration 019 in `migrations.sql`, mirrored in
+      `schema.sql`). **Run Migration 019 on Supabase before deploying.** It backfills
+      existing mutual `tracker_entries` `friend` pairs into `accepted` connections.
+- [x] **Connect = Friend** — an accepted connection now *is* a "friend" everywhere:
+      `getFriends`, `getFriendsProgress`, and the leaderboard `friends` scope read
+      accepted connections; the legacy `POST /users/:id/friend` toggle now creates /
+      removes a connection request.
+- [x] **Backend** — `connection.controller.js`: `POST /social/connections/:id`
+      (send request — also follows the target; auto-accepts a reverse pending request),
+      `/accept`, `/decline` (follow left intact), `DELETE /social/connections/:id`
+      (remove / withdraw — follow left intact), `GET /social/connections?box=`.
+      `getProfile` now returns `connectionStatus` + `connectionId`.
+      Notifications: `connect_request`, `connect_accepted`.
+- [x] **Weekly limit** — `message.controller.js` blocks starting a 6th brand-new
+      request in any rolling 7 days with `409 {code:'WEEKLY_REQUEST_LIMIT'}`
+      (`WEEKLY_REQUEST_LIMIT = 5`). Existing/accepted threads are unaffected.
+- [x] **Frontend** — `social.service.ts` connect methods + types; `UserProfileScreen`
+      Connect button (states: Connect / Requested / Accept / Connected) + optional-note
+      modal; `DiscoverPeopleScreen` inline connect action; new `ConnectionsScreen`
+      (Requests / Sent / Connections tabs) on route `Connections`, reached from the
+      Community header people icon and from connect notifications; `DirectMessageScreen`
+      surfaces `WEEKLY_REQUEST_LIMIT`.
+
 ## Follow-ups / not done
 
 - Real WebRTC media (add `react-native-webrtc` + config plugin + dev-client rebuild;

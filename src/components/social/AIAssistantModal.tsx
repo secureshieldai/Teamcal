@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing } from '../../theme';
@@ -32,7 +32,15 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView 
+        style={styles.backdrop} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <TouchableOpacity 
+          style={styles.backdropTouchable} 
+          activeOpacity={1} 
+          onPress={close}
+        />
         <View style={styles.sheet}>
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
@@ -89,13 +97,14 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(20,20,43,0.5)', justifyContent: 'flex-end' },
+  backdropTouchable: { flex: 1 },
   sheet: { backgroundColor: colors.card, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, padding: spacing.xl, gap: spacing.lg },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

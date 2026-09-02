@@ -36,6 +36,13 @@ export default function CommunityScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.iconButton}
+          onPress={() => navigation.navigate('Connections')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="people-outline" size={20} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
           onPress={() => navigation.navigate('Challenges')}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >

@@ -20,6 +20,8 @@ export default function DiscoverPeopleScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [followBusy, setFollowBusy] = useState<Record<string, boolean>>({});
   const [followed, setFollowed] = useState<Record<string, boolean>>({});
+  const [connectSent, setConnectSent] = useState<Record<string, boolean>>({});
+  const [connectBusy, setConnectBusy] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     socialService
@@ -66,6 +68,21 @@ export default function DiscoverPeopleScreen({ navigation }: Props) {
     }
   };
 
+  const connect = async (id: string) => {
+    if (connectBusy[id] || connectSent[id]) return;
+    setConnectBusy((b) => ({ ...b, [id]: true }));
+    setConnectSent((c) => ({ ...c, [id]: true }));
+    setFollowed((f) => ({ ...f, [id]: true })); // a request follows them too
+    try {
+      const res = await socialService.sendConnectRequest(id);
+      setConnectSent((c) => ({ ...c, [id]: res.connectionStatus !== 'none' }));
+    } catch {
+      setConnectSent((c) => ({ ...c, [id]: false }));
+    } finally {
+      setConnectBusy((b) => ({ ...b, [id]: false }));
+    }
+  };
+
   const data = results ?? suggested;
   const heading = results ? (loading ? 'Searching…' : `${data.length} result${data.length === 1 ? '' : 's'}`) : 'Suggested for you';
 
@@ -93,14 +110,25 @@ export default function DiscoverPeopleScreen({ navigation }: Props) {
             <Text style={[s.followText, followed[item.id] && s.followingText]}>{followed[item.id] ? 'Following' : 'Follow'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={s.msgBtn}
+            style={[s.iconBtn, connectSent[item.id] && s.iconBtnDone]}
+            onPress={() => connect(item.id)}
+            disabled={connectBusy[item.id] || connectSent[item.id]}
+          >
+            <Ionicons
+              name={connectSent[item.id] ? 'checkmark' : 'person-add-outline'}
+              size={17}
+              color={connectSent[item.id] ? colors.textMuted : colors.navy}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.iconBtn}
             onPress={() => navigation.navigate('DirectMessage', { userId: item.id, name: item.name, avatar: item.avatar })}
           >
             <Ionicons name="paper-plane-outline" size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>
       ),
-    [followed, followBusy, navigation],
+    [followed, followBusy, connectSent, connectBusy, navigation],
   );
 
   return (
@@ -162,7 +190,7 @@ const s = StyleSheet.create({
   followingBtn: { backgroundColor: colors.border },
   followText: { color: colors.white, fontWeight: '700', fontSize: 12 },
   followingText: { color: colors.textPrimary },
-  msgBtn: {
+  iconBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
@@ -170,5 +198,9 @@ const s = StyleSheet.create({
     borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconBtnDone: {
+    borderColor: colors.border,
+    backgroundColor: colors.border,
   },
 });

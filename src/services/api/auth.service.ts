@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { storage } from '../storage';
+import { storage } from '../auth/secureStorage';
 import type { AuthResponse, RegistrationResponse, User } from '../../types/api';
 
 export const authService = {

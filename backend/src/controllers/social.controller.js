@@ -1,6 +1,12 @@
 const { supabase } = require("../config/supabase");
 const { notifySafely } = require("../services/notification.service");
 const { enrichPosts } = require("./post.controller");
+const {
+  connectionStateFor,
+  acceptedConnectionUserIds,
+  findConnection,
+  ensureFollow,
+} = require("./connection.controller");
 
 /** GET /api/social/feed?limit=20&skip=0 */
 async function getFeed(req, res, next) {
@@ -54,11 +60,19 @@ async function getProfile(req, res, next) {
 
     if (error || !user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const [{ count: postCount }, { count: followersCount }, { count: followingCount }, { data: myFollow }] = await Promise.all([
+    const isSelf = req.user.id === user.id;
+    const [
+      { count: postCount },
+      { count: followersCount },
+      { count: followingCount },
+      { data: myFollow },
+      connection,
+    ] = await Promise.all([
       supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("deleted_at", null),
       supabase.from("tracker_entries").select("*", { count: "exact", head: true }).eq("tracker", "following").contains("meta", { targetId: user.id }),
       supabase.from("tracker_entries").select("*", { count: "exact", head: true }).eq("tracker", "following").eq("user_id", user.id),
       supabase.from("tracker_entries").select("id").eq("tracker", "following").eq("user_id", req.user.id).contains("meta", { targetId: user.id }).maybeSingle(),
+      isSelf ? Promise.resolve({ connectionStatus: "none", connectionId: null }) : connectionStateFor(req.user.id, user.id),
     ]);
 
     res.json({
@@ -69,7 +83,9 @@ async function getProfile(req, res, next) {
         followersCount: followersCount || 0,
         followingCount: followingCount || 0,
         isFollowing: Boolean(myFollow),
-        isSelf: req.user.id === user.id,
+        isSelf,
+        connectionStatus: connection.connectionStatus,
+        connectionId: connection.connectionId,
       },
     });
   } catch (err) {
@@ -97,8 +113,7 @@ async function getLeaderboard(req, res, next) {
 
     let friendIds = null;
     if (scope === "friends") {
-      const { data: links } = await supabase.from("tracker_entries").select("meta").eq("user_id", req.user.id).eq("tracker", "friend");
-      friendIds = [req.user.id, ...(links || []).map(x => x.meta?.targetId).filter(Boolean)];
+      friendIds = [req.user.id, ...(await acceptedConnectionUserIds(req.user.id))];
     }
 
     let query = supabase
@@ -115,24 +130,38 @@ async function getLeaderboard(req, res, next) {
   }
 }
 
+// Legacy endpoint kept for older call sites (global search "Add friend").
+// "Friend" is now the accepted state of a connection, so this toggles a
+// connection request: remove any existing link, otherwise send a request
+// (which also follows the person).
 async function toggleFriend(req, res, next) {
   try {
     const targetId = req.params.id;
     if (targetId === req.user.id) return res.status(400).json({ success: false, message: "You cannot add yourself" });
-    const { data: existing } = await supabase.from("tracker_entries").select("id").eq("user_id", req.user.id).eq("tracker", "friend").contains("meta", { targetId }).limit(1);
-    if (existing?.length) { await supabase.from("tracker_entries").delete().eq("id", existing[0].id); return res.json({ success: true, friend: false }); }
+    const existing = await findConnection(req.user.id, targetId);
+    if (existing && existing.status !== "declined") {
+      await supabase.from("connections").delete().eq("id", existing.id);
+      return res.json({ success: true, friend: false });
+    }
     const { data: target } = await supabase.from("users").select("id").eq("id", targetId).single();
     if (!target) return res.status(404).json({ success: false, message: "User not found" });
-    await supabase.from("tracker_entries").insert({ user_id: req.user.id, tracker: "friend", ts: Date.now(), value: 1, meta: { targetId } });
-    notifySafely(targetId, "friend", "New friend", "Someone added you as a friend.", { actorId: req.user.id });
+    await ensureFollow(req.user.id, targetId);
+    if (existing) {
+      await supabase
+        .from("connections")
+        .update({ requester_id: req.user.id, addressee_id: targetId, status: "pending", note: "", responded_at: null })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("connections").insert({ requester_id: req.user.id, addressee_id: targetId, status: "pending", note: "" });
+    }
+    notifySafely(targetId, "connect_request", "New connection request", "Someone wants to connect with you.", { actorId: req.user.id });
     res.json({ success: true, friend: true });
   } catch (err) { next(err); }
 }
 
 async function getFriends(req, res, next) {
   try {
-    const { data: links, error } = await supabase.from("tracker_entries").select("meta").eq("user_id", req.user.id).eq("tracker", "friend");
-    if (error) throw error; const ids = links.map(x => x.meta?.targetId).filter(Boolean);
+    const ids = await acceptedConnectionUserIds(req.user.id);
     if (!ids.length) return res.json({ success: true, friends: [] });
     const { data: friends, error: userError } = await supabase.from("users").select("id, name, bio, avatar, verified, level, xp, goal_kcal").in("id", ids);
     if (userError) throw userError; res.json({ success: true, friends });
@@ -141,8 +170,8 @@ async function getFriends(req, res, next) {
 
 async function getFriendsProgress(req, res, next) {
   try {
-    const { data: links } = await supabase.from("tracker_entries").select("meta").eq("user_id", req.user.id).eq("tracker", "friend");
-    const ids = (links || []).map(x => x.meta?.targetId).filter(Boolean); if (!ids.length) return res.json({ success: true, friends: [] });
+    const ids = await acceptedConnectionUserIds(req.user.id);
+    if (!ids.length) return res.json({ success: true, friends: [] });
     const start = new Date(); start.setHours(0,0,0,0);
     const [{ data: users }, { data: entries }] = await Promise.all([
       supabase.from("users").select("id, name, avatar, goal_kcal").in("id", ids),

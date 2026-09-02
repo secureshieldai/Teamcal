@@ -61,6 +61,7 @@ import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import AudienceEngineScreen from '../screens/AudienceEngineScreen';
 import DirectMessageScreen from '../screens/DirectMessageScreen';
 import DiscoverPeopleScreen from '../screens/DiscoverPeopleScreen';
+import ConnectionsScreen from '../screens/ConnectionsScreen';
 import CallScreen from '../screens/CallScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import ChallengeDetailScreen from '../screens/ChallengeDetailScreen';
@@ -209,6 +210,7 @@ export default function RootNavigator() {
       <Stack.Screen name="AudienceEngine" component={AudienceEngineScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="DirectMessage" component={DirectMessageScreen} />
       <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
+      <Stack.Screen name="Connections" component={ConnectionsScreen} />
       <Stack.Screen name="Call" component={CallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
       <Stack.Screen name="Goals" component={GoalsScreen} />
       <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />

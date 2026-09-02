@@ -362,9 +362,11 @@ function TierEditor({ tier, onCancel, onSave }: { tier: MembershipTier; onCancel
   return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
           <View style={s.header}>
-            <TouchableOpacity onPress={onCancel}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity onPress={onCancel} style={s.cancelBtn}>
+              <Text style={s.cancelText}>Cancel</Text>
+            </TouchableOpacity>
             <Text style={s.headerTitle}>Add Tier</Text>
-            <View style={{ width: 60 }} />
+            <View style={s.cancelBtn} />
           </View>
       <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         <Text style={s.fieldLabel}>Tier name *</Text>
@@ -512,9 +514,9 @@ function ContentSection({ md, onUpdate }: { md: MembershipMetadata; onUpdate: (p
       <Modal visible={modal} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
           <View style={s.header}>
-            <TouchableOpacity onPress={() => setModal(false)}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setModal(false)} style={s.cancelBtn}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
             <Text style={s.headerTitle}>Add Content</Text>
-            <View style={{ width: 60 }} />
+            <View style={s.cancelBtn} />
           </View>
           <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
             <Text style={s.fieldLabel}>What would you like to add?</Text>
@@ -606,9 +608,9 @@ function EventsSection({ md, onUpdate }: { md: MembershipMetadata; onUpdate: (p:
       <Modal visible={modal} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
           <View style={s.header}>
-            <TouchableOpacity onPress={() => setModal(false)}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setModal(false)} style={s.cancelBtn}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
             <Text style={s.headerTitle}>Schedule Event</Text>
-            <View style={{ width: 60 }} />
+            <View style={s.cancelBtn} />
           </View>
           <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
             <Text style={s.fieldLabel}>Event title *</Text>
@@ -1046,9 +1048,9 @@ function PluginsAndPixels({ md, group, onUpdate, onUpdatePlugins, onClose }: {
   return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Close</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onClose} style={s.cancelBtn}><Text style={s.cancelText}>Close</Text></TouchableOpacity>
         <Text style={s.headerTitle}>Plugins & Tracking</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.cancelBtn} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.sectionGroup}>Plugins</Text>
@@ -1169,9 +1171,9 @@ function AutoDmComposer({ autoDm, onSave, onClose }: { autoDm?: MembershipMetada
   return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onClose} style={s.cancelBtn}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         <Text style={s.headerTitle}>Auto-DM New Members</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.cancelBtn} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.note}>This message is sent automatically, exactly once, when someone successfully joins or is approved as a member.</Text>
@@ -1255,9 +1257,9 @@ function OnboardingVideoSetup({ value, onSave, onClose }: {
   return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onClose} style={s.cancelBtn}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         <Text style={s.headerTitle}>Onboarding Video</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.cancelBtn} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <TouchableOpacity style={s.uploadBox} onPress={pickVideo} disabled={busy}>
@@ -1312,9 +1314,9 @@ function PixelSetup({ platform, config, onSave, onRemove, onClose }: {
   return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onClose} style={s.cancelBtn}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         <Text style={s.headerTitle}>{platform.label}</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.cancelBtn} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.note}>Where to find your ID: {platform.hint}</Text>
@@ -1389,6 +1391,7 @@ const s = StyleSheet.create({
   headerTitle: { ...typography.h2, fontSize: 15, color: colors.textPrimary, flex: 1, textAlign: 'center' },
   headerHeading: { ...typography.h2, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
   headerSub: { fontSize: 11, lineHeight: 14, color: colors.textSecondary },
+  cancelBtn: { width: 70, alignItems: 'flex-start' },
   cancelText: { fontSize: 14, fontWeight: '600', color: colors.primary },
   tabs: { flexGrow: 0, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: colors.border },
   tabsContent: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
