@@ -183,61 +183,68 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
       ) : subTab === 'Events' ? (
         <SocialEventsTab />
       ) : (
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => null}
-          ListEmptyComponent={
-            <Text style={styles.empty}>
-              {feedLoading ? 'Loading posts…' : feedError ? `Unable to load posts: ${feedError}` : 'No posts yet. Share the first update.'}
-            </Text>
-          }
-          ListHeaderComponent={
-            <View style={styles.composerWrap}>
-              <View style={styles.composer}>
-              <TextInput
-                style={styles.composerInput}
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="Share an update…"
-                placeholderTextColor={colors.textMuted}
-                multiline
-              />
-              {selectedImages.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewRow}>
-                {selectedImages.map((asset, index) => <View key={`${asset.uri}-${index}`} style={styles.previewWrap}>
-                  <Image source={{ uri: asset.uri }} style={styles.preview} />
-                  <TouchableOpacity accessibilityLabel={`Remove image ${index + 1}`} style={styles.removeImage} onPress={() => setSelectedImages(current => current.filter((_, i) => i !== index))}>
-                    <Ionicons name="close" size={15} color={colors.white} />
-                  </TouchableOpacity>
-                  <View style={styles.reorderButtons}>
-                    {index > 0 && <TouchableOpacity accessibilityLabel="Move image left" onPress={() => moveImage(index, -1)}><Ionicons name="chevron-back-circle" size={22} color={colors.white} /></TouchableOpacity>}
-                    {index < selectedImages.length - 1 && <TouchableOpacity accessibilityLabel="Move image right" onPress={() => moveImage(index, 1)}><Ionicons name="chevron-forward-circle" size={22} color={colors.white} /></TouchableOpacity>}
+        <KeyboardAvoidingView 
+          style={styles.flex} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <FlatList
+            data={posts}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode="on-drag"
+            ItemSeparatorComponent={() => null}
+            ListEmptyComponent={
+              <Text style={styles.empty}>
+                {feedLoading ? 'Loading posts…' : feedError ? `Unable to load posts: ${feedError}` : 'No posts yet. Share the first update.'}
+              </Text>
+            }
+            ListHeaderComponent={
+              <View style={styles.composerWrap}>
+                <View style={styles.composer}>
+                <TextInput
+                  style={styles.composerInput}
+                  value={draft}
+                  onChangeText={setDraft}
+                  placeholder="Share an update…"
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                />
+                {selectedImages.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewRow}>
+                  {selectedImages.map((asset, index) => <View key={`${asset.uri}-${index}`} style={styles.previewWrap}>
+                    <Image source={{ uri: asset.uri }} style={styles.preview} />
+                    <TouchableOpacity accessibilityLabel={`Remove image ${index + 1}`} style={styles.removeImage} onPress={() => setSelectedImages(current => current.filter((_, i) => i !== index))}>
+                      <Ionicons name="close" size={15} color={colors.white} />
+                    </TouchableOpacity>
+                    <View style={styles.reorderButtons}>
+                      {index > 0 && <TouchableOpacity accessibilityLabel="Move image left" onPress={() => moveImage(index, -1)}><Ionicons name="chevron-back-circle" size={22} color={colors.white} /></TouchableOpacity>}
+                      {index < selectedImages.length - 1 && <TouchableOpacity accessibilityLabel="Move image right" onPress={() => moveImage(index, 1)}><Ionicons name="chevron-forward-circle" size={22} color={colors.white} /></TouchableOpacity>}
+                    </View>
+                  </View>)}
+                </ScrollView> : null}
+                <View style={styles.composerActions}>
+                  <View style={styles.composerButtonGroup}>
+                    <TouchableOpacity accessibilityLabel="AI Assistant" style={styles.pillButton} onPress={() => setAiModalOpen(true)} disabled={posting}>
+                      <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
+                      <Text style={styles.pillButtonText}>AI Assistant</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity accessibilityLabel="Add images" style={styles.pillButton} onPress={chooseImages} disabled={posting}>
+                      <Ionicons name="image-outline" size={16} color={colors.primary} />
+                      <Text style={styles.pillButtonText}>Image</Text>
+                      {selectedImages.length ? <Text style={styles.imageCount}>{selectedImages.length}/10</Text> : null}
+                    </TouchableOpacity>
                   </View>
-                </View>)}
-              </ScrollView> : null}
-              <View style={styles.composerActions}>
-                <View style={styles.composerButtonGroup}>
-                  <TouchableOpacity accessibilityLabel="AI Assistant" style={styles.pillButton} onPress={() => setAiModalOpen(true)} disabled={posting}>
-                    <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
-                    <Text style={styles.pillButtonText}>AI Assistant</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity accessibilityLabel="Add images" style={styles.pillButton} onPress={chooseImages} disabled={posting}>
-                    <Ionicons name="image-outline" size={16} color={colors.primary} />
-                    <Text style={styles.pillButtonText}>Image</Text>
-                    {selectedImages.length ? <Text style={styles.imageCount}>{selectedImages.length}/10</Text> : null}
+                  <TouchableOpacity style={styles.postButton} onPress={publish} disabled={posting || (!draft.trim() && !selectedImages.length)}>
+                    <Text style={styles.postText}>{posting ? 'Posting…' : 'Post'}</Text>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.postButton} onPress={publish} disabled={posting || (!draft.trim() && !selectedImages.length)}>
-                  <Text style={styles.postText}>{posting ? 'Posting…' : 'Post'}</Text>
-                </TouchableOpacity>
               </View>
-            </View>
-            </View>
-          }
-        />
+              </View>
+            }
+          />
+        </KeyboardAvoidingView>
       )}
 
       <AIAssistantModal
