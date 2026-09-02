@@ -24,6 +24,8 @@ export default function AIHelperScreen({ navigation, route }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [wordCount, setWordCount] = useState('500');
+  const [showWordCount, setShowWordCount] = useState(false);
 
   const notAvailable = () => Alert.alert('Not available yet', 'This isn\'t supported in this build yet.');
 
@@ -36,12 +38,22 @@ export default function AIHelperScreen({ navigation, route }: Props) {
       ]);
       return;
     }
-    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text: userLabel }]);
+    
+    // Show word count input for "write" action
+    if (action === 'write' && !showWordCount) {
+      setShowWordCount(true);
+      return;
+    }
+    
+    const finalLabel = action === 'write' && wordCount ? `${userLabel} (${wordCount} words)` : userLabel;
+    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text: finalLabel }]);
     setLoading(true);
+    setShowWordCount(false);
     try {
       const result = await coachService.generateArticleContent({
         action,
         topic: topic || 'this article',
+        wordCount: action === 'write' && wordCount ? parseInt(wordCount) : undefined,
         existingContent: action === 'improve' ? existingContent || '' : undefined,
       });
       const text = action === 'titles' ? (result.titles || []).map((t) => `- ${t}`).join('\n') : result.text || '';
@@ -91,6 +103,35 @@ export default function AIHelperScreen({ navigation, route }: Props) {
         {!messages.length && (
           <>
             <Text style={styles.sectionLabel}>Get started</Text>
+            
+            {showWordCount && (
+              <View style={styles.wordCountBox}>
+                <Text style={styles.wordCountLabel}>How many words would you like?</Text>
+                <View style={styles.wordCountInputRow}>
+                  <TextInput
+                    style={styles.wordCountInput}
+                    value={wordCount}
+                    onChangeText={setWordCount}
+                    placeholder="500"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                  />
+                  <Text style={styles.wordCountSuffix}>words</Text>
+                </View>
+                <View style={styles.wordCountActions}>
+                  <TouchableOpacity style={styles.wordCountCancelBtn} onPress={() => setShowWordCount(false)}>
+                    <Text style={styles.wordCountCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.wordCountGenerateBtn} 
+                    onPress={() => run('write', '', 'Write a blog post about my topic')}
+                  >
+                    <Text style={styles.wordCountGenerateText}>Generate</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+            
             <View style={styles.grid}>
               {QUICK_ACTIONS.map((qa) => (
                 <TouchableOpacity key={qa.userLabel} style={[styles.actionCard, shadow.soft]} activeOpacity={0.85} onPress={() => run(qa.action, '', qa.userLabel)}>
@@ -153,6 +194,16 @@ const styles = StyleSheet.create({
   introTitle: { fontSize: 15.5, fontWeight: '800', color: colors.textPrimary },
   introSubtitle: { fontSize: 12.5, color: colors.textSecondary, marginTop: 3, lineHeight: 18 },
   sectionLabel: { fontSize: 13.5, fontWeight: '700', color: colors.textSecondary, marginTop: spacing.sm },
+  wordCountBox: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1.5, borderColor: colors.primary, marginBottom: spacing.md },
+  wordCountLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md },
+  wordCountInputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  wordCountInput: { flex: 1, backgroundColor: colors.background, borderRadius: radii.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, fontSize: 16, fontWeight: '700', color: colors.textPrimary, borderWidth: 1, borderColor: colors.border },
+  wordCountSuffix: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  wordCountActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  wordCountCancelBtn: { flex: 1, backgroundColor: colors.background, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  wordCountCancelText: { fontSize: 14, fontWeight: '700', color: colors.textSecondary },
+  wordCountGenerateBtn: { flex: 1, backgroundColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center' },
+  wordCountGenerateText: { fontSize: 14, fontWeight: '700', color: colors.white },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   actionCard: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radii.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   actionIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },

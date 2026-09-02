@@ -916,6 +916,13 @@ function SettingsSection({ asset, md, group, onUpdate, onUpdatePlugins, onAssetC
           <Text style={s.rowText}>Edit membership details</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={s.row}
+          onPress={() => navigation.navigate('Bots', { spaceType: 'community', spaceId: md.groupId || asset.id, spaceName: asset.title })}
+        >
+          <Text style={s.rowText}>Bots &amp; Automation</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
         <TouchableOpacity style={s.row} onPress={pickCover} disabled={busy}>
           <Text style={s.rowText}>{busy ? 'Uploading…' : 'Edit cover image'}</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -1382,8 +1389,8 @@ const s = StyleSheet.create({
   headerTitle: { ...typography.h2, fontSize: 15, color: colors.textPrimary, flex: 1, textAlign: 'center' },
   headerSub: { fontSize: 11, color: colors.textSecondary },
   cancelText: { fontSize: 14, fontWeight: '600', color: colors.primary, width: 50 },
-  tabs: { maxHeight: 46, borderBottomWidth: 1, borderBottomColor: colors.border },
-  tabsContent: { gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  tabs: { borderBottomWidth: 1, borderBottomColor: colors.border },
+  tabsContent: { gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radii.pill, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   tabText: { fontSize: 11, fontWeight: '700', color: colors.textSecondary },

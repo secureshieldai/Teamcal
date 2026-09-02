@@ -93,9 +93,9 @@ export default function ChannelFeedScreen() {
       )}
 
       <View style={styles.postHeader}>
-        <Avatar uri={item.author?.avatar} size={40} />
+        <Avatar uri={item.author?.avatar || null} size={40} />
         <View style={{ flex: 1, marginLeft: spacing.md }}>
-          <Text style={styles.authorName}>{item.author?.name}</Text>
+          <Text style={styles.authorName}>{item.author?.name || 'Unknown'}</Text>
           <Text style={styles.postTime}>{new Date(item.created_at).toLocaleDateString()}</Text>
         </View>
         {item.is_announcement && (
@@ -187,14 +187,18 @@ export default function ChannelFeedScreen() {
           <View>
             {channel.cover_image && <Image source={{ uri: channel.cover_image }} style={styles.coverImage} />}
             <View style={styles.profileRow}>
-              <Avatar uri={channel.avatar} size={64} />
+              <Avatar uri={channel.avatar || null} size={64} />
               <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={styles.profileName}>{channel.name}</Text>
-                  {channel.is_monetized && <Ionicons name="checkmark-circle" size={16} color={colors.primary} />}
+                  {channel.is_monetized && (
+                    <View style={styles.verifiedBadge}>
+                      <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.profileUsername}>@{channel.username}</Text>
-                <Text style={styles.profileStats}>{channel.follower_count} followers · {channel.post_count} posts</Text>
+                <Text style={styles.profileStats}>{channel.follower_count.toLocaleString()} followers · {channel.post_count} posts</Text>
               </View>
             </View>
             {channel.description && <Text style={styles.description}>{channel.description}</Text>}
@@ -207,7 +211,7 @@ export default function ChannelFeedScreen() {
                   {channel.isFollowing ? 'Following' : 'Follow'}
                 </Text>
               </TouchableOpacity>
-              {channel.memberRole === 'owner' || channel.memberRole === 'admin' ? (
+              {(channel.memberRole === 'owner' || channel.memberRole === 'admin') ? (
                 <TouchableOpacity
                   style={styles.postBtn}
                   onPress={() => navigation.navigate('CreateChannelPost', { channelId: channel.id })}
@@ -215,6 +219,11 @@ export default function ChannelFeedScreen() {
                   <Ionicons name="add" size={18} color={colors.white} />
                   <Text style={styles.postBtnText}>New Post</Text>
                 </TouchableOpacity>
+              ) : channel.isFollowing && !channel.allow_comments ? (
+                <View style={styles.infoBox}>
+                  <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+                  <Text style={styles.infoText}>Only admins can post to this channel</Text>
+                </View>
               ) : null}
             </View>
           </View>
@@ -239,6 +248,7 @@ const styles = StyleSheet.create({
   list: { paddingBottom: spacing.xxl },
   coverImage: { width: '100%', height: 160, backgroundColor: colors.card },
   profileRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, marginTop: -32, marginBottom: spacing.md },
+  verifiedBadge: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   profileName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
   profileUsername: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
   profileStats: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
@@ -248,6 +258,8 @@ const styles = StyleSheet.create({
   followingBtn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   followBtnText: { fontSize: 14, fontWeight: '700', color: colors.white },
   followingBtnText: { color: colors.textPrimary },
+  infoBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.card, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  infoText: { fontSize: 12, color: colors.textMuted },
   postBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.navy, borderRadius: radii.pill, paddingVertical: spacing.sm },
   postBtnText: { fontSize: 14, fontWeight: '700', color: colors.white },
   postCard: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.lg, marginHorizontal: spacing.lg, marginBottom: spacing.md },

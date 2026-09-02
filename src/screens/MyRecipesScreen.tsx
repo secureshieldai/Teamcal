@@ -84,12 +84,12 @@ export default function MyRecipesScreen() {
             <Text style={styles.tileTitle}>Import from URL</Text>
             <Text style={styles.tileSubtitle}>Blogs, IG, TikTok</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.tile, shadow.soft]} onPress={() => setStudioOpen(true)} activeOpacity={0.85}>
+          <TouchableOpacity style={[styles.tile, shadow.soft]} onPress={() => navigation.navigate('CreateRecipe')} activeOpacity={0.85}>
             <View style={[styles.tileIcon, { backgroundColor: '#FDECE4' }]}>
-              <Ionicons name="restaurant-outline" size={18} color={colors.primary} />
+              <Ionicons name="create-outline" size={18} color={colors.primary} />
             </View>
-            <Text style={styles.tileTitle}>AI create</Text>
-            <Text style={styles.tileSubtitle}>From goals & pantry</Text>
+            <Text style={styles.tileTitle}>Enter Manually</Text>
+            <Text style={styles.tileSubtitle}>Create your own recipe</Text>
           </TouchableOpacity>
         </View>
 

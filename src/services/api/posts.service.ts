@@ -38,6 +38,35 @@ export const postsService = {
     
     return data.url;
   },
+
+  async uploadVideo(input: { uri: string; mimeType?: string | null; fileName?: string | null }) {
+    const form = new FormData();
+    
+    // Debug logging
+    if (__DEV__) {
+      console.log('PostsService uploadVideo - URI:', input.uri?.substring(0, 60));
+      console.log('PostsService uploadVideo - mimeType:', input.mimeType);
+      console.log('PostsService uploadVideo - fileName:', input.fileName);
+    }
+    
+    form.append('video', {
+      uri: input.uri,
+      type: input.mimeType || 'video/mp4',
+      name: input.fileName || 'social-video.mp4',
+    } as never);
+    
+    const { data } = await apiClient.post<{ success: boolean; url: string }>('/posts/video', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120_000, // 2 minutes for video upload
+    });
+    
+    // Debug logging
+    if (__DEV__) {
+      console.log('PostsService uploadVideo - returned URL:', data.url);
+    }
+    
+    return data.url;
+  },
   /**
    * GET /api/posts/feed?limit=20&skip=0
    * Returns { posts } with user relation joined
@@ -67,9 +96,9 @@ export const postsService = {
 
   /**
    * POST /api/posts
-   * Body: { text, image?, images?, community? } — images (up to 10) takes precedence; image is the legacy single-photo fallback.
+   * Body: { text, image?, images?, video?, community? } — images (up to 10) takes precedence; image is the legacy single-photo fallback.
    */
-  async create(payload: { text: string; image?: string; images?: string[]; community?: string }) {
+  async create(payload: { text: string; image?: string; images?: string[]; video?: string; community?: string }) {
     const { data } = await apiClient.post<{ success: boolean; post: Post }>('/posts', payload);
     return data.post;
   },

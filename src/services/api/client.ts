@@ -23,11 +23,14 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 // Normalize error shape
 apiClient.interceptors.response.use(
   (res) => res,
-  (error: AxiosError<{ message?: string }>) => {
+  (error: AxiosError<{ message?: string; code?: string }>) => {
     const message =
       error.response?.data?.message ??
       error.message ??
       'Something went wrong';
-    return Promise.reject(new Error(message));
+    const normalized = new Error(message) as Error & { code?: string; status?: number };
+    if (error.response?.data?.code) normalized.code = error.response.data.code;
+    if (error.response?.status) normalized.status = error.response.status;
+    return Promise.reject(normalized);
   }
 );

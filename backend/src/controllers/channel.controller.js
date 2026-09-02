@@ -1,4 +1,5 @@
 const { supabase } = require('../config/supabase');
+const botHooks = require('../services/bot.hooks');
 
 /**
  * Create a new channel
@@ -186,6 +187,14 @@ async function followChannel(req, res) {
       .single();
 
     if (error) throw error;
+
+    const { data: channel } = await supabase.from('channels').select('name').eq('id', id).maybeSingle();
+    await botHooks.onMemberJoined({
+      spaceType: 'channel',
+      spaceId: id,
+      spaceName: channel && channel.name,
+      memberId: userId,
+    });
 
     res.json({ data, message: 'Successfully followed channel' });
   } catch (error) {

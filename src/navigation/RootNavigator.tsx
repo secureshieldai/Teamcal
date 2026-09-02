@@ -48,6 +48,10 @@ import ChannelFeedScreen from '../screens/ChannelFeedScreen';
 import CreateChannelPostScreen from '../screens/CreateChannelPostScreen';
 import ChannelPostDetailScreen from '../screens/ChannelPostDetailScreen';
 import ChannelSettingsScreen from '../screens/ChannelSettingsScreen';
+import EditChannelScreen from '../screens/EditChannelScreen';
+import ChannelDetailSettingsScreen from '../screens/ChannelDetailSettingsScreen';
+import ShareChannelScreen from '../screens/ShareChannelScreen';
+import ReportChannelScreen from '../screens/ReportChannelScreen';
 import ChannelAnalyticsScreen from '../screens/ChannelAnalyticsScreen';
 import ChannelDiscoveryScreen from '../screens/ChannelDiscoveryScreen';
 import ChannelAdminManagementScreen from '../screens/ChannelAdminManagementScreen';
@@ -56,6 +60,8 @@ import ChannelEarningsScreen from '../screens/ChannelEarningsScreen';
 import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import AudienceEngineScreen from '../screens/AudienceEngineScreen';
 import DirectMessageScreen from '../screens/DirectMessageScreen';
+import DiscoverPeopleScreen from '../screens/DiscoverPeopleScreen';
+import CallScreen from '../screens/CallScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import ChallengeDetailScreen from '../screens/ChallengeDetailScreen';
 import ChallengeInviteScreen from '../screens/ChallengeInviteScreen';
@@ -122,6 +128,11 @@ import LiveSetupScreen from '../screens/live/LiveSetupScreen';
 import LiveHostScreen from '../screens/live/LiveHostScreen';
 import LiveViewerScreen from '../screens/live/LiveViewerScreen';
 import LiveSummaryScreen from '../screens/live/LiveSummaryScreen';
+import CreateRecipeScreen from '../screens/CreateRecipeScreen';
+import BotsHomeScreen from '../screens/bots/BotsHomeScreen';
+import CreateBotScreen from '../screens/bots/CreateBotScreen';
+import BotManageScreen from '../screens/bots/BotManageScreen';
+import BotChatPublicScreen from '../screens/bots/BotChatPublicScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -186,6 +197,10 @@ export default function RootNavigator() {
       <Stack.Screen name="CreateChannelPost" component={CreateChannelPostScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="ChannelPostDetail" component={ChannelPostDetailScreen} />
       <Stack.Screen name="ChannelSettings" component={ChannelSettingsScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="EditChannel" component={EditChannelScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="ChannelDetailSettings" component={ChannelDetailSettingsScreen} />
+      <Stack.Screen name="ShareChannel" component={ShareChannelScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="ReportChannel" component={ReportChannelScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="ChannelDiscovery" component={ChannelDiscoveryScreen} />
       <Stack.Screen name="ChannelAdminManagement" component={ChannelAdminManagementScreen} />
       <Stack.Screen name="ChannelMonetization" component={ChannelMonetizationScreen} />
@@ -193,10 +208,13 @@ export default function RootNavigator() {
       <Stack.Screen name="ChannelAnalytics" component={ChannelAnalyticsScreen} />
       <Stack.Screen name="AudienceEngine" component={AudienceEngineScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="DirectMessage" component={DirectMessageScreen} />
+      <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
+      <Stack.Screen name="Call" component={CallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
       <Stack.Screen name="Goals" component={GoalsScreen} />
       <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <Stack.Screen name="ChallengeInvite" component={ChallengeInviteScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="MyRecipes" component={MyRecipesScreen} />
+      <Stack.Screen name="CreateRecipe" component={CreateRecipeScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="PeriodTracker" component={PeriodTrackerScreen} />
       <Stack.Screen name="SupplementTracker" component={SupplementTrackerScreen} />
       <Stack.Screen name="SupplementScanner" component={SupplementScannerScreen} />
@@ -258,6 +276,10 @@ export default function RootNavigator() {
       <Stack.Screen name="LiveHost" component={LiveHostScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="LiveViewer" component={LiveViewerScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="LiveSummary" component={LiveSummaryScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="Bots" component={BotsHomeScreen} />
+      <Stack.Screen name="CreateBot" component={CreateBotScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="BotManage" component={BotManageScreen} />
+      <Stack.Screen name="BotChatPublic" component={BotChatPublicScreen} />
     </Stack.Navigator>
   );
 }

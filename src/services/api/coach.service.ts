@@ -45,7 +45,7 @@ export const coachService = {
   async generateAudience(value:{topic:string;instructions:string;tone:string;formats:string[];count:number}){const {data}=await apiClient.post<{success:boolean;posts:GeneratedAudiencePost[]}>('/coach/audience/generate',value);return data.posts;},
 
   /** POST /api/coach/article-helper — always succeeds: real Gemini when configured, deterministic fallback otherwise. */
-  async generateArticleContent(value: { action: ArticleHelperAction; topic: string; instructions?: string; existingContent?: string }) {
+  async generateArticleContent(value: { action: ArticleHelperAction; topic: string; instructions?: string; existingContent?: string; wordCount?: number }) {
     const { data } = await apiClient.post<{ success: boolean; action: ArticleHelperAction; text?: string; titles?: string[] }>('/coach/article-helper', value);
     return data;
   },

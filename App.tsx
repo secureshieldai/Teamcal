@@ -5,6 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import StepSyncManager from './src/components/StepSyncManager';
+import IncomingCallManager from './src/components/IncomingCallManager';
+import { navigationRef } from './src/navigation/navigationRef';
 
 export default function App() {
   return (
@@ -13,13 +15,20 @@ export default function App() {
         <AuthProvider>
           <StepSyncManager />
           <NavigationContainer
+            ref={navigationRef}
             linking={{
               prefixes: ['teamcal://'],
-              config: { screens: { AudienceAccounts: 'social-auth/callback' } },
+              config: {
+                screens: {
+                  AudienceAccounts: 'social-auth/callback',
+                  BotChatPublic: 'b/:slug',
+                },
+              },
             }}
           >
             <RootNavigator />
           </NavigationContainer>
+          <IncomingCallManager />
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

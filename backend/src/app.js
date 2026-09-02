@@ -43,6 +43,7 @@ const channelRoutes = require("./routes/channel.routes");
 const channelPostRoutes = require("./routes/channel-post.routes");
 const channelAnalyticsRoutes = require("./routes/channel-analytics.routes");
 const channelMonetizationRoutes = require("./routes/channel-monetization.routes");
+const botRoutes = require("./routes/bot.routes");
 
 const app = express();
 
@@ -143,6 +144,7 @@ app.use("/api/channels", channelRoutes);
 app.use("/api/channels", channelPostRoutes);
 app.use("/api/channels", channelAnalyticsRoutes);
 app.use("/api/channels", channelMonetizationRoutes);
+app.use("/api/bots", botRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));

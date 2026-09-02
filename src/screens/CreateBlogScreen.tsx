@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -142,12 +142,24 @@ export default function CreateBlogScreen() {
             <Text style={styles.stepTitle}>Upload logo & cover</Text>
             <Text style={styles.stepSubtitle}>Add a logo and cover image for your blog.</Text>
             <TouchableOpacity style={styles.uploadBox} onPress={() => chooseImage('logo')}>
-              <Ionicons name="image-outline" size={26} color={colors.textMuted} />
-              <Text style={styles.uploadText}>Blog Logo · Tap to upload</Text>
+              {logo ? (
+                <Image source={{ uri: logo }} style={styles.uploadPreview} />
+              ) : (
+                <>
+                  <Ionicons name="image-outline" size={26} color={colors.textMuted} />
+                  <Text style={styles.uploadText}>Blog Logo · Tap to upload</Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={[styles.uploadBox, { height: 100 }]} onPress={() => chooseImage('cover')}>
-              <Ionicons name="image-outline" size={26} color={colors.textMuted} />
-              <Text style={styles.uploadText}>Blog Cover Image · Tap to upload</Text>
+              {cover ? (
+                <Image source={{ uri: cover }} style={styles.uploadPreview} />
+              ) : (
+                <>
+                  <Ionicons name="image-outline" size={26} color={colors.textMuted} />
+                  <Text style={styles.uploadText}>Blog Cover Image · Tap to upload</Text>
+                </>
+              )}
             </TouchableOpacity>
           </>
         )}
@@ -295,7 +307,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.md,
     gap: spacing.sm,
+    overflow: 'hidden',
   },
+  uploadPreview: { width: '100%', height: '100%', borderRadius: radii.xl },
   uploadText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
   colorRow: { flexDirection: 'row', gap: spacing.sm },
   colorSwatch: { width: 32, height: 32, borderRadius: 16 },

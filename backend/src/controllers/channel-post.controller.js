@@ -1,4 +1,5 @@
 const { supabase } = require('../config/supabase');
+const botHooks = require('../services/bot.hooks');
 
 /**
  * Create a post in a channel
@@ -31,6 +32,14 @@ async function createPost(req, res) {
       .single();
 
     if (error) throw error;
+
+    await botHooks.onContentPosted({
+      spaceType: 'channel',
+      spaceId: channelId,
+      authorId: userId,
+      text: text_content || link_title || '',
+      entityId: post.id,
+    });
 
     res.status(201).json({ data: post });
   } catch (error) {

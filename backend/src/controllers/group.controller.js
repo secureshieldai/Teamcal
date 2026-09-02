@@ -1,4 +1,5 @@
 const { supabase } = require("../config/supabase");
+const botHooks = require("../services/bot.hooks");
 
 /** GET /api/groups — groups the user belongs to */
 async function getMyGroups(req, res, next) {
@@ -245,7 +246,7 @@ async function joinGroup(req, res, next) {
   try {
     const { data: group, error: gErr } = await supabase
       .from("groups")
-      .select("id, is_private, member_count")
+      .select("id, name, is_private, member_count")
       .eq("id", req.params.id)
       .single();
 
@@ -276,6 +277,12 @@ async function joinGroup(req, res, next) {
       .eq("id", group.id);
 
     await sendAutoDmIfConfigured(group.id, req.user.id).catch(() => {});
+    await botHooks.onMemberJoined({
+      spaceType: "community",
+      spaceId: group.id,
+      spaceName: group.name,
+      memberId: req.user.id,
+    });
 
     res.json({ success: true, message: "Joined group" });
   } catch (err) {

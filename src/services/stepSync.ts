@@ -13,6 +13,16 @@ export type StepSourceId = 'phone-motion' | 'apple-health' | 'health-connect';
 export type StepSourceConnection = { connected: boolean; lastSyncedAt?: number; error?: string };
 export type StepConnections = Partial<Record<StepSourceId, StepSourceConnection>>;
 
+/** What a source can report for one day. Everything but `steps` is optional — a
+ *  plain pedometer only knows step count, while Health platforms also expose
+ *  distance, active energy and exercise time recorded by the phone or watch. */
+export type ActivityMetrics = {
+  steps: number;
+  distanceKm?: number;
+  calories?: number;
+  activeMinutes?: number;
+};
+
 export async function getStepConnections(): Promise<StepConnections> {
   const raw = await AsyncStorage.getItem(CONNECTIONS_KEY);
   try { return raw ? JSON.parse(raw) : {}; } catch { return {}; }
@@ -28,7 +38,7 @@ function todayRange() {
   return { start, end: new Date() };
 }
 
-async function readHealthKit(requestPermission: boolean) {
+async function readHealthKit(requestPermission: boolean): Promise<ActivityMetrics> {
   const health = require('@kingstinct/react-native-healthkit') as typeof import('@kingstinct/react-native-healthkit');
   if (!(await health.isHealthDataAvailableAsync())) throw new Error('Apple Health is unavailable on this device.');
   if (requestPermission) await health.requestAuthorization({ toRead: [
@@ -38,14 +48,26 @@ async function readHealthKit(requestPermission: boolean) {
     'HKQuantityTypeIdentifierAppleExerciseTime',
   ] });
   const { start, end } = todayRange();
-  const result = await health.queryStatisticsForQuantity(
-    'HKQuantityTypeIdentifierStepCount', ['cumulativeSum'],
-    { filter: { date: { startDate: start, endDate: end } }, unit: 'count' }
-  );
-  return Number(result.sumQuantity?.quantity ?? 0);
+  const total = async (identifier: string, unit: string) => {
+    try {
+      const result = await health.queryStatisticsForQuantity(
+        identifier as any, ['cumulativeSum'],
+        { filter: { date: { startDate: start, endDate: end } }, unit: unit as any }
+      );
+      const value = Number(result.sumQuantity?.quantity ?? 0);
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    } catch { return 0; }
+  };
+  const [steps, distanceKm, calories, activeMinutes] = await Promise.all([
+    total('HKQuantityTypeIdentifierStepCount', 'count'),
+    total('HKQuantityTypeIdentifierDistanceWalkingRunning', 'km'),
+    total('HKQuantityTypeIdentifierActiveEnergyBurned', 'kcal'),
+    total('HKQuantityTypeIdentifierAppleExerciseTime', 'min'),
+  ]);
+  return { steps, distanceKm, calories, activeMinutes };
 }
 
-async function readHealthConnect(requestPermission: boolean) {
+async function readHealthConnect(requestPermission: boolean): Promise<ActivityMetrics> {
   const health = require('react-native-health-connect') as typeof import('react-native-health-connect');
   if (!(await health.initialize())) throw new Error('Health Connect is unavailable.');
   if (requestPermission) {
@@ -57,41 +79,50 @@ async function readHealthConnect(requestPermission: boolean) {
     ]);
   }
   const { start, end } = todayRange();
-  const result = await health.aggregateRecord({
-    recordType: 'Steps',
-    timeRangeFilter: { operator: 'between', startTime: start.toISOString(), endTime: end.toISOString() },
-  });
-  return Number(result.COUNT_TOTAL ?? 0);
+  const timeRangeFilter = { operator: 'between', startTime: start.toISOString(), endTime: end.toISOString() } as const;
+  const aggregate = async (recordType: string) => {
+    try { return (await health.aggregateRecord({ recordType: recordType as any, timeRangeFilter })) as Record<string, any>; }
+    catch { return {}; }
+  };
+  const [stepsAgg, distanceAgg, caloriesAgg] = await Promise.all([
+    aggregate('Steps'), aggregate('Distance'), aggregate('ActiveCaloriesBurned'),
+  ]);
+  const positive = (value: unknown) => (Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : undefined);
+  return {
+    steps: Number(stepsAgg.COUNT_TOTAL ?? 0),
+    distanceKm: positive(distanceAgg.DISTANCE?.inKilometers),
+    calories: positive(caloriesAgg.ACTIVE_CALORIES_TOTAL?.inKilocalories),
+  };
 }
 
-async function readPedometer() {
+async function readPedometer(): Promise<ActivityMetrics> {
   const available = await Pedometer.isAvailableAsync();
   if (!available) throw new Error('This device has no supported pedometer.');
   const permission = await Pedometer.getPermissionsAsync();
   const granted = permission.granted ? permission : await Pedometer.requestPermissionsAsync();
   if (!granted.granted) throw new Error('Physical activity permission was not granted. Enable it in device settings and try again.');
-  if (Platform.OS !== 'ios') return 0;
+  if (Platform.OS !== 'ios') return { steps: 0 };
   const { start, end } = todayRange();
-  return (await Pedometer.getStepCountAsync(start, end)).steps;
+  return { steps: (await Pedometer.getStepCountAsync(start, end)).steps };
 }
 
 export async function syncStepSource(source: StepSourceId, requestPermission = false) {
   if (Platform.OS === 'web') throw new Error('Step sources are available in the iOS and Android apps.');
-  let steps = 0;
-  if (source === 'phone-motion') steps = await readPedometer();
+  let metrics: ActivityMetrics;
+  if (source === 'phone-motion') metrics = await readPedometer();
   else if (source === 'apple-health') {
     if (Platform.OS !== 'ios') throw new Error('Apple Watch is available on iOS only.');
-    steps = await readHealthKit(requestPermission);
+    metrics = await readHealthKit(requestPermission);
   } else {
     if (Platform.OS !== 'android') throw new Error('Health Connect is available on Android only.');
-    steps = await readHealthConnect(requestPermission);
+    metrics = await readHealthConnect(requestPermission);
   }
   const syncedAt = Date.now();
-  await trackerService.syncDailySteps(steps, source);
+  await trackerService.syncDailyActivity(metrics, source);
   await setConnection(source, { connected: true, lastSyncedAt: syncedAt });
   await AsyncStorage.setItem(ENABLED_KEY, 'true');
   await registerStepBackgroundSync();
-  return { steps, source, syncedAt };
+  return { ...metrics, source, syncedAt };
 }
 
 export async function connectStepSource(source: StepSourceId) {
@@ -116,16 +147,16 @@ export async function openStepSourcePermissions(source: StepSourceId) {
 
 export async function syncSteps(requestPermission = false) {
   if (Platform.OS === 'web') throw new Error('Automatic step sync is available on iOS and Android only.');
-  let steps: number; let source: string;
+  let metrics: ActivityMetrics; let source: string;
   try {
-    if (Platform.OS === 'ios') { steps = await readHealthKit(requestPermission); source = 'apple-health'; }
-    else { steps = await readHealthConnect(requestPermission); source = 'health-connect'; }
+    if (Platform.OS === 'ios') { metrics = await readHealthKit(requestPermission); source = 'apple-health'; }
+    else { metrics = await readHealthConnect(requestPermission); source = 'health-connect'; }
   } catch (healthError) {
     if (!requestPermission) throw healthError;
-    steps = await readPedometer(); source = 'device-pedometer';
+    metrics = await readPedometer(); source = 'device-pedometer';
   }
-  await trackerService.syncDailySteps(steps, 'automatic-health');
-  return { steps, source, syncedAt: Date.now() };
+  await trackerService.syncDailyActivity(metrics, 'automatic-health');
+  return { steps: metrics.steps, source, syncedAt: Date.now() };
 }
 
 export async function syncConnectedStepSources() {

@@ -98,7 +98,7 @@ export default function SocialMeTab({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         ListEmptyComponent={<Text style={styles.empty}>{emptyText}</Text>}
-        renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onDelete={async id=>{await postsService.delete(id);await refetch();}} />}
+        renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onDelete={async id=>{await postsService.delete(id);await refetch();}} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
       />
     </View>
   );

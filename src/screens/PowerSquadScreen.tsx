@@ -306,20 +306,25 @@ function FeedTab({ groupId, isMember, isAdmin, posts, onRefresh, streaks }: {
 
       {/* Posts */}
       {posts.map(post => (
-        <CommunityPost key={post.id} post={post} isAdmin={isAdmin} onRefresh={onRefresh} streak={streaks[post.user_id] || 0} />
+        <CommunityPost key={post.id} post={post} isAdmin={isAdmin} onRefresh={onRefresh} streak={streaks[post.user_id] || 0} navigation={navigation} />
       ))}
       {!posts.length && <Text style={s.emptyText}>No posts yet. Be the first to share!</Text>}
     </View>
   );
 }
 
-function CommunityPost({ post, isAdmin, onRefresh, streak = 0 }: { post: any; isAdmin: boolean; onRefresh: () => void; streak?: number }) {
+function CommunityPost({ post, isAdmin, onRefresh, streak = 0, navigation }: { post: any; isAdmin: boolean; onRefresh: () => void; streak?: number; navigation: any }) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
 
   return (
     <View style={[s.postCard, shadow.soft]}>
-      <View style={s.postHeader}>
+      <TouchableOpacity 
+        style={s.postHeader}
+        onPress={() => post.user?.id && navigation.navigate('UserProfile', { userId: post.user.id, username: post.user.name })}
+        disabled={!post.user?.id}
+        activeOpacity={0.7}
+      >
         <Avatar uri={post.user?.avatar || ''} size={36} />
         <View style={{ flex: 1, marginLeft: spacing.sm }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -344,7 +349,7 @@ function CommunityPost({ post, isAdmin, onRefresh, streak = 0 }: { post: any; is
             <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
-      </View>
+      </TouchableOpacity>
 
       <Text style={s.postBody}>{post.text}</Text>
 
@@ -413,13 +418,18 @@ function QATab({ groupId, isMember }: { groupId?: string; isMember: boolean }) {
 
       {qa.data.map((item: any) => (
         <View key={item.id} style={[s.postCard, shadow.soft]}>
-          <View style={s.postHeader}>
+          <TouchableOpacity 
+            style={s.postHeader}
+            onPress={() => item.userId && navigation.navigate('UserProfile', { userId: item.userId, username: item.authorName })}
+            disabled={!item.userId}
+            activeOpacity={0.7}
+          >
             <Avatar uri={item.authorAvatar || ''} size={36} />
             <View style={{ flex: 1, marginLeft: spacing.sm }}>
               <Text style={s.postAuthor}>@{item.authorName?.replace(/\s+/g, '.').toLowerCase() || 'member'}</Text>
               <Text style={s.postSubLabel}>Community post</Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <Text style={s.postBody}>Q: {item.text}</Text>
           <View style={s.postFooter}>
             <TouchableOpacity style={s.footerBtn}>
@@ -884,7 +894,13 @@ function Top10Tab({ members }: { members: any[] }) {
         const pts = m.user?.points ?? m.user?.xp ?? Math.max(100, 1000 - i * 87);
         const medal = MEDALS[rank];
         return (
-          <View key={m.user?.id ?? i} style={[s.leaderRow, shadow.soft]}>
+          <TouchableOpacity 
+            key={m.user?.id ?? i} 
+            style={[s.leaderRow, shadow.soft]}
+            onPress={() => m.user?.id && navigation.navigate('UserProfile', { userId: m.user.id, username: m.user.name ?? 'Member' })}
+            disabled={!m.user?.id}
+            activeOpacity={0.75}
+          >
             <Text style={[s.leaderRank, rank <= 3 && { color: colors.textPrimary }]}>{rank}</Text>
             <Avatar uri={m.user?.avatar || ''} size={46} />
             <View style={{ flex: 1, marginLeft: spacing.md }}>
@@ -900,7 +916,7 @@ function Top10Tab({ members }: { members: any[] }) {
               <Text style={s.leaderUsername}>@{(m.user?.name ?? 'member').toLowerCase().replace(/\s+/g, '')}</Text>
             </View>
             <Text style={s.leaderPts}>{pts.toLocaleString()} pts</Text>
-          </View>
+          </TouchableOpacity>
         );
       })}
       {!sorted.length && <Text style={s.emptyText}>No members yet.</Text>}

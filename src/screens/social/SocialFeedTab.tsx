@@ -36,6 +36,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   const { createPost, loading: posting } = useCreatePost();
   const [draft, setDraft] = useState('');
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [activeStoryId, setActiveStoryId] = useState<string | null>(null);
   const [storyLikes, setStoryLikes] = useState<Record<string, { liked: boolean; likes: number }>>({});
@@ -126,6 +127,18 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: remaining, quality: .8 });
     if (!result.canceled) setSelectedImages(current => [...current, ...result.assets].slice(0, 10));
   };
+  
+  const chooseVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ 
+      mediaTypes: ['videos'], 
+      allowsEditing: false,
+      quality: 1
+    });
+    if (!result.canceled) {
+      setSelectedVideo(result.assets[0]);
+      setSelectedImages([]); // Clear images when video is selected
+    }
+  };
   const moveImage = (index: number, direction: -1 | 1) => setSelectedImages(current => {
     const next = [...current];
     const target = index + direction;
@@ -134,19 +147,35 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
     return next;
   });
   const publish = async () => {
-    if (!draft.trim() && !selectedImages.length) return;
+    if (!draft.trim() && !selectedImages.length && !selectedVideo) return;
     try {
-      console.log('Publishing post with', selectedImages.length, 'images');
-      const imageUrls = await Promise.all(selectedImages.map(async (asset, index) => {
-        console.log(`Uploading image ${index + 1}/${selectedImages.length}:`, asset.uri.substring(0, 60));
-        const url = await postsService.uploadImage({ uri: asset.uri, mimeType: asset.mimeType, fileName: asset.fileName });
-        console.log(`Image ${index + 1} uploaded, URL:`, url);
-        return url;
-      }));
-      console.log('All images uploaded, URLs:', imageUrls);
-      await createPost(draft.trim(), imageUrls);
+      console.log('Publishing post with', selectedImages.length, 'images and', selectedVideo ? '1 video' : 'no video');
+      
+      let imageUrls: string[] = [];
+      let videoUrl: string | undefined;
+      
+      if (selectedVideo) {
+        console.log('Uploading video:', selectedVideo.uri.substring(0, 60));
+        videoUrl = await postsService.uploadVideo({ 
+          uri: selectedVideo.uri, 
+          mimeType: selectedVideo.mimeType || 'video/mp4', 
+          fileName: selectedVideo.fileName || 'video.mp4' 
+        });
+        console.log('Video uploaded, URL:', videoUrl);
+      } else if (selectedImages.length) {
+        imageUrls = await Promise.all(selectedImages.map(async (asset, index) => {
+          console.log(`Uploading image ${index + 1}/${selectedImages.length}:`, asset.uri.substring(0, 60));
+          const url = await postsService.uploadImage({ uri: asset.uri, mimeType: asset.mimeType, fileName: asset.fileName });
+          console.log(`Image ${index + 1} uploaded, URL:`, url);
+          return url;
+        }));
+        console.log('All images uploaded, URLs:', imageUrls);
+      }
+      
+      await createPost(draft.trim(), imageUrls, videoUrl);
       setDraft('');
       setSelectedImages([]);
+      setSelectedVideo(null);
       await refetch();
     } catch (e) {
       console.error('Error publishing post:', e);
@@ -224,19 +253,33 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
                     </View>
                   </View>)}
                 </ScrollView> : null}
+                {selectedVideo ? <View style={styles.videoPreviewWrap}>
+                  <View style={styles.videoPreview}>
+                    <Ionicons name="videocam" size={32} color={colors.white} />
+                    <Text style={styles.videoName} numberOfLines={1}>{selectedVideo.fileName || 'Video selected'}</Text>
+                    {selectedVideo.duration && <Text style={styles.videoDuration}>{Math.floor(selectedVideo.duration)}s</Text>}
+                  </View>
+                  <TouchableOpacity accessibilityLabel="Remove video" style={styles.removeVideo} onPress={() => setSelectedVideo(null)}>
+                    <Ionicons name="close" size={15} color={colors.white} />
+                  </TouchableOpacity>
+                </View> : null}
                 <View style={styles.composerActions}>
                   <View style={styles.composerButtonGroup}>
                     <TouchableOpacity accessibilityLabel="AI Assistant" style={styles.pillButton} onPress={() => setAiModalOpen(true)} disabled={posting}>
                       <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
                       <Text style={styles.pillButtonText}>AI Assistant</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity accessibilityLabel="Add images" style={styles.pillButton} onPress={chooseImages} disabled={posting}>
+                    <TouchableOpacity accessibilityLabel="Add images" style={styles.pillButton} onPress={chooseImages} disabled={posting || !!selectedVideo}>
                       <Ionicons name="image-outline" size={16} color={colors.primary} />
                       <Text style={styles.pillButtonText}>Image</Text>
                       {selectedImages.length ? <Text style={styles.imageCount}>{selectedImages.length}/10</Text> : null}
                     </TouchableOpacity>
+                    <TouchableOpacity accessibilityLabel="Add video" style={styles.pillButton} onPress={chooseVideo} disabled={posting || selectedImages.length > 0}>
+                      <Ionicons name="videocam-outline" size={16} color={colors.primary} />
+                      <Text style={styles.pillButtonText}>Video</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.postButton} onPress={publish} disabled={posting || (!draft.trim() && !selectedImages.length)}>
+                  <TouchableOpacity style={styles.postButton} onPress={publish} disabled={posting || (!draft.trim() && !selectedImages.length && !selectedVideo)}>
                     <Text style={styles.postText}>{posting ? 'Posting…' : 'Post'}</Text>
                   </TouchableOpacity>
                 </View>
@@ -353,6 +396,11 @@ const styles = StyleSheet.create({
   preview: { width: '100%', height: '100%' },
   removeImage: { position: 'absolute', right: 4, top: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.65)', padding: 2 },
   reorderButtons: { position: 'absolute', left: 4, right: 4, bottom: 4, flexDirection: 'row', justifyContent: 'space-between' },
+  videoPreviewWrap: { marginTop: spacing.sm, borderRadius: radii.lg, overflow: 'hidden' },
+  videoPreview: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.navy, padding: spacing.md, borderRadius: radii.lg },
+  videoName: { flex: 1, color: colors.white, fontSize: 13, fontWeight: '600' },
+  videoDuration: { color: colors.white, fontSize: 11, fontWeight: '600', opacity: 0.8 },
+  removeVideo: { position: 'absolute', right: 8, top: 8, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.65)', padding: 2 },
   postText: {
     color: colors.white,
     fontWeight: '700',

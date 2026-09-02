@@ -53,6 +53,7 @@ export default function OverviewTab({ navigation, onNavigateTab }: Props) {
     else if (key === 'upload-video') onNavigateTab('Videos');
     else if (key === 'create-store') onNavigateTab('Stores');
     else if (key === 'create-membership') onNavigateTab('Memberships');
+    else if (key === 'bots') navigation.navigate('Bots');
   };
 
   return (

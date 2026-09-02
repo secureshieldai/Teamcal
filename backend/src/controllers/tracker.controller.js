@@ -27,11 +27,42 @@ async function addEntry(req, res, next) {
   }
 }
 
+/** Trackers whose rows can be imported cumulatively from a device/health source.
+ *  For these, repeated per-day totals must not be added together. */
+const CUMULATIVE_TRACKERS = new Set(["steps", "distance", "active-calories", "active-minutes"]);
+
 function deduplicatedTotal(entries) {
   const imported = entries.filter((entry) => entry.meta?.cumulative);
   const manual = entries.filter((entry) => !entry.meta?.cumulative);
   return manual.reduce((sum, entry) => sum + Number(entry.value), 0) +
     imported.reduce((max, entry) => Math.max(max, Number(entry.value)), 0);
+}
+
+function totalFor(tracker, entries) {
+  return CUMULATIVE_TRACKERS.has(tracker)
+    ? deduplicatedTotal(entries)
+    : entries.reduce((a, e) => a + Number(e.value), 0);
+}
+
+/** Upsert a single cumulative daily total, replacing any prior row with the same
+ *  meta.syncKey so re-syncing the same source+day is idempotent. */
+async function upsertCumulativeEntry(userId, tracker, value, meta) {
+  const { data: existing, error: findError } = await supabase
+    .from("tracker_entries")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("tracker", tracker)
+    .contains("meta", { syncKey: meta.syncKey })
+    .limit(1);
+  if (findError) throw findError;
+
+  const payload = { user_id: userId, tracker, ts: meta.ts, value, meta };
+  const query = existing?.length
+    ? supabase.from("tracker_entries").update(payload).eq("id", existing[0].id)
+    : supabase.from("tracker_entries").insert(payload);
+  const { data: entry, error } = await query.select().single();
+  if (error) throw error;
+  return { entry, replaced: Boolean(existing?.length) };
 }
 
 /** POST /api/tracker/steps/sync
@@ -52,28 +83,23 @@ async function syncDailySteps(req, res, next) {
     }
 
     const syncKey = `${source}:${day}`;
-    const { data: existing, error: findError } = await supabase
-      .from("tracker_entries")
-      .select("id")
-      .eq("user_id", req.user.id)
-      .eq("tracker", "steps")
-      .contains("meta", { syncKey })
-      .limit(1);
-    if (findError) throw findError;
+    const baseMeta = { syncKey, source, day, cumulative: true, ts: dayStart, syncedAt: Date.now() };
 
-    const payload = {
-      user_id: req.user.id,
-      tracker: "steps",
-      ts: dayStart,
-      value,
-      meta: { syncKey, source, day, cumulative: true, syncedAt: Date.now() },
-    };
-    const query = existing?.length
-      ? supabase.from("tracker_entries").update(payload).eq("id", existing[0].id)
-      : supabase.from("tracker_entries").insert(payload);
-    const { data: entry, error } = await query.select().single();
-    if (error) throw error;
-    res.status(existing?.length ? 200 : 201).json({ success: true, entry, replaced: Boolean(existing?.length) });
+    const { entry, replaced } = await upsertCumulativeEntry(req.user.id, "steps", value, { ...baseMeta });
+
+    // Optional companion metrics — only stored when the source actually reported them.
+    const companions = [
+      ["distance", req.body.distanceKm],
+      ["active-calories", req.body.calories],
+      ["active-minutes", req.body.activeMinutes],
+    ];
+    for (const [tracker, raw] of companions) {
+      const num = Number(raw);
+      if (!Number.isFinite(num) || num <= 0 || num > 1e6) continue;
+      await upsertCumulativeEntry(req.user.id, tracker, Math.round(num * 100) / 100, { ...baseMeta });
+    }
+
+    res.status(replaced ? 200 : 201).json({ success: true, entry, replaced });
   } catch (err) {
     next(err);
   }
@@ -119,7 +145,7 @@ async function getToday(req, res, next) {
       .order("ts", { ascending: false });
 
     if (error) throw error;
-    const sum = req.params.tracker === "steps" ? deduplicatedTotal(entries) : entries.reduce((a, e) => a + Number(e.value), 0);
+    const sum = totalFor(req.params.tracker, entries);
     res.json({ success: true, entries, sum });
   } catch (err) {
     next(err);
@@ -149,7 +175,7 @@ async function getLastN(req, res, next) {
       d.setUTCDate(d.getUTCDate() - (days - 1 - i));
       const k = dayKey(d.getTime() + timezoneOffsetMinutes * 60000, timezoneOffsetMinutes);
       const day = entries.filter((e) => dayKey(e.ts, timezoneOffsetMinutes) === k);
-      return { day: k, total: req.params.tracker === "steps" ? deduplicatedTotal(day) : day.reduce((a, b) => a + Number(b.value), 0), count: day.length };
+      return { day: k, total: totalFor(req.params.tracker, day), count: day.length };
     });
 
     res.json({ success: true, data: result });
@@ -206,7 +232,7 @@ async function getStreak(req, res, next) {
       d.setDate(d.getDate() - i);
       const k = dayKey(d.getTime());
       const dayEntries = entries.filter((e) => dayKey(e.ts) === k);
-      const total = req.params.tracker === "steps" ? deduplicatedTotal(dayEntries) : dayEntries.reduce((a, b) => a + Number(b.value), 0);
+      const total = totalFor(req.params.tracker, dayEntries);
       if (total >= dailyGoal) streak++;
       else if (i > 0) break;
     }

@@ -1,13 +1,13 @@
--- ============================================================
--- TeamCal – Supabase PostgreSQL Schema
--- Paste into Supabase Dashboard → SQL Editor → Run
+﻿-- ============================================================
+-- TeamCal â€“ Supabase PostgreSQL Schema
+-- Paste into Supabase Dashboard â†’ SQL Editor â†’ Run
 -- ============================================================
 
 create extension if not exists "pgcrypto";
 
--- ─────────────────────────────────────────────────────────────
--- updated_at trigger (defined first — referenced by all tables)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- updated_at trigger (defined first â€” referenced by all tables)
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create or replace function set_updated_at()
 returns trigger language plpgsql as $$
 begin
@@ -16,9 +16,9 @@ begin
 end;
 $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- USERS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists users (
   id                  uuid primary key default gen_random_uuid(),
   email               text unique not null,
@@ -94,9 +94,9 @@ do $$ begin
     before update on users for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- FASTING LOGS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists fast_logs (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references users(id) on delete cascade,
@@ -113,9 +113,9 @@ create index if not exists idx_fast_logs_user_id     on fast_logs(user_id);
 create index if not exists idx_fast_logs_user_active  on fast_logs(user_id, active);
 create index if not exists idx_fast_logs_started_at   on fast_logs(user_id, started_at desc);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- SLEEP LOGS (tap-to-sleep active session tracking)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists sleep_logs (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references users(id) on delete cascade,
@@ -132,11 +132,11 @@ create index if not exists idx_sleep_logs_user_id    on sleep_logs(user_id);
 create index if not exists idx_sleep_logs_user_active on sleep_logs(user_id, active);
 create index if not exists idx_sleep_logs_started_at on sleep_logs(user_id, started_at desc);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- TRACKER ENTRIES
 -- Generic time-series log for: calories, water, steps, weight,
 -- workouts, sleep, meals, meal-scan
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists tracker_entries (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references users(id) on delete cascade,
@@ -152,9 +152,9 @@ create unique index if not exists idx_unique_synced_steps_per_source_day
   on tracker_entries(user_id, tracker, (meta->>'syncKey'))
   where tracker = 'steps' and meta ? 'syncKey';
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- POSTS  (community feed)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists posts (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null references users(id) on delete cascade,
@@ -255,9 +255,9 @@ create index if not exists idx_articles_user on articles(user_id, created_at des
 create index if not exists idx_articles_blog on articles(blog_id, created_at desc);
 do $$ begin create trigger trg_articles_updated_at before update on articles for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- CHALLENGES
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists challenges (
   id            uuid primary key default gen_random_uuid(),
   created_by    uuid references users(id) on delete set null,
@@ -286,9 +286,9 @@ do $$ begin
     before update on challenges for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- CHALLENGE MEMBERS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists challenge_members (
   id           uuid primary key default gen_random_uuid(),
   challenge_id uuid not null references challenges(id) on delete cascade,
@@ -302,9 +302,9 @@ create table if not exists challenge_members (
 create index if not exists idx_challenge_members_user_id      on challenge_members(user_id);
 create index if not exists idx_challenge_members_challenge_id on challenge_members(challenge_id);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- GROUPS  (Power Squads / Teams)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists groups (
   id           uuid primary key default gen_random_uuid(),
   name         text not null,
@@ -326,9 +326,9 @@ do $$ begin
     before update on groups for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- GROUP MEMBERS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists group_members (
   id        uuid primary key default gen_random_uuid(),
   group_id  uuid not null references groups(id) on delete cascade,
@@ -341,9 +341,9 @@ create table if not exists group_members (
 create index if not exists idx_group_members_user_id  on group_members(user_id);
 create index if not exists idx_group_members_group_id on group_members(group_id);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- WORKOUTS  (templates + user-created plans)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists workouts (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid references users(id) on delete set null,
@@ -369,9 +369,9 @@ do $$ begin
     before update on workouts for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- WORKOUT LOGS  (completed sessions)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists workout_logs (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references users(id) on delete cascade,
@@ -387,9 +387,9 @@ create table if not exists workout_logs (
 
 create index if not exists idx_workout_logs_user_id on workout_logs(user_id, started_at desc);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- MARKETPLACE PRODUCTS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists marketplace_products (
   id          uuid primary key default gen_random_uuid(),
   seller_id   uuid references users(id) on delete set null,
@@ -414,9 +414,9 @@ do $$ begin
     before update on marketplace_products for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- EARN ENTRIES  (points ledger)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists earn_entries (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references users(id) on delete cascade,
@@ -430,9 +430,9 @@ create table if not exists earn_entries (
 
 create index if not exists idx_earn_entries_user_id on earn_entries(user_id, created_at desc);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- REFERRALS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists referrals (
   id               uuid primary key default gen_random_uuid(),
   referrer_id      uuid not null references users(id) on delete cascade,
@@ -445,9 +445,9 @@ create table if not exists referrals (
 
 create index if not exists idx_referrals_referrer_id on referrals(referrer_id);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- PAYOUTS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists payouts (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid unique not null references users(id) on delete cascade,
@@ -466,9 +466,9 @@ do $$ begin
     before update on payouts for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- APPOINTMENTS  (coach / health pro bookings)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists appointments (
   id        uuid primary key default gen_random_uuid(),
   user_id   uuid not null references users(id) on delete cascade,
@@ -491,9 +491,9 @@ do $$ begin
     before update on appointments for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- HEALTH INVITES  (share data with doctor / nutritionist)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists health_invites (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references users(id) on delete cascade,
@@ -509,9 +509,9 @@ create table if not exists health_invites (
 
 create index if not exists idx_health_invites_user_id on health_invites(user_id);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- SHOPPING ITEMS  (AI grocery list)
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists shopping_items (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references users(id) on delete cascade,
@@ -525,9 +525,9 @@ create table if not exists shopping_items (
 
 create index if not exists idx_shopping_items_user_id on shopping_items(user_id, created_at desc);
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- PUSH TOKENS
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 create table if not exists push_tokens (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references users(id) on delete cascade,
@@ -544,11 +544,11 @@ do $$ begin
     before update on push_tokens for each row execute function set_updated_at();
 exception when duplicate_object then null; end $$;
 
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- ROW LEVEL SECURITY
 -- Backend uses service_role key which bypasses RLS.
 -- Enabled as a safety net against accidental anon key usage.
--- ─────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 alter table users                enable row level security;
 alter table email_verification_otps enable row level security;
 alter table fast_logs            enable row level security;
@@ -647,6 +647,49 @@ create table if not exists exercise_performances (
 create index if not exists idx_exercise_perf_user_exercise on exercise_performances(user_id, exercise_name, set_index, ts desc);
 alter table exercise_performances enable row level security;
 
--- Smart-alarm preferences (settings only — no server-side notification scheduling yet).
+-- Smart-alarm preferences (settings only â€” no server-side notification scheduling yet).
 alter table users add column if not exists sleep_alarm_prefs jsonb not null default '{"wakeTime":"06:30","smartAlarm":true,"wakeWindowMin":30,"sound":"Sunrise"}';
 alter table sleep_logs enable row level security;
+
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- DIRECT MESSAGING  (message requests + inbox, images, voice notes, calls)
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+create table if not exists dm_conversations (
+  id                    uuid primary key default gen_random_uuid(),
+  user_lo               uuid not null references users(id) on delete cascade,
+  user_hi               uuid not null references users(id) on delete cascade,
+  status                text not null default 'pending' check (status in ('pending','accepted','blocked')),
+  initiator_id          uuid not null references users(id) on delete cascade,
+  request_message_count int  not null default 0,
+  blocked_by            uuid references users(id) on delete set null,
+  last_message_at       timestamptz,
+  last_message_preview  text default '',
+  last_message_type     text default 'text',
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now(),
+  check (user_lo < user_hi),
+  unique (user_lo, user_hi)
+);
+create index if not exists idx_dm_conversations_user_lo on dm_conversations(user_lo, last_message_at desc);
+create index if not exists idx_dm_conversations_user_hi on dm_conversations(user_hi, last_message_at desc);
+do $$ begin create trigger trg_dm_conversations_updated_at before update on dm_conversations for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
+
+create table if not exists dm_messages (
+  id                uuid primary key default gen_random_uuid(),
+  conversation_id   uuid not null references dm_conversations(id) on delete cascade,
+  sender_id         uuid not null references users(id) on delete cascade,
+  type              text not null default 'text' check (type in ('text','image','voice','call')),
+  body              text default '',
+  media_url         text,
+  media_duration_ms int,
+  transcript        text,
+  call_mode         text check (call_mode in ('audio','video')),
+  call_outcome      text check (call_outcome in ('missed','declined','no_answer','ended','cancelled')),
+  call_duration_s   int,
+  read_at           timestamptz,
+  created_at        timestamptz not null default now()
+);
+create index if not exists idx_dm_messages_conversation on dm_messages(conversation_id, created_at);
+create index if not exists idx_dm_messages_unread on dm_messages(conversation_id, sender_id) where read_at is null;
+alter table dm_conversations enable row level security;
+alter table dm_messages      enable row level security;

@@ -32,4 +32,16 @@ export const recipeService = {
     const { data } = await apiClient.get<{ success: boolean; recipe: Recipe }>(`/recipes/${id}`);
     return data.recipe;
   },
+  async createManual(params: {
+    title: string;
+    prepTime: number;
+    cookTime: number;
+    servings: number;
+    image?: string;
+    ingredients: string[];
+    steps: string[];
+  }) {
+    const { data } = await apiClient.post<{ success: boolean; recipe: Recipe }>('/recipes/manual', params);
+    return data.recipe;
+  },
 };

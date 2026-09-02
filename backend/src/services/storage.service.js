@@ -15,7 +15,7 @@ async function ensureBucket(force = false) {
     // default can exceed the project's plan and leave image uploads stuck on
     // an older, smaller bucket limit.
     fileSizeLimit: null,
-    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf", "video/mp4", "video/quicktime", "video/webm", "video/x-m4v", "text/vtt", "application/x-subrip", "text/plain"],
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf", "video/mp4", "video/quicktime", "video/webm", "video/x-m4v", "text/vtt", "application/x-subrip", "text/plain", "audio/m4a", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/mpeg", "audio/mp3", "audio/webm", "audio/ogg", "audio/wav", "audio/x-wav"],
   };
   const { data, error } = await supabase.storage.getBucket(BUCKET);
   if (error || !data) {
@@ -74,4 +74,14 @@ async function uploadPublicFile(folder, userId, file) {
   return supabase.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
 }
 
-module.exports = { uploadPublicImage, uploadPublicFile };
+async function uploadPublicAudio(folder, userId, file) {
+  if (!file?.buffer) throw new Error("Audio buffer is missing");
+  await ensureBucket();
+  const fromMime = { "audio/mpeg": ".mp3", "audio/mp3": ".mp3", "audio/webm": ".webm", "audio/ogg": ".ogg", "audio/wav": ".wav", "audio/x-wav": ".wav", "audio/aac": ".aac" };
+  const extension = path.extname(file.originalname || "").toLowerCase() || fromMime[file.mimetype] || ".m4a";
+  const objectPath = `${folder}/${userId}/${randomUUID()}${extension}`;
+  await uploadObject(objectPath, file, "31536000");
+  return supabase.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
+}
+
+module.exports = { uploadPublicImage, uploadPublicFile, uploadPublicAudio };

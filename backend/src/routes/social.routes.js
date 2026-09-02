@@ -1,7 +1,8 @@
 const express = require("express");
 const { protect } = require("../middleware/auth");
 const { getFeed, searchUsers, getProfile, getLeaderboard, toggleFriend, getFriends, getFriendsProgress, toggleFollow, getCreators, reportContent, toggleBlockUser, getSocialBlogs, getSocialBlog, getSocialVideos, getStories, articleEngagement, toggleArticleLike, addArticleComment, toggleArticleCommentLike, deleteArticleComment, toggleBlogFollow } = require("../controllers/social.controller");
-const { listConversations, listRequests, getMessages, sendMessage, actOnRequest } = require('../controllers/message.controller');
+const { listConversations, listRequests, getMessages, sendMessage, sendMediaMessage, transcribeAudio, markRead, logCall, actOnRequest } = require('../controllers/message.controller');
+const { audioUpload, dmMediaUpload } = require('../middleware/upload');
 const { getLiveStreams, getEvents, registerEvent } = require("../controllers/social.events.controller");
 
 const router = express.Router();
@@ -22,9 +23,13 @@ router.get('/content/videos',getSocialVideos);
 router.get('/stories',getStories);
 router.get('/messages/conversations',listConversations);
 router.get('/messages/requests',listRequests);
-router.get('/messages/:userId',getMessages);
-router.post('/messages/:userId',sendMessage);
+router.post('/messages/transcribe',audioUpload.single('audio'),transcribeAudio);
 router.post('/messages/requests/:userId',actOnRequest);
+router.get('/messages/:userId',getMessages);
+router.post('/messages/:userId/media',dmMediaUpload.single('file'),sendMediaMessage);
+router.post('/messages/:userId/read',markRead);
+router.post('/messages/:userId/call',logCall);
+router.post('/messages/:userId',sendMessage);
 router.get("/users", searchUsers);
 router.get("/leaderboard", getLeaderboard);
 router.get("/friends", getFriends);

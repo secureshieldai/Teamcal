@@ -1,10 +1,16 @@
 const multer = require("multer");
 
 const MAX_MB = Number(process.env.UPLOAD_MAX_SIZE_MB) || 10;
+const AUDIO_MB = Number(process.env.AUDIO_UPLOAD_MAX_SIZE_MB) || 25;
+
+const AUDIO_MIMES = [
+  "audio/m4a", "audio/mp4", "audio/x-m4a", "audio/aac",
+  "audio/mpeg", "audio/mp3", "audio/webm", "audio/ogg", "audio/wav", "audio/x-wav",
+];
+const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 function fileFilter(_req, file, cb) {
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (allowed.includes(file.mimetype)) return cb(null, true);
+  if (IMAGE_MIMES.includes(file.mimetype)) return cb(null, true);
   cb(new Error("Only JPEG, PNG, WEBP or GIF images are allowed"));
 }
 
@@ -23,6 +29,25 @@ const pdfUpload = multer({
   limits: { fileSize: (Number(process.env.PDF_UPLOAD_MAX_SIZE_MB) || 100) * 1024 * 1024 },
 });
 
+const audioUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter(_req, file, cb) {
+    if (AUDIO_MIMES.includes(file.mimetype)) return cb(null, true);
+    cb(new Error("Only M4A, MP3, AAC, OGG, WAV or WEBM audio is allowed"));
+  },
+  limits: { fileSize: AUDIO_MB * 1024 * 1024 },
+});
+
+// Direct-message attachments: one endpoint accepts both photos and voice notes.
+const dmMediaUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter(_req, file, cb) {
+    if ([...IMAGE_MIMES, ...AUDIO_MIMES].includes(file.mimetype)) return cb(null, true);
+    cb(new Error("Only images or audio are allowed"));
+  },
+  limits: { fileSize: AUDIO_MB * 1024 * 1024 },
+});
+
 const videoUpload = multer({
   storage: multer.memoryStorage(),
   fileFilter(_req, file, cb) {
@@ -36,3 +61,5 @@ const videoUpload = multer({
 module.exports = upload;
 module.exports.pdfUpload = pdfUpload;
 module.exports.videoUpload = videoUpload;
+module.exports.audioUpload = audioUpload;
+module.exports.dmMediaUpload = dmMediaUpload;

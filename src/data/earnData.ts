@@ -21,6 +21,7 @@ export const earnQuickActions=[
   {key:'audience-engine',label:'Audience Engine',icon:'people-circle-outline'},{key:'create-blog',label:'Create Blog',icon:'create-outline'},
   {key:'upload-pdf',label:'Upload PDF',icon:'document-text-outline'},{key:'upload-video',label:'Upload Video',icon:'videocam-outline'},
   {key:'create-store',label:'Create Store',icon:'storefront-outline'},{key:'create-membership',label:'Create Membership',icon:'ribbon-outline'},
+  {key:'bots',label:'Bots',icon:'hardware-chip-outline'},
 ] as const;
 export const audienceEngineTemplates=[
   {key:'content-repurposing',label:'Content Repurposing Pack',posts:30,icon:'shuffle-outline',description:'Turn one piece of content into multiple text posts, graphics, carousels, and short-video scripts.'},

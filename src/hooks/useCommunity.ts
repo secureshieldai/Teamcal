@@ -86,10 +86,10 @@ export function useCreatePost() {
   const [loading, setLoading] = useState(false);
 
   // POST /api/posts
-  const createPost = async (text: string, images: string[] = [], community?: string) => {
+  const createPost = async (text: string, images: string[] = [], video?: string, community?: string) => {
     setLoading(true);
     try {
-      return await postsService.create({ text, images, image: images[0], community });
+      return await postsService.create({ text, images, image: images[0], video, community });
     } finally {
       setLoading(false);
     }

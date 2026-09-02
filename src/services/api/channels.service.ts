@@ -22,6 +22,11 @@ export const channelsService = {
     await apiClient.delete(`/channels/${id}`);
   },
 
+  // Alias for delete for clarity
+  async deleteChannel(id: string): Promise<void> {
+    return this.delete(id);
+  },
+
   async follow(id: string): Promise<void> {
     await apiClient.post(`/channels/${id}/follow`);
   },

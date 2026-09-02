@@ -90,7 +90,13 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
                 style={sizeStyle}
                 resizeMode="cover"
                 onError={(error) => {
-                  console.log('Image load error for post', post.id, 'image', i, ':', uri, error.nativeEvent?.error);
+                  const errorMsg = error.nativeEvent?.error || 'Unknown error';
+                  console.error('═══ IMAGE LOAD ERROR ═══');
+                  console.error('Post ID:', post.id);
+                  console.error('Image Index:', i);
+                  console.error('Image URL:', uri);
+                  console.error('Error:', errorMsg);
+                  console.error('═══════════════════════');
                   setImageErrors(prev => ({ ...prev, [i]: true }));
                   setImageLoading(prev => ({ ...prev, [i]: false }));
                 }}
@@ -99,9 +105,9 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
                 }}
                 onLoadEnd={() => {
                   setImageLoading(prev => ({ ...prev, [i]: false }));
-                  if (__DEV__) {
-                    console.log('Image loaded successfully:', uri.substring(0, 60) + '...');
-                  }
+                  console.log('✓ Image loaded successfully');
+                  console.log('  Post:', post.id, '| Index:', i);
+                  console.log('  URL:', uri.substring(0, 80) + (uri.length > 80 ? '...' : ''));
                 }}
               />
               {imageLoading[i] && (

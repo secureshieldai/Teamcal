@@ -2,7 +2,16 @@ import { apiClient } from './client';
 import type { TrackerEntry } from '../../types/api';
 
 // Backend tracker names
-export type TrackerName = 'calories' | 'weight' | 'water' | 'steps' | 'workouts' | 'sleep' | 'meals' | 'walks' | 'progress-photos' | 'mood';
+export type TrackerName = 'calories' | 'weight' | 'water' | 'steps' | 'workouts' | 'sleep' | 'meals' | 'walks' | 'progress-photos' | 'mood' | 'distance' | 'active-calories' | 'active-minutes';
+
+/** A day's activity from a connected source. Only `steps` is guaranteed; the
+ *  rest are sent through only when the source actually reported them. */
+export interface DailyActivityMetrics {
+  steps: number;
+  distanceKm?: number;
+  calories?: number;
+  activeMinutes?: number;
+}
 
 export interface TrackerTodayResponse {
   success: boolean;
@@ -26,15 +35,47 @@ export const trackerService = {
     return data.entry;
   },
 
-  async syncDailySteps(value: number, source: string, date = new Date()) {
+  /** Push one day's activity from a connected source. Steps are always sent;
+   *  distance/calories/active-minutes ride along when the source reported them.
+   *  The backend upserts one cumulative row per metric keyed by source+day, so
+   *  repeated syncs are idempotent and multiple sources can't double-count. */
+  async syncDailyActivity(metrics: DailyActivityMetrics, source: string, date = new Date()) {
     const start = new Date(date); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 1);
     const day = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+    const positive = (value?: number) => (typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined);
     const { data } = await apiClient.post<{ success: boolean; entry: TrackerEntry; replaced: boolean }>(
       '/tracker/steps/sync',
-      { value: Math.max(0, Math.round(value)), source, day, dayStart: start.getTime(), dayEnd: end.getTime() }
+      {
+        value: Math.max(0, Math.round(metrics.steps)),
+        source, day, dayStart: start.getTime(), dayEnd: end.getTime(),
+        distanceKm: positive(metrics.distanceKm),
+        calories: positive(metrics.calories),
+        activeMinutes: positive(metrics.activeMinutes),
+      }
     );
     return data.entry;
+  },
+
+  /** Back-compat shim for callers that only have a step count (live pedometer). */
+  async syncDailySteps(value: number, source: string, date = new Date()) {
+    return trackerService.syncDailyActivity({ steps: value }, source, date);
+  },
+
+  /** Today's distance (km), active calories (kcal) and active minutes as reported
+   *  by connected sources. Zeroes mean "no source data" — callers fall back to
+   *  estimates derived from step count. */
+  async getTodayActivityMetrics() {
+    const [distance, activeCalories, activeMinutes] = await Promise.all([
+      trackerService.getToday('distance').catch(() => ({ sum: 0 })),
+      trackerService.getToday('active-calories').catch(() => ({ sum: 0 })),
+      trackerService.getToday('active-minutes').catch(() => ({ sum: 0 })),
+    ]);
+    return {
+      distanceKm: Number(distance.sum) || 0,
+      calories: Number(activeCalories.sum) || 0,
+      activeMinutes: Number(activeMinutes.sum) || 0,
+    };
   },
 
   /** GET /api/tracker/:tracker/today  — entries + sum for current day */

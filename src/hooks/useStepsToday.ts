@@ -13,6 +13,7 @@ export function useStepsToday() {
 
   const [sum, setSum] = useState(0);
   const [entries, setEntries] = useState<TrackerEntry[]>([]);
+  const [sourceMetrics, setSourceMetrics] = useState({ distanceKm: 0, calories: 0, activeMinutes: 0 });
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [syncEnabled, setSyncEnabled] = useState(false);
@@ -20,9 +21,10 @@ export function useStepsToday() {
   const [goalSaving, setGoalSaving] = useState(false);
 
   const percent = goal > 0 ? Math.min(100, Math.round((sum / goal) * 100)) : 0;
-  const km = stepsToKm(sum);
-  const kcal = stepsToKcal(sum);
-  const activeMin = stepsToActiveMinutes(sum);
+  // Prefer real data from a connected source; fall back to step-count estimates.
+  const km = sourceMetrics.distanceKm > 0 ? sourceMetrics.distanceKm : stepsToKm(sum);
+  const kcal = sourceMetrics.calories > 0 ? Math.round(sourceMetrics.calories) : stepsToKcal(sum);
+  const activeMin = sourceMetrics.activeMinutes > 0 ? Math.round(sourceMetrics.activeMinutes) : stepsToActiveMinutes(sum);
 
   const refetch = useCallback(async () => {
     setLoading(true);
@@ -30,6 +32,8 @@ export function useStepsToday() {
       const today = await trackerService.getToday('steps');
       setSum(today.sum);
       setEntries(today.entries);
+      const metrics = await trackerService.getTodayActivityMetrics().catch(() => null);
+      if (metrics) setSourceMetrics(metrics);
       const s = await trackerService.getStreak('steps', goal);
       setStreak(s);
     } catch {

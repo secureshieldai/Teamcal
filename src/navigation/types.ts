@@ -39,6 +39,10 @@ export type RootStackParamList = {
   CreateChannel: undefined;
   ChannelFeed: { channelId: string };
   ChannelSettings: { channelId: string };
+  EditChannel: { channelId: string };
+  ChannelDetailSettings: { channelId: string };
+  ShareChannel: { channelId: string };
+  ReportChannel: { channelId: string };
   ChannelAdminManagement: { channelId: string };
   ChannelDiscovery: undefined;
   ChannelMonetization: { channelId: string };
@@ -97,12 +101,22 @@ export type RootStackParamList = {
   MembershipPublic: { membershipId:string };
   MembershipCheckout: { membershipId:string; tierId?:string };
   DirectMessage: { userId: string; name: string; avatar?: string | null };
+  DiscoverPeople: undefined;
+  Call: {
+    userId: string;
+    name: string;
+    avatar?: string | null;
+    mode: 'audio' | 'video';
+    direction: 'outgoing' | 'incoming';
+    callId?: string;
+  };
   UserProfile: { userId: string; username: string };
   ShowcaseEditor: { userId?: string } | undefined;
   Goals: undefined;
   ChallengeDetail: { challengeId: string };
   ChallengeInvite: { challengeId: string };
   MyRecipes: undefined;
+  CreateRecipe: undefined;
   RecipeLibrary: undefined;
   CookMode: { recipe: Recipe };
   PeriodTracker: undefined;
@@ -132,6 +146,12 @@ export type RootStackParamList = {
   LiveHost: { streamId: string };
   LiveViewer: { streamId: string };
   LiveSummary: { streamId: string };
+  Bots: { spaceType?: 'channel' | 'community'; spaceId?: string; spaceName?: string } | undefined;
+  CreateBot:
+    | { spaceType?: 'channel' | 'community'; spaceId?: string; spaceName?: string; presetType?: 'space' | 'conversational' }
+    | undefined;
+  BotManage: { botId: string };
+  BotChatPublic: { slug: string };
 };
 
 export type NoParamRoute = {

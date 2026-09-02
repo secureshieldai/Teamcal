@@ -246,7 +246,7 @@ create table if not exists live_streams (
 );
 create index if not exists idx_live_streams_host   on live_streams(host_id, started_at desc);
 create index if not exists idx_live_streams_status on live_streams(status, viewer_count desc);
-do $ begin create trigger trg_live_streams_updated_at before update on live_streams for each row execute function set_updated_at(); exception when duplicate_object then null; end $;
+do $$ begin create trigger trg_live_streams_updated_at before update on live_streams for each row execute function set_updated_at(); exception when duplicate_object then null; end $$;
 
 create table if not exists live_comments (
   id         uuid primary key default gen_random_uuid(),
@@ -317,10 +317,10 @@ create table if not exists social_events (
 );
 create index if not exists idx_social_events_starts_at on social_events(starts_at, status);
 create index if not exists idx_social_events_host     on social_events(host_id, created_at desc);
-do $ begin
+do $$ begin
   create trigger trg_social_events_updated_at
     before update on social_events for each row execute function set_updated_at();
-exception when duplicate_object then null; end $;
+exception when duplicate_object then null; end $$;
 
 create table if not exists social_event_registrations (
   id         uuid primary key default gen_random_uuid(),
@@ -334,3 +334,50 @@ create index if not exists idx_social_event_regs_user  on social_event_registrat
 
 alter table social_events                enable row level security;
 alter table social_event_registrations   enable row level security;
+
+-- Migration 018: Direct messaging on a dedicated store (replaces the
+-- tracker_entries 'direct-message' rows). Enforces the message-request flow:
+-- a first-time sender may post at most 3 messages until the recipient accepts.
+create table if not exists dm_conversations (
+  id                    uuid primary key default gen_random_uuid(),
+  user_lo               uuid not null references users(id) on delete cascade,
+  user_hi               uuid not null references users(id) on delete cascade,
+  status                text not null default 'pending' check (status in ('pending','accepted','blocked')),
+  initiator_id          uuid not null references users(id) on delete cascade,
+  request_message_count int  not null default 0,
+  blocked_by            uuid references users(id) on delete set null,
+  last_message_at       timestamptz,
+  last_message_preview  text default '',
+  last_message_type     text default 'text',
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now(),
+  check (user_lo < user_hi),
+  unique (user_lo, user_hi)
+);
+create index if not exists idx_dm_conversations_user_lo on dm_conversations(user_lo, last_message_at desc);
+create index if not exists idx_dm_conversations_user_hi on dm_conversations(user_hi, last_message_at desc);
+do $$ begin
+  create trigger trg_dm_conversations_updated_at
+    before update on dm_conversations for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;
+
+create table if not exists dm_messages (
+  id                uuid primary key default gen_random_uuid(),
+  conversation_id   uuid not null references dm_conversations(id) on delete cascade,
+  sender_id         uuid not null references users(id) on delete cascade,
+  type              text not null default 'text' check (type in ('text','image','voice','call')),
+  body              text default '',
+  media_url         text,
+  media_duration_ms int,
+  transcript        text,
+  call_mode         text check (call_mode in ('audio','video')),
+  call_outcome      text check (call_outcome in ('missed','declined','no_answer','ended','cancelled')),
+  call_duration_s   int,
+  read_at           timestamptz,
+  created_at        timestamptz not null default now()
+);
+create index if not exists idx_dm_messages_conversation on dm_messages(conversation_id, created_at);
+create index if not exists idx_dm_messages_unread on dm_messages(conversation_id, sender_id) where read_at is null;
+
+alter table dm_conversations enable row level security;
+alter table dm_messages      enable row level security;

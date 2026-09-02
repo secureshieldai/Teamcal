@@ -89,13 +89,18 @@ export default function ChannelPostDetailScreen() {
           contentContainerStyle={styles.content}
           ListHeaderComponent={
             <View style={styles.postSection}>
-              <View style={styles.postHeader}>
+              <TouchableOpacity 
+                style={styles.postHeader}
+                onPress={() => post.author?.id && navigation.navigate('UserProfile', { userId: post.author.id, username: post.author.name })}
+                disabled={!post.author?.id}
+                activeOpacity={0.7}
+              >
                 <Avatar uri={post.author?.avatar} size={44} />
                 <View style={{ flex: 1, marginLeft: spacing.md }}>
                   <Text style={styles.authorName}>{post.author?.name}</Text>
                   <Text style={styles.postTime}>{new Date(post.created_at).toLocaleString()}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
               {post.text_content && <Text style={styles.postText}>{post.text_content}</Text>}
               {post.media_url && <Image source={{ uri: post.media_url }} style={styles.postImage} />}
               <View style={styles.statsRow}>
@@ -116,14 +121,19 @@ export default function ChannelPostDetailScreen() {
             </View>
           }
           renderItem={({ item }) => (
-            <View style={styles.comment}>
+            <TouchableOpacity 
+              style={styles.comment}
+              onPress={() => item.user?.id && navigation.navigate('UserProfile', { userId: item.user.id, username: item.user.name })}
+              disabled={!item.user?.id}
+              activeOpacity={0.7}
+            >
               <Avatar uri={item.user?.avatar} size={32} />
               <View style={{ flex: 1, marginLeft: spacing.sm }}>
                 <Text style={styles.commentAuthor}>{item.user?.name}</Text>
                 <Text style={styles.commentText}>{item.content}</Text>
                 <Text style={styles.commentTime}>{new Date(item.created_at).toLocaleDateString()}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={<Text style={styles.emptyText}>No comments yet</Text>}
         />

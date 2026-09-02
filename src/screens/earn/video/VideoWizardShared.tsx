@@ -182,12 +182,14 @@ export function MonetizationStep({
   allowComments, onAllowComments,
   allowLikes, onAllowLikes,
   addToShowcase, onAddToShowcase,
+  dropContent, onDropContent,
 }: {
   selected: MonetizationType; onSelect: (v: MonetizationType) => void;
   price: string; onPrice: (v: string) => void;
   allowComments: boolean; onAllowComments: (v: boolean) => void;
   allowLikes: boolean; onAllowLikes: (v: boolean) => void;
   addToShowcase: boolean; onAddToShowcase: (v: boolean) => void;
+  dropContent: boolean; onDropContent: () => void;
 }) {
   return (
     <ScrollView contentContainerStyle={sw.stepContent} keyboardShouldPersistTaps="handled">
@@ -236,6 +238,7 @@ export function MonetizationStep({
       <ToggleRow label="Allow Comments" value={allowComments} onChange={onAllowComments} />
       <ToggleRow label="Allow Likes" value={allowLikes} onChange={onAllowLikes} />
       <ToggleRow label="Add to Showcase" value={addToShowcase} onChange={() => onAddToShowcase(!addToShowcase)} />
+      <ToggleRow label="Schedule Content Release" value={dropContent} onChange={onDropContent} />
     </ScrollView>
   );
 }
@@ -250,6 +253,7 @@ export function PreviewStep({
   allowComments, onAllowComments,
   allowLikes, onAllowLikes,
   addToShowcase, onAddToShowcase,
+  dropContent, onDropContent,
   previewThumbUri,
 }: {
   previewType: PreviewType; onPreviewType: (v: PreviewType) => void;
@@ -259,6 +263,7 @@ export function PreviewStep({
   allowComments: boolean; onAllowComments: (v: boolean) => void;
   allowLikes: boolean; onAllowLikes: (v: boolean) => void;
   addToShowcase: boolean; onAddToShowcase: (v: boolean) => void;
+  dropContent: boolean; onDropContent: () => void;
   previewThumbUri?: string;
 }) {
   return (

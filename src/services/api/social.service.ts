@@ -10,9 +10,13 @@ export interface LeaderboardUser {
 }
 export type FriendProgress = { id: string; name: string; avatar: string | null; calories: number; steps: number; percent: number };
 export type CreatorUser = LeaderboardUser & { bio?: string; following: boolean };
-export type SocialConversation={id:string;user:{id:string;name:string;avatar:string|null};summary:string;unreadCount:number;updatedAt:string};
-export type MessageRequest={id:string;user:{id:string;name:string;avatar:string|null};summary:string;createdAt:string};
-export type DirectMessage={id:string;conversationId:string;senderId:string;recipientId:string;text:string;status:string;read:boolean;createdAt:string;ts:number};
+export type DmMessageType='text'|'image'|'voice'|'call';
+export type DmConversationStatus='pending'|'accepted'|'blocked';
+export type SocialConversation={id:string;user:{id:string;name:string;avatar:string|null};summary:string;lastMessageType:DmMessageType;unreadCount:number;status:DmConversationStatus;updatedAt:string};
+export type MessageRequest={id:string;user:{id:string;name:string;avatar:string|null};summary:string;messageCount:number;messageLimit:number;createdAt:string};
+export type DirectMessage={id:string;conversationId:string;senderId:string;mine:boolean;type:DmMessageType;text:string;mediaUrl:string|null;durationMs:number|null;transcript:string|null;call:{mode:'audio'|'video';outcome:string;durationS:number}|null;read:boolean;createdAt:string;ts:number};
+export type ConversationMeta={id:string;status:DmConversationStatus;isInitiator:boolean;messageCount:number;messageLimit:number;messagesRemaining:number|null;canSend:boolean};
+export type MediaAsset={uri:string;mimeType?:string|null;fileName?:string|null};
 export type SocialBlog={id:string;blog_id:string;title:string;cover?:string;body:string;category?:string;read_minutes:number;views:number;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
 export type ArticleComment={id:string;name:string;avatar:string;time:string;text:string;likes:number;liked:boolean;userId:string;parentCommentId:string|null;verified?:boolean};
 export type SocialVideo={id:string;title:string;description?:string;image?:string;subtype?:string;metrics?:Record<string,number>;metadata?:Record<string,unknown>;created_at:string;user?:{id:string;name:string;avatar:string|null;verified:boolean}};
@@ -24,8 +28,13 @@ export const socialService = {
   async blockUser(userId:string){const {data}=await apiClient.post<{success:boolean;blocked:boolean}>(`/social/users/${userId}/block`);return data.blocked;},
   async getConversations(){const {data}=await apiClient.get<{success:boolean;conversations:SocialConversation[]}>('/social/messages/conversations');return data.conversations;},
   async getMessageRequests(){const {data}=await apiClient.get<{success:boolean;requests:MessageRequest[]}>('/social/messages/requests');return data.requests;},
-  async getMessages(userId:string){const {data}=await apiClient.get<{success:boolean;messages:DirectMessage[]}>(`/social/messages/${userId}`);return data.messages;},
+  async getMessages(userId:string){const {data}=await apiClient.get<{success:boolean;messages:DirectMessage[];conversation:ConversationMeta|null}>(`/social/messages/${userId}`);return {messages:data.messages,conversation:data.conversation};},
   async sendMessage(userId:string,text:string){const {data}=await apiClient.post<{success:boolean;message:DirectMessage}>(`/social/messages/${userId}`,{text});return data.message;},
+  async sendImageMessage(userId:string,asset:MediaAsset){const form=new FormData();form.append('kind','image');form.append('file',{uri:asset.uri,type:asset.mimeType||'image/jpeg',name:asset.fileName||'dm-photo.jpg'} as never);const {data}=await apiClient.post<{success:boolean;message:DirectMessage}>(`/social/messages/${userId}/media`,form,{headers:{'Content-Type':'multipart/form-data'},timeout:30_000});return data.message;},
+  async sendVoiceMessage(userId:string,asset:MediaAsset,durationMs:number,transcript?:string){const form=new FormData();form.append('kind','voice');form.append('durationMs',String(Math.round(durationMs)));if(transcript)form.append('transcript',transcript);form.append('file',{uri:asset.uri,type:asset.mimeType||'audio/m4a',name:asset.fileName||'dm-voice.m4a'} as never);const {data}=await apiClient.post<{success:boolean;message:DirectMessage}>(`/social/messages/${userId}/media`,form,{headers:{'Content-Type':'multipart/form-data'},timeout:60_000});return data.message;},
+  async transcribeAudio(asset:MediaAsset){const form=new FormData();form.append('audio',{uri:asset.uri,type:asset.mimeType||'audio/m4a',name:asset.fileName||'voice.m4a'} as never);const {data}=await apiClient.post<{success:boolean;transcript:string}>('/social/messages/transcribe',form,{headers:{'Content-Type':'multipart/form-data'},timeout:60_000});return data.transcript;},
+  async markConversationRead(userId:string){await apiClient.post(`/social/messages/${userId}/read`);},
+  async logCall(userId:string,payload:{mode:'audio'|'video';outcome:string;durationS:number}){const {data}=await apiClient.post<{success:boolean;message:DirectMessage}>(`/social/messages/${userId}/call`,payload);return data.message;},
   async actOnMessageRequest(userId:string,action:'accept'|'decline'|'block'){const {data}=await apiClient.post<{success:boolean;status:string}>(`/social/messages/requests/${userId}`,{action});return data.status;},
   async getSocialBlogs(){const {data}=await apiClient.get<{success:boolean;blogs:SocialBlog[]}>('/social/content/blogs');return data.blogs;},
   async getSocialBlog(id:string){const {data}=await apiClient.get<{success:boolean;blog:SocialBlog}>(`/social/content/blogs/${id}`);return data.blog;},

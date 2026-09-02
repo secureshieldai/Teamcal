@@ -48,9 +48,36 @@ function initRealtime(server) {
     socket.on("live:leave_stream", ({ streamId }) => {
       if (streamId) socket.leave(`live:${streamId}`);
     });
+
+    // ── Direct messaging ─────────────────────────────────────────
+    // Typing indicator: relayed straight to the peer's personal room.
+    socket.on("dm:typing", ({ toUserId, typing }) => {
+      if (!toUserId) return;
+      io.to(`user:${toUserId}`).emit("dm:typing", { fromUserId: socket.userId, typing: Boolean(typing) });
+    });
+
+    // ── Call signaling (WebRTC offer/answer/ICE relay) ───────────
+    // The server is a blind relay: it only stamps `fromUserId` and
+    // forwards to the target user's personal room. Media negotiation
+    // happens entirely between the two clients.
+    const relayCall = (event) => ({ toUserId, ...rest }) => {
+      if (!toUserId) return;
+      io.to(`user:${toUserId}`).emit(event, { fromUserId: socket.userId, ...rest });
+    };
+    socket.on("call:invite", relayCall("call:invite"));
+    socket.on("call:accept", relayCall("call:accept"));
+    socket.on("call:decline", relayCall("call:decline"));
+    socket.on("call:end", relayCall("call:end"));
+    socket.on("call:sdp", relayCall("call:sdp"));
+    socket.on("call:ice", relayCall("call:ice"));
   });
 
   return io;
+}
+
+/** Emit an event to a single user's personal room (no-op if realtime is down). */
+function emitToUser(userId, event, payload) {
+  io?.to(`user:${userId}`).emit(event, payload);
 }
 
 function emitAssetChange(userId, action, asset) {
@@ -61,4 +88,4 @@ function emitStoreCommerceChange(userId, storeId, resource, value) {
   io?.to(`user:${userId}`).emit("store:commerce", { storeId, resource, value });
 }
 
-module.exports = { initRealtime, getIo, emitAssetChange, emitStoreCommerceChange };
+module.exports = { initRealtime, getIo, emitToUser, emitAssetChange, emitStoreCommerceChange };
