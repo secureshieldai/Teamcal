@@ -42,6 +42,7 @@ export default function UploadVideoScreen({ navigation }: Props) {
   const [allowComments, setAllowComments] = useState(true);
   const [allowLikes, setAllowLikes] = useState(true);
   const [addToShowcase, setAddToShowcase] = useState(false);
+  const [dropContent, setDropContent] = useState(false);
 
   // Step 4 – Preview
   const [previewType, setPreviewType] = useState<PreviewType>('first-30');
@@ -109,7 +110,6 @@ export default function UploadVideoScreen({ navigation }: Props) {
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           language,
           monetization,
-          earnPerCompleteRate: monetization === 'earn-per-complete' ? Number(price) : undefined,
           previewType,
           previewCustomStart: customStart ? Number(customStart) : undefined,
           previewCustomEnd: customEnd ? Number(customEnd) : undefined,
@@ -208,6 +208,7 @@ export default function UploadVideoScreen({ navigation }: Props) {
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
           addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
+          dropContent={dropContent} onDropContent={() => setDropContent(!dropContent)}
         />
       )}
 
@@ -220,6 +221,7 @@ export default function UploadVideoScreen({ navigation }: Props) {
           allowComments={allowComments} onAllowComments={setAllowComments}
           allowLikes={allowLikes} onAllowLikes={setAllowLikes}
           addToShowcase={addToShowcase} onAddToShowcase={setAddToShowcase}
+          dropContent={dropContent} onDropContent={() => setDropContent(!dropContent)}
         />
       )}
 
