@@ -22,18 +22,33 @@ export default function ChannelFeedScreen() {
   const [posts, setPosts] = useState<ChannelPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadChannel();
-    loadPosts();
+    loadData();
   }, [channelId]);
+
+  const loadData = async () => {
+    setError(null);
+    await Promise.all([loadChannel(), loadPosts()]);
+  };
 
   const loadChannel = async () => {
     try {
       const data = await channelsService.getById(channelId);
       setChannel(data);
+      setError(null);
     } catch (error) {
-      Alert.alert('Error', (error as Error).message);
+      console.error('Error loading channel:', error);
+      const message = (error as Error).message;
+      setError(message);
+      if (message.includes('401') || message.includes('unauthorized')) {
+        Alert.alert('Access Denied', 'You do not have permission to view this channel.');
+      } else if (message.includes('404') || message.includes('not found')) {
+        Alert.alert('Channel Not Found', 'This channel may have been deleted or does not exist.');
+      } else {
+        Alert.alert('Error', message);
+      }
     }
   };
 
@@ -42,7 +57,8 @@ export default function ChannelFeedScreen() {
       const data = await channelsService.getPosts(channelId);
       setPosts(data);
     } catch (error) {
-      Alert.alert('Error', (error as Error).message);
+      console.error('Error loading posts:', error);
+      // Don't show alert for posts error if channel also failed
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -75,8 +91,7 @@ export default function ChannelFeedScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadChannel();
-    loadPosts();
+    loadData();
   }, []);
 
   const renderPost = ({ item }: { item: ChannelPost }) => (
@@ -93,7 +108,7 @@ export default function ChannelFeedScreen() {
       )}
 
       <View style={styles.postHeader}>
-        <Avatar uri={item.author?.avatar || null} size={40} />
+        <Avatar uri={item.author?.avatar ?? ''} size={40} />
         <View style={{ flex: 1, marginLeft: spacing.md }}>
           <Text style={styles.authorName}>{item.author?.name || 'Unknown'}</Text>
           <Text style={styles.postTime}>{new Date(item.created_at).toLocaleDateString()}</Text>
@@ -152,11 +167,32 @@ export default function ChannelFeedScreen() {
     </TouchableOpacity>
   );
 
-  if (loading || !channel) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !channel) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.channelName, { marginLeft: spacing.md }]}>Channel</Text>
+        </View>
+        <View style={styles.center}>
+          <Ionicons name="alert-circle-outline" size={64} color={colors.border} />
+          <Text style={styles.errorTitle}>Unable to load channel</Text>
+          <Text style={styles.errorText}>{error || 'Channel not found'}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadData}>
+            <Text style={styles.retryBtnText}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -187,7 +223,7 @@ export default function ChannelFeedScreen() {
           <View>
             {channel.cover_image && <Image source={{ uri: channel.cover_image }} style={styles.coverImage} />}
             <View style={styles.profileRow}>
-              <Avatar uri={channel.avatar || null} size={64} />
+              <Avatar uri={channel.avatar ?? ''} size={64} />
               <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={styles.profileName}>{channel.name}</Text>
@@ -282,7 +318,11 @@ const styles = StyleSheet.create({
   reactionCount: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginLeft: spacing.xs },
   stats: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statText: { fontSize: 12, color: colors.textMuted },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl },
+  errorTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.lg },
+  errorText: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm },
+  retryBtn: { marginTop: spacing.lg, backgroundColor: colors.primary, borderRadius: radii.pill, paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
+  retryBtnText: { fontSize: 14, fontWeight: '700', color: colors.white },
   empty: { alignItems: 'center', padding: spacing.xxl },
   emptyText: { fontSize: 13, color: colors.textMuted, marginTop: spacing.md },
 });

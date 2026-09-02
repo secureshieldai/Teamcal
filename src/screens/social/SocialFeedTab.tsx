@@ -220,7 +220,16 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
           <FlatList
             data={posts}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
+            renderItem={({ item }) => (
+              <PostCard 
+                post={item} 
+                onComment={(postId) => navigation.navigate('Comments', { postId })} 
+                onPressAuthor={item.authorId ? () => {
+                  console.log('Navigating to profile:', item.authorId, item.authorName);
+                  navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName });
+                } : undefined} 
+              />
+            )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="on-drag"
@@ -385,9 +394,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
+    alignSelf: 'flex-end',
   },
-  composerActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
-  composerButtonGroup: { flexDirection: 'row', gap: spacing.sm, flex: 1 },
+  composerActions: { flexDirection: 'column', gap: spacing.sm, marginTop: spacing.sm },
+  composerButtonGroup: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   pillButton: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   pillButtonText: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
   imageCount: { color: colors.textMuted, fontSize: 11, fontWeight: '600' },

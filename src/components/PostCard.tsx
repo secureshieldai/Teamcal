@@ -16,6 +16,8 @@ export type Post = {
   time: string;
   caption: string;
   photos: string[];
+  videos?: string[]; // Video URLs
+  mediaTypes?: ('image' | 'video')[]; // Type for each media item
   badge?: string;
   likes: number;
   comments: number;
@@ -66,6 +68,7 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
             console.warn('PostCard: Empty image URI at index', i, 'in post', post.id);
           }
           
+          const isVideo = post.mediaTypes?.[i] === 'video';
           const single = post.photos.length === 1;
           const wrapStyle = single ? styles.photoWrapSingle : styles.photoWrapGrid;
           const sizeStyle = single ? styles.photoSingle : styles.photoGrid;
@@ -113,6 +116,13 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
               {imageLoading[i] && (
                 <View style={styles.loadingOverlay}>
                   <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
+              {isVideo && !imageLoading[i] && (
+                <View style={styles.playOverlay}>
+                  <View style={styles.playButton}>
+                    <Ionicons name="play" size={28} color="#fff" />
+                  </View>
                 </View>
               )}
             </View>
@@ -197,10 +207,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  playOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  playButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   errorText: {
     fontSize: 10,

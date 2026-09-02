@@ -120,7 +120,7 @@ export default function MembershipDashboardScreen({ route, navigation }: Props) 
           <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle} numberOfLines={1}>Membership Manager</Text>
+          <Text style={s.headerHeading} numberOfLines={1}>Membership Manager</Text>
           <Text style={s.headerSub} numberOfLines={1}>{asset.title}</Text>
         </View>
         <TouchableOpacity onPress={() => Share.share({ message: `Join ${asset.title}: teamcal.com/${(group?.metadata as any)?.slug || asset.id}` })}>
@@ -361,11 +361,11 @@ function TierEditor({ tier, onCancel, onSave }: { tier: MembershipTier; onCancel
 
   return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top', 'bottom']}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={onCancel}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
-        <Text style={s.headerTitle}>Add Tier</Text>
-        <View style={{ width: 50 }} />
-      </View>
+          <View style={s.header}>
+            <TouchableOpacity onPress={onCancel}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
+            <Text style={s.headerTitle}>Add Tier</Text>
+            <View style={{ width: 60 }} />
+          </View>
       <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         <Text style={s.fieldLabel}>Tier name *</Text>
         <TextInput style={s.input} value={form.name} onChangeText={v => setForm(f => ({ ...f, name: v }))} placeholder="e.g., Pro" placeholderTextColor={colors.textMuted} />
@@ -514,7 +514,7 @@ function ContentSection({ md, onUpdate }: { md: MembershipMetadata; onUpdate: (p
           <View style={s.header}>
             <TouchableOpacity onPress={() => setModal(false)}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
             <Text style={s.headerTitle}>Add Content</Text>
-            <View style={{ width: 50 }} />
+            <View style={{ width: 60 }} />
           </View>
           <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
             <Text style={s.fieldLabel}>What would you like to add?</Text>
@@ -608,7 +608,7 @@ function EventsSection({ md, onUpdate }: { md: MembershipMetadata; onUpdate: (p:
           <View style={s.header}>
             <TouchableOpacity onPress={() => setModal(false)}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
             <Text style={s.headerTitle}>Schedule Event</Text>
-            <View style={{ width: 50 }} />
+            <View style={{ width: 60 }} />
           </View>
           <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
             <Text style={s.fieldLabel}>Event title *</Text>
@@ -1048,7 +1048,7 @@ function PluginsAndPixels({ md, group, onUpdate, onUpdatePlugins, onClose }: {
       <View style={s.header}>
         <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Close</Text></TouchableOpacity>
         <Text style={s.headerTitle}>Plugins & Tracking</Text>
-        <View style={{ width: 50 }} />
+        <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.sectionGroup}>Plugins</Text>
@@ -1171,7 +1171,7 @@ function AutoDmComposer({ autoDm, onSave, onClose }: { autoDm?: MembershipMetada
       <View style={s.header}>
         <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         <Text style={s.headerTitle}>Auto-DM New Members</Text>
-        <View style={{ width: 50 }} />
+        <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.note}>This message is sent automatically, exactly once, when someone successfully joins or is approved as a member.</Text>
@@ -1257,7 +1257,7 @@ function OnboardingVideoSetup({ value, onSave, onClose }: {
       <View style={s.header}>
         <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         <Text style={s.headerTitle}>Onboarding Video</Text>
-        <View style={{ width: 50 }} />
+        <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <TouchableOpacity style={s.uploadBox} onPress={pickVideo} disabled={busy}>
@@ -1314,7 +1314,7 @@ function PixelSetup({ platform, config, onSave, onRemove, onClose }: {
       <View style={s.header}>
         <TouchableOpacity onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         <Text style={s.headerTitle}>{platform.label}</Text>
-        <View style={{ width: 50 }} />
+        <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.note}>Where to find your ID: {platform.hint}</Text>
@@ -1387,10 +1387,11 @@ const s = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: 100, color: colors.textSecondary },
   header: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   headerTitle: { ...typography.h2, fontSize: 15, color: colors.textPrimary, flex: 1, textAlign: 'center' },
-  headerSub: { fontSize: 11, color: colors.textSecondary },
-  cancelText: { fontSize: 14, fontWeight: '600', color: colors.primary, width: 50 },
-  tabs: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  tabsContent: { gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+  headerHeading: { ...typography.h2, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
+  headerSub: { fontSize: 11, lineHeight: 14, color: colors.textSecondary },
+  cancelText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  tabs: { flexGrow: 0, flexShrink: 0, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tabsContent: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radii.pill, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   tabText: { fontSize: 11, fontWeight: '700', color: colors.textSecondary },

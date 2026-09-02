@@ -7,18 +7,24 @@ import type { Post as PostCardItem } from '../components/PostCard';
 
 // Map backend post shape → PostCard shape
 function mapPosts(posts: Post[]):PostCardItem[] {
-  return posts.map((p) => ({
-    id: p.id,
-    authorId: p.user?.id ?? p.user_id,
-    authorName: p.user?.name ?? 'Unknown',
-    authorAvatar: p.user?.avatar ?? '',
-    time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    caption: p.text,
-    photos: p.image_urls?.length ? p.image_urls : p.image ? [p.image] : [],
-    likes: p.likes,
-    comments: p.comments_count||0,
-    liked: Boolean(p.liked),
-  }));
+  return posts.map((p) => {
+    const authorId = p.user?.id ?? p.user_id;
+    if (!authorId) {
+      console.warn('Post missing authorId:', p.id, 'user:', p.user, 'user_id:', p.user_id);
+    }
+    return {
+      id: p.id,
+      authorId,
+      authorName: p.user?.name ?? 'Unknown',
+      authorAvatar: p.user?.avatar ?? '',
+      time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      caption: p.text,
+      photos: p.image_urls?.length ? p.image_urls : p.image ? [p.image] : [],
+      likes: p.likes,
+      comments: p.comments_count||0,
+      liked: Boolean(p.liked),
+    };
+  });
 }
 
 export function useFeed() {
