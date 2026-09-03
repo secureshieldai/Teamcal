@@ -21,6 +21,9 @@ export const ENV = {
   // Google OAuth
   GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
   
+  // Claude AI
+  CLAUDE_API_KEY: process.env.EXPO_PUBLIC_CLAUDE_API_KEY ?? '',
+  
   // Feature Flags (for gradual rollout)
   FEATURES: {
     USE_NEW_AUTH: false, // Toggle new auth implementation

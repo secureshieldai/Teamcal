@@ -5,9 +5,10 @@ import VideoFeedCard, { type VideoFeedItem } from '../../components/social/Video
 type Props = {
   videos: VideoFeedItem[];
   loading: boolean;
+  ListHeaderComponent?: React.ReactElement;
 };
 
-export default function VideoFeedTab({ videos, loading }: Props) {
+export default function VideoFeedTab({ videos, loading, ListHeaderComponent }: Props) {
   const { height } = useWindowDimensions();
   // Use full viewport height for TikTok-like experience
   const itemHeight = height;
@@ -29,6 +30,7 @@ export default function VideoFeedTab({ videos, loading }: Props) {
       decelerationRate="fast"
       snapToInterval={itemHeight}
       snapToAlignment="start"
+      ListHeaderComponent={ListHeaderComponent}
       viewabilityConfig={{
         itemVisiblePercentThreshold: 50,
       }}

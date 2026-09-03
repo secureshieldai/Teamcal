@@ -11,7 +11,7 @@ type SocialEvent = {
   category: string; registered: boolean; reminded: boolean; registrations: number;
 };
 
-export default function SocialEventsTab() {
+export default function SocialEventsTab({ ListHeaderComponent }: { ListHeaderComponent?: React.ReactElement }) {
   const events = useApiQuery<SocialEvent[]>(() =>
     socialService.getEvents?.() ?? Promise.resolve([]), [], []);
 
@@ -21,6 +21,7 @@ export default function SocialEventsTab() {
       keyExtractor={item => item.id}
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
+      ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={
         !events.loading ? (
           <View style={s.empty}>

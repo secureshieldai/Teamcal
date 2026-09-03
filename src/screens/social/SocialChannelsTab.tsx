@@ -67,120 +67,141 @@ export default function SocialChannelsTab({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Header with title and action icons */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Channels</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="search-outline" size={22} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('CreateChannel')} 
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            style={styles.addIcon}
-          >
-            <Ionicons name="add" size={24} color={colors.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* View Toggle */}
-      <View style={styles.toggleRow}>
-        <TouchableOpacity
-          style={[styles.toggleBtn, view === 'feed' && styles.toggleBtnActive]}
-          onPress={() => setView('feed')}
-        >
-          <Text style={[styles.toggleText, view === 'feed' && styles.toggleTextActive]}>Feed</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleBtn, view === 'all' && styles.toggleBtnActive]}
-          onPress={() => setView('all')}
-        >
-          <Text style={[styles.toggleText, view === 'all' && styles.toggleTextActive]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleBtn, view === 'owned' && styles.toggleBtnActive]}
-          onPress={() => setView('owned')}
-        >
-          <Text style={[styles.toggleText, view === 'owned' && styles.toggleTextActive]}>Owned</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Search Input - Always visible */}
-      <View style={styles.searchRow}>
-        <View style={styles.searchInput}>
-          <Ionicons name="search-outline" size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchText}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search channels"
-            placeholderTextColor={colors.textMuted}
-            onSubmitEditing={handleSearch}
-            returnKeyType="search"
-          />
-        </View>
-      </View>
-
-      {/* Categories Filter */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        style={styles.categories}
-        contentContainerStyle={styles.categoriesContent}
-      >
-        <TouchableOpacity style={[styles.categoryBtn, styles.categoryBtnActive]}>
-          <Text style={[styles.categoryBtnText, styles.categoryBtnTextActive]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBtn}>
-          <Text style={styles.categoryBtnText}>Wellness</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBtn}>
-          <Text style={styles.categoryBtnText}>Fitness</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBtn}>
-          <Text style={styles.categoryBtnText}>Nutrition</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBtn}>
-          <Text style={styles.categoryBtnText}>Mindfulness</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Create Channel Banner - Only on Feed view */}
-      {view === 'feed' && (
-        <TouchableOpacity
-          style={styles.createBanner}
-          onPress={() => navigation.navigate('CreateChannel')}
-          activeOpacity={0.85}
-        >
-          <View style={styles.createIcon}>
-            <Ionicons name="add" size={20} color={colors.white} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.createTitle}>Create a channel</Text>
-            <Text style={styles.createSubtitle}>Share updates with your audience</Text>
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {/* Channels List */}
+      {/* Channels List with all elements as header */}
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : channels.length === 0 ? (
-        <View style={styles.center}>
-          <Ionicons name="radio-outline" size={48} color={colors.border} />
-          <Text style={styles.emptyText}>
-            {view === 'feed' ? 'No channels yet.\nFollow some channels to see updates.' : view === 'all' ? 'No channels found' : 'No channels owned.\nCreate your first channel!'}
-          </Text>
-        </View>
+        <>
+          {/* Fixed Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Channels</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="search-outline" size={22} color={colors.textPrimary} />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('CreateChannel')} 
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.addIcon}
+              >
+                <Ionicons name="add" size={24} color={colors.white} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.center}>
+            <Ionicons name="radio-outline" size={48} color={colors.border} />
+            <Text style={styles.emptyText}>
+              {view === 'feed' ? 'No channels yet.\nFollow some channels to see updates.' : view === 'all' ? 'No channels found' : 'No channels owned.\nCreate your first channel!'}
+            </Text>
+          </View>
+        </>
       ) : (
         <FlatList
           data={channels}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              {/* Header with title and action icons */}
+              <View style={styles.header}>
+                <Text style={styles.headerTitle}>Channels</Text>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Ionicons name="search-outline" size={22} color={colors.textPrimary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => navigation.navigate('CreateChannel')} 
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.addIcon}
+                  >
+                    <Ionicons name="add" size={24} color={colors.white} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* View Toggle */}
+              <View style={styles.toggleRow}>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, view === 'feed' && styles.toggleBtnActive]}
+                  onPress={() => setView('feed')}
+                >
+                  <Text style={[styles.toggleText, view === 'feed' && styles.toggleTextActive]}>Feed</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, view === 'all' && styles.toggleBtnActive]}
+                  onPress={() => setView('all')}
+                >
+                  <Text style={[styles.toggleText, view === 'all' && styles.toggleTextActive]}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, view === 'owned' && styles.toggleBtnActive]}
+                  onPress={() => setView('owned')}
+                >
+                  <Text style={[styles.toggleText, view === 'owned' && styles.toggleTextActive]}>Owned</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Search Input - Always visible */}
+              <View style={styles.searchRow}>
+                <View style={styles.searchInput}>
+                  <Ionicons name="search-outline" size={18} color={colors.textMuted} />
+                  <TextInput
+                    style={styles.searchText}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholder="Search channels"
+                    placeholderTextColor={colors.textMuted}
+                    onSubmitEditing={handleSearch}
+                    returnKeyType="search"
+                  />
+                </View>
+              </View>
+
+              {/* Categories Filter */}
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                style={styles.categories}
+                contentContainerStyle={styles.categoriesContent}
+              >
+                <TouchableOpacity style={[styles.categoryBtn, styles.categoryBtnActive]}>
+                  <Text style={[styles.categoryBtnText, styles.categoryBtnTextActive]}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.categoryBtn}>
+                  <Text style={styles.categoryBtnText}>Wellness</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.categoryBtn}>
+                  <Text style={styles.categoryBtnText}>Fitness</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.categoryBtn}>
+                  <Text style={styles.categoryBtnText}>Nutrition</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.categoryBtn}>
+                  <Text style={styles.categoryBtnText}>Mindfulness</Text>
+                </TouchableOpacity>
+              </ScrollView>
+
+              {/* Create Channel Banner - Only on Feed view */}
+              {view === 'feed' && (
+                <TouchableOpacity
+                  style={styles.createBanner}
+                  onPress={() => navigation.navigate('CreateChannel')}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.createIcon}>
+                    <Ionicons name="add" size={20} color={colors.white} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.createTitle}>Create a channel</Text>
+                    <Text style={styles.createSubtitle}>Share updates with your audience</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </>
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.channelCard, shadow.soft]}
@@ -233,9 +254,9 @@ const styles = StyleSheet.create({
   searchText: { flex: 1, fontSize: 15, color: colors.textPrimary },
   categories: { marginTop: spacing.md },
   categoriesContent: { paddingHorizontal: spacing.lg, gap: spacing.sm },
-  categoryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.card },
+  categoryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.card, flexShrink: 0 },
   categoryBtnActive: { backgroundColor: colors.primary },
-  categoryBtnText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  categoryBtnText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, flexShrink: 0 },
   categoryBtnTextActive: { color: colors.white },
   createBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginHorizontal: spacing.lg, marginTop: spacing.md, padding: spacing.lg, backgroundColor: colors.card, borderRadius: radii.xl, borderWidth: 2, borderColor: colors.primary, borderStyle: 'dashed' },
   createIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },

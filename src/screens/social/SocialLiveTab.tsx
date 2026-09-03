@@ -10,7 +10,7 @@ import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-export default function SocialLiveTab() {
+export default function SocialLiveTab({ ListHeaderComponent }: { ListHeaderComponent?: React.ReactElement }) {
   const navigation = useNavigation<Nav>();
   const streams = useApiQuery<LiveStream[]>(() => liveService.listStreams(), [], []);
 
@@ -27,7 +27,12 @@ export default function SocialLiveTab() {
       showsVerticalScrollIndicator={false}
       onRefresh={streams.refetch}
       refreshing={streams.loading}
-      ListHeaderComponent={<GoLiveCard onPress={() => navigation.navigate('LiveSetup')} />}
+      ListHeaderComponent={
+        <>
+          {ListHeaderComponent}
+          <GoLiveCard onPress={() => navigation.navigate('LiveSetup')} />
+        </>
+      }
       ListEmptyComponent={
         !streams.loading ? (
           <View style={s.empty}>

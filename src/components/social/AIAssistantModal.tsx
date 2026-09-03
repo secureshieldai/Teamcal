@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing } from '../../theme';
-import { CAPTION_TONES, generateCaption, type CaptionTone } from '../../data/postComposerAI';
+import { useClaudeAI } from '../../hooks/useClaudeAI';
+
+const CAPTION_TONES = ['Professional', 'Casual', 'Funny', 'Motivational', 'Educational'] as const;
+type CaptionTone = typeof CAPTION_TONES[number];
 
 type Props = {
   visible: boolean;
@@ -15,6 +18,7 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState<CaptionTone>(CAPTION_TONES[0]);
   const [generated, setGenerated] = useState<string | null>(null);
+  const { generateCaption, loading } = useClaudeAI();
 
   const close = () => {
     setTopic('');
@@ -23,7 +27,16 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
     onClose();
   };
 
-  const generate = () => setGenerated(generateCaption(topic, tone));
+  const generate = async () => {
+    if (!topic.trim()) return;
+    try {
+      const context = `Topic: ${topic}\nTone: ${tone}`;
+      const result = await generateCaption(context);
+      setGenerated(result);
+    } catch (error) {
+      console.error('Failed to generate caption:', error);
+    }
+  };
 
   const useIt = () => {
     if (generated) onUseCaption(generated);
@@ -84,15 +97,19 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
           ) : null}
 
           {generated ? (
-            <TouchableOpacity onPress={useIt} activeOpacity={0.88}>
+            <TouchableOpacity onPress={useIt} activeOpacity={0.88} disabled={loading}>
               <LinearGradient colors={[colors.primary, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.actionBtn}>
                 <Text style={styles.actionText}>Use this caption</Text>
               </LinearGradient>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={generate} activeOpacity={0.88}>
+            <TouchableOpacity onPress={generate} activeOpacity={0.88} disabled={loading || !topic.trim()}>
               <LinearGradient colors={[colors.primary, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.actionBtn}>
-                <Text style={styles.actionText}>Generate</Text>
+                {loading ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.actionText}>Generate with Claude AI</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           )}

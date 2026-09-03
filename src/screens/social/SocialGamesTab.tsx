@@ -21,9 +21,10 @@ const TOURNAMENTS = [
   { id: 't3', game: 'Color Dash',    name: 'Color Dash League',         type: 'Team Tournament',   current: 48,  total: 96,  gameId: 'color-dash',    color: '#2ED47A' },
 ];
 
-export default function SocialGamesTab() {
+export default function SocialGamesTab({ ListHeaderComponent }: { ListHeaderComponent?: React.ReactElement }) {
   return (
     <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      {ListHeaderComponent}
       {/* Top Games Discussions */}
       <View style={s.sectionHeader}>
         <Text style={s.sectionTitle}>Top Games Discussions</Text>

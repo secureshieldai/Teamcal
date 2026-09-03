@@ -207,8 +207,9 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
     }
   };
 
-  return (
-    <View style={styles.flex}>
+  // Shared header for all tabs
+  const SharedHeader = (
+    <>
       <View style={styles.storiesWrap}>
         <StoriesRow
           currentUserAvatar={user?.avatar||''}
@@ -222,7 +223,11 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
       <View style={styles.subTabsWrap}>
         <SegmentedControl options={feedSubTabs} value={subTab} onChange={setSubTab} variant="pill" />
       </View>
+    </>
+  );
 
+  return (
+    <View style={styles.flex}>
       {subTab === 'Blogs' ? (
         <FlatList
           data={blogCards}
@@ -241,20 +246,30 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
               colors={[colors.primary]}
             />
           }
+          ListHeaderComponent={
+            <>
+              {SharedHeader}
+            </>
+          }
           renderItem={({ item }) => (
             <BlogCard post={item} onPressSeeAll={() => navigation.navigate('BlogDetail', { blogId: item.id })} />
           )}
         />
       ) : subTab === 'Videos' ? (
-        <VideoFeedTab videos={videoCards} loading={socialVideos.loading} />
+        <VideoFeedTab videos={videoCards} loading={socialVideos.loading} ListHeaderComponent={SharedHeader} />
       ) : subTab === 'Games' ? (
-        <SocialGamesTab />
+        <SocialGamesTab ListHeaderComponent={SharedHeader} />
       ) : subTab === 'Live' ? (
-        <SocialLiveTab />
+        <SocialLiveTab ListHeaderComponent={SharedHeader} />
       ) : subTab === 'Events' ? (
-        <SocialEventsTab />
+        <SocialEventsTab ListHeaderComponent={SharedHeader} />
       ) : (
-        <FlatList
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <FlatList
             data={posts}
             keyExtractor={keyExtractor}
             renderItem={renderPost}
@@ -283,8 +298,11 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
               </Text>
             }
             ListHeaderComponent={
-              <View style={styles.composerWrap}>
-                <View style={styles.composer}>
+              <>
+                {SharedHeader}
+
+                <View style={styles.composerWrap}>
+                  <View style={styles.composer}>
                 <TextInput
                   style={styles.composerInput}
                   value={draft}
@@ -337,8 +355,10 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
                 </View>
               </View>
               </View>
+              </>
             }
           />
+        </KeyboardAvoidingView>
       )}
 
       <AIAssistantModal
