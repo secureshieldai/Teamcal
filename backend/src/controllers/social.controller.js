@@ -210,7 +210,80 @@ async function toggleBlockUser(req,res,next){try{const targetId=req.params.id;if
 
 async function getSocialBlogs(req,res,next){try{const {data,error}=await supabase.from('articles').select('id,blog_id,title,cover,body,category,read_minutes,views,earned,created_at,user:user_id(id,name,avatar,verified)').eq('status','published').order('created_at',{ascending:false}).limit(50);if(error)throw error;res.json({success:true,blogs:data||[]});}catch(e){next(e);}}
 async function getSocialBlog(req,res,next){try{const {data,error}=await supabase.from('articles').select('id,blog_id,title,cover,body,category,read_minutes,views,earned,created_at,user:user_id(id,name,avatar,verified)').eq('id',req.params.id).eq('status','published').maybeSingle();if(error)throw error;if(!data)return res.status(404).json({success:false,message:'Blog article not found'});res.json({success:true,blog:data});}catch(e){next(e);}}
-async function getSocialVideos(req,res,next){try{const {data,error}=await supabase.from('user_records').select('id,user_id,data,status,created_at').eq('kind','earn-video').eq('status','published').order('created_at',{ascending:false}).limit(50);if(error)throw error;const ids=[...new Set((data||[]).map(x=>x.user_id))];const {data:users,error:userError}=ids.length?await supabase.from('users').select('id,name,avatar,verified').in('id',ids):{data:[],error:null};if(userError)throw userError;const byId=Object.fromEntries((users||[]).map(x=>[x.id,x]));res.json({success:true,videos:(data||[]).map(x=>({id:x.id,...x.data,status:x.status,created_at:x.created_at,user:byId[x.user_id]}))});}catch(e){next(e);}}
+async function getSocialVideos(req,res,next){
+  try{
+    // Get published earn videos
+    const {data:earnVideos,error:earnError}=await supabase
+      .from('user_records')
+      .select('id,user_id,data,status,created_at')
+      .eq('kind','earn-video')
+      .eq('status','published')
+      .order('created_at',{ascending:false})
+      .limit(25);
+    
+    if(earnError)throw earnError;
+    
+    // Get social posts with videos
+    const {data:postVideos,error:postError}=await supabase
+      .from('posts')
+      .select('id,user_id,text,video,image,created_at')
+      .not('video','is',null)
+      .is('deleted_at',null)
+      .order('created_at',{ascending:false})
+      .limit(25);
+    
+    if(postError)throw postError;
+    
+    // Combine and get all unique user IDs
+    const allUserIds=[
+      ...new Set([
+        ...(earnVideos||[]).map(x=>x.user_id),
+        ...(postVideos||[]).map(x=>x.user_id)
+      ])
+    ];
+    
+    const {data:users,error:userError}=allUserIds.length
+      ?await supabase.from('users').select('id,name,avatar,verified').in('id',allUserIds)
+      :{data:[],error:null};
+    
+    if(userError)throw userError;
+    
+    const byId=Object.fromEntries((users||[]).map(x=>[x.id,x]));
+    
+    // Transform earn videos
+    const transformedEarnVideos=(earnVideos||[]).map(x=>({
+      id:x.id,
+      ...x.data,
+      status:x.status,
+      created_at:x.created_at,
+      user:byId[x.user_id],
+      source:'earn'
+    }));
+    
+    // Transform post videos
+    const transformedPostVideos=(postVideos||[]).map(x=>({
+      id:x.id,
+      title:x.text||'Video post',
+      description:x.text,
+      image:x.image,
+      metadata:{
+        fileUrl:x.video,
+        duration:'0:00'
+      },
+      status:'published',
+      created_at:x.created_at,
+      user:byId[x.user_id],
+      source:'post'
+    }));
+    
+    // Combine and sort by created_at
+    const allVideos=[...transformedEarnVideos,...transformedPostVideos]
+      .sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime())
+      .slice(0,50);
+    
+    res.json({success:true,videos:allVideos});
+  }catch(e){next(e);}
+}
 async function getStories(req,res,next){try{const cutoff=new Date(Date.now()-86400000).toISOString();const {data,error}=await supabase.from('posts').select('id,image,created_at,user:user_id(id,name,avatar)').eq('community','story').not('image','is',null).is('deleted_at',null).gte('created_at',cutoff).order('created_at',{ascending:false}).limit(30);if(error)throw error;const seen=new Set();const deduped=(data||[]).filter(item=>{const userId=item.user?.id;if(!userId||seen.has(userId))return false;seen.add(userId);return true;});const stories=await enrichPosts(deduped,req.user.id);res.json({success:true,stories});}catch(e){next(e);}}
 
 async function articleEngagement(req,res,next){try{const articleId=req.params.id;const {data:entries,error}=await supabase.from('tracker_entries').select('*').in('tracker',['article-like','article-comment','article-comment-like']).contains('meta',{articleId}).order('ts',{ascending:false});if(error)throw error;const comments=(entries||[]).filter(x=>x.tracker==='article-comment');const commentLikes=(entries||[]).filter(x=>x.tracker==='article-comment-like');const ids=[...new Set(comments.map(x=>x.user_id))];const {data:users}=ids.length?await supabase.from('users').select('id,name,avatar,verified').in('id',ids):{data:[]};const byId=Object.fromEntries((users||[]).map(x=>[x.id,x]));const likes=(entries||[]).filter(x=>x.tracker==='article-like');res.json({success:true,likes:likes.length,liked:likes.some(x=>x.user_id===req.user.id),comments:comments.map(x=>{const ownLikes=commentLikes.filter(l=>l.meta?.commentId===x.id);return{id:x.id,name:byId[x.user_id]?.name||'Member',avatar:byId[x.user_id]?.avatar||'',verified:Boolean(byId[x.user_id]?.verified),time:new Date(x.ts).toLocaleString(),text:x.meta.text,likes:ownLikes.length,liked:ownLikes.some(l=>l.user_id===req.user.id),userId:x.user_id,parentCommentId:x.meta.parentCommentId||null};})});}catch(e){next(e);}}

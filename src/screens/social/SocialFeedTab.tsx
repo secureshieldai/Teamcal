@@ -61,16 +61,17 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   }));
   const videoCards:VideoFeedItem[]=socialVideos.data.map((item)=>({
     id:item.id,
-    thumbnail:item.image||'',
+    thumbnail:item.image||item.metadata?.thumbnailUrl||'',
     authorId:item.user?.id||'',
     author:item.user?.name||'Creator',
     authorAvatar:item.user?.avatar||'',
     verified:item.user?.verified,
     time:new Date(item.created_at).toLocaleDateString(),
     duration:String(item.metadata?.duration||'0:00'),
-    caption:item.description||item.title,
+    caption:item.description||item.title||'',
     likes:item.metrics?.likes||0,
     comments:item.metrics?.comments||0,
+    videoUrl:item.metadata?.fileUrl||item.video||'',
   }));
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.image}));
   const activeStory=activeStoryId ? socialStories.data.find(item=>item.id===activeStoryId) : undefined;

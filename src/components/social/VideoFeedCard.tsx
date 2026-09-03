@@ -57,7 +57,20 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
 
   return (
     <View style={[styles.card, { height }]}>
-      <Image source={{ uri: video.thumbnail }} style={styles.media} />
+      {video.thumbnail ? (
+        <Image 
+          source={{ uri: video.thumbnail }} 
+          style={styles.media}
+          defaultSource={require('../../assets/video-placeholder.png') as never}
+          onError={(e) => {
+            console.log('[VideoFeedCard] Image load error:', e.nativeEvent.error);
+          }}
+        />
+      ) : (
+        <View style={[styles.media, styles.placeholderBg]}>
+          <Ionicons name="videocam" size={64} color="rgba(255,255,255,0.3)" />
+        </View>
+      )}
 
       <View style={styles.topRow}>
         <View style={styles.authorAvatarWrap}>

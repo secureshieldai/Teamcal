@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -89,96 +89,102 @@ export default function AIHelperScreen({ navigation, route }: Props) {
         <View style={{ width: 20 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={styles.introRow}>
-          <View style={styles.introIcon}>
-            <Ionicons name="sparkles" size={20} color={colors.primary} />
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View style={styles.introRow}>
+            <View style={styles.introIcon}>
+              <Ionicons name="sparkles" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.introTitle}>Hi! I'm your AI writing assistant</Text>
+              <Text style={styles.introSubtitle}>I can help you brainstorm ideas, write content, improve it, and more.</Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.introTitle}>Hi! I'm your AI writing assistant</Text>
-            <Text style={styles.introSubtitle}>I can help you brainstorm ideas, write content, improve it, and more.</Text>
-          </View>
-        </View>
 
-        {!messages.length && (
-          <>
-            <Text style={styles.sectionLabel}>Get started</Text>
-            
-            {showWordCount && (
-              <View style={styles.wordCountBox}>
-                <Text style={styles.wordCountLabel}>How many words would you like?</Text>
-                <View style={styles.wordCountInputRow}>
-                  <TextInput
-                    style={styles.wordCountInput}
-                    value={wordCount}
-                    onChangeText={setWordCount}
-                    placeholder="500"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="number-pad"
-                  />
-                  <Text style={styles.wordCountSuffix}>words</Text>
-                </View>
-                <View style={styles.wordCountActions}>
-                  <TouchableOpacity style={styles.wordCountCancelBtn} onPress={() => setShowWordCount(false)}>
-                    <Text style={styles.wordCountCancelText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.wordCountGenerateBtn} 
-                    onPress={() => run('write', '', 'Write a blog post about my topic')}
-                  >
-                    <Text style={styles.wordCountGenerateText}>Generate</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            
-            <View style={styles.grid}>
-              {QUICK_ACTIONS.map((qa) => (
-                <TouchableOpacity key={qa.userLabel} style={[styles.actionCard, shadow.soft]} activeOpacity={0.85} onPress={() => run(qa.action, '', qa.userLabel)}>
-                  <View style={[styles.actionIcon, { backgroundColor: qa.bg }]}>
-                    <Ionicons name={qa.icon} size={18} color={qa.color} />
+          {!messages.length && (
+            <>
+              <Text style={styles.sectionLabel}>Get started</Text>
+              
+              {showWordCount && (
+                <View style={styles.wordCountBox}>
+                  <Text style={styles.wordCountLabel}>How many words would you like?</Text>
+                  <View style={styles.wordCountInputRow}>
+                    <TextInput
+                      style={styles.wordCountInput}
+                      value={wordCount}
+                      onChangeText={setWordCount}
+                      placeholder="500"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="number-pad"
+                    />
+                    <Text style={styles.wordCountSuffix}>words</Text>
                   </View>
-                  <Text style={styles.actionLabel}>{qa.label}</Text>
+                  <View style={styles.wordCountActions}>
+                    <TouchableOpacity style={styles.wordCountCancelBtn} onPress={() => setShowWordCount(false)}>
+                      <Text style={styles.wordCountCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.wordCountGenerateBtn} 
+                      onPress={() => run('write', '', 'Write a blog post about my topic')}
+                    >
+                      <Text style={styles.wordCountGenerateText}>Generate</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+              
+              <View style={styles.grid}>
+                {QUICK_ACTIONS.map((qa) => (
+                  <TouchableOpacity key={qa.userLabel} style={[styles.actionCard, shadow.soft]} activeOpacity={0.85} onPress={() => run(qa.action, '', qa.userLabel)}>
+                    <View style={[styles.actionIcon, { backgroundColor: qa.bg }]}>
+                      <Ionicons name={qa.icon} size={18} color={qa.color} />
+                    </View>
+                    <Text style={styles.actionLabel}>{qa.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>Or ask me anything</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </>
+          )}
+
+          {messages.map((m) => (
+            <View key={m.id} style={[styles.bubbleRow, m.role === 'user' && styles.bubbleRowUser]}>
+              <View style={[styles.bubble, m.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant]}>
+                <Text style={[styles.bubbleText, m.role === 'user' && styles.bubbleTextUser]}>{m.text}</Text>
+              </View>
+              {m.insertable && m.text ? (
+                <TouchableOpacity style={styles.insertBtn} onPress={() => insert(m.text)}>
+                  <Ionicons name="add-circle-outline" size={14} color={colors.primary} />
+                  <Text style={styles.insertText}>Insert into article</Text>
                 </TouchableOpacity>
-              ))}
+              ) : null}
             </View>
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or ask me anything</Text>
-              <View style={styles.dividerLine} />
-            </View>
-          </>
-        )}
+          ))}
+          {loading && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} />}
+        </ScrollView>
 
-        {messages.map((m) => (
-          <View key={m.id} style={[styles.bubbleRow, m.role === 'user' && styles.bubbleRowUser]}>
-            <View style={[styles.bubble, m.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant]}>
-              <Text style={[styles.bubbleText, m.role === 'user' && styles.bubbleTextUser]}>{m.text}</Text>
-            </View>
-            {m.insertable && m.text ? (
-              <TouchableOpacity style={styles.insertBtn} onPress={() => insert(m.text)}>
-                <Ionicons name="add-circle-outline" size={14} color={colors.primary} />
-                <Text style={styles.insertText}>Insert into article</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        ))}
-        {loading && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} />}
-      </ScrollView>
-
-      <View style={styles.inputBar}>
-        <TextInput
-          style={styles.input}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Type your message..."
-          placeholderTextColor={colors.textMuted}
-          onSubmitEditing={sendFreeText}
-        />
-        <TouchableOpacity style={styles.sendBtn} onPress={sendFreeText} disabled={!input.trim() || loading}>
-          <Ionicons name="arrow-up" size={18} color={colors.white} />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.inputBar}>
+          <TextInput
+            style={styles.input}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Type your message..."
+            placeholderTextColor={colors.textMuted}
+            onSubmitEditing={sendFreeText}
+          />
+          <TouchableOpacity style={styles.sendBtn} onPress={sendFreeText} disabled={!input.trim() || loading}>
+            <Ionicons name="arrow-up" size={18} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
