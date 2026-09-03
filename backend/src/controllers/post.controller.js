@@ -33,6 +33,7 @@ async function createPost(req, res, next) {
         text: req.body.text || "",
         image: images[0] || null,
         image_urls: images,
+        video: req.body.video || null,
         community: isStory ? "story" : (req.body.community || null),
         community_cover: req.body.communityCover || null,
       })
@@ -61,6 +62,17 @@ async function createPost(req, res, next) {
 
 /** POST /api/posts/image */
 async function uploadPostImage(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: "No file" });
+    const url = await uploadPublicImage("posts", req.user.id, req.file);
+    res.json({ success: true, url });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/posts/video */
+async function uploadPostVideo(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: "No file" });
     const url = await uploadPublicImage("posts", req.user.id, req.file);
@@ -220,4 +232,4 @@ async function deleteComment(req, res, next) {
   catch (err) { next(err); }
 }
 
-module.exports = { createPost, uploadPostImage, myPosts, getUserPosts, getFeed, likePost, deletePost, getComments, addComment, deleteComment, enrichPosts };
+module.exports = { createPost, uploadPostImage, uploadPostVideo, myPosts, getUserPosts, getFeed, likePost, deletePost, getComments, addComment, deleteComment, enrichPosts };

@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ChannelFeed'>;
 export default function ChannelFeedScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<Props['route']>();
-  const { channelId } = route.params;
+  const { channelId } = route.params || {};
 
   const [channel, setChannel] = useState<Channel | null>(null);
   const [posts, setPosts] = useState<ChannelPost[]>([]);
@@ -24,7 +24,13 @@ export default function ChannelFeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Safety check: if no channelId, show error immediately
   useEffect(() => {
+    if (!channelId) {
+      setError('No channel ID provided');
+      setLoading(false);
+      return;
+    }
     loadData();
   }, [channelId]);
 
@@ -35,12 +41,15 @@ export default function ChannelFeedScreen() {
 
   const loadChannel = async () => {
     try {
+      if (!channelId) {
+        throw new Error('Channel ID is missing');
+      }
       const data = await channelsService.getById(channelId);
       setChannel(data);
       setError(null);
     } catch (error) {
-      console.error('Error loading channel:', error);
-      const message = (error as Error).message;
+      console.error('[ChannelFeed] Error loading channel:', error);
+      const message = (error as Error).message || 'Failed to load channel';
       setError(message);
       if (message.includes('401') || message.includes('unauthorized')) {
         Alert.alert('Access Denied', 'You do not have permission to view this channel.');
@@ -54,10 +63,13 @@ export default function ChannelFeedScreen() {
 
   const loadPosts = async () => {
     try {
+      if (!channelId) {
+        throw new Error('Channel ID is missing');
+      }
       const data = await channelsService.getPosts(channelId);
       setPosts(data);
     } catch (error) {
-      console.error('Error loading posts:', error);
+      console.error('[ChannelFeed] Error loading posts:', error);
       // Don't show alert for posts error if channel also failed
     } finally {
       setLoading(false);
@@ -108,7 +120,7 @@ export default function ChannelFeedScreen() {
       )}
 
       <View style={styles.postHeader}>
-        <Avatar uri={item.author?.avatar ?? ''} size={40} />
+        <Avatar uri={item.author?.avatar || ''} size={40} />
         <View style={{ flex: 1, marginLeft: spacing.md }}>
           <Text style={styles.authorName}>{item.author?.name || 'Unknown'}</Text>
           <Text style={styles.postTime}>{new Date(item.created_at).toLocaleDateString()}</Text>
@@ -223,7 +235,7 @@ export default function ChannelFeedScreen() {
           <View>
             {channel.cover_image && <Image source={{ uri: channel.cover_image }} style={styles.coverImage} />}
             <View style={styles.profileRow}>
-              <Avatar uri={channel.avatar ?? ''} size={64} />
+              <Avatar uri={channel.avatar || ''} size={64} />
               <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={styles.profileName}>{channel.name}</Text>
