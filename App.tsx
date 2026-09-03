@@ -13,11 +13,12 @@ export default function App() {
       <NavigationContainer
         ref={navigationRef}
         linking={{
-          prefixes: ['teamcal://'],
+          prefixes: ['teamcal://', 'https://teamcal.app', 'https://teamcal.app/'],
           config: {
             screens: {
               AudienceAccounts: 'social-auth/callback',
               BotChatPublic: 'b/:slug',
+              LiveViewer: 'live/:streamId',
             },
           },
         }}

@@ -134,6 +134,8 @@ import BotsHomeScreen from '../screens/bots/BotsHomeScreen';
 import CreateBotScreen from '../screens/bots/CreateBotScreen';
 import BotManageScreen from '../screens/bots/BotManageScreen';
 import BotChatPublicScreen from '../screens/bots/BotChatPublicScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
+import ShowcaseEditorScreen from '../screens/ShowcaseEditorScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -282,6 +284,8 @@ export default function RootNavigator() {
       <Stack.Screen name="CreateBot" component={CreateBotScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="BotManage" component={BotManageScreen} />
       <Stack.Screen name="BotChatPublic" component={BotChatPublicScreen} />
+      <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+      <Stack.Screen name="ShowcaseEditor" component={ShowcaseEditorScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }

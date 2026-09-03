@@ -24,7 +24,7 @@ export type Post = {
   liked?: boolean;
 };
 
-export default function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void }) {
+function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void }) {
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
@@ -151,6 +151,10 @@ export default function PostCard({ post, onComment, onDelete, onPressAuthor }: {
     </View>
   );
 }
+
+// Memoized so the feed FlatList only re-renders cells whose post actually changed,
+// keeping vertical scrolling smooth as new rows mount/unmount.
+export default React.memo(PostCard);
 
 const styles = StyleSheet.create({
   card: {

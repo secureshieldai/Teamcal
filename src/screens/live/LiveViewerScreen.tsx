@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert, FlatList, KeyboardAvoidingView, Platform, Share,
+  Alert, FlatList, KeyboardAvoidingView, Share,
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -115,8 +115,13 @@ export default function LiveViewerScreen() {
   }
 
   async function handleShare() {
+    const url = liveService.getStreamShareUrl(streamId);
+    const title = stream?.title ? ` "${stream.title}"` : '';
     try {
-      await Share.share({ message: `Watch ${stream?.host?.name ?? 'someone'} live on TeamCal! "${stream?.title ?? ''}"` });
+      await Share.share({
+        message: `Watch ${stream?.host?.name ?? 'someone'} live on TeamCal!${title}\nJoin here: ${url}`,
+        url,
+      });
     } catch { /* ignore */ }
   }
 
@@ -214,7 +219,11 @@ export default function LiveViewerScreen() {
         </View>
 
         {/* Comments + input */}
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.bottom}>
+        <KeyboardAvoidingView
+          behavior="padding"
+          keyboardVerticalOffset={0}
+          style={s.bottom}
+        >
           <FlatList
             ref={flatRef}
             data={comments.filter(c => !c.deleted_at)}

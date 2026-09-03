@@ -11,9 +11,10 @@ type Props = {
   stories: Story[];
   onAddStory?: () => void;
   onPressStory?: (id: string) => void;
+  onPressYou?: () => void;
 };
 
-export default function StoriesRow({ currentUserAvatar, stories, onAddStory, onPressStory }: Props) {
+export default function StoriesRow({ currentUserAvatar, stories, onAddStory, onPressStory, onPressYou }: Props) {
   return (
     <ScrollView
       horizontal
@@ -29,7 +30,7 @@ export default function StoriesRow({ currentUserAvatar, stories, onAddStory, onP
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.item}>
+      <TouchableOpacity style={styles.item} onPress={onPressYou} disabled={!onPressYou}>
         <Avatar uri={currentUserAvatar} size={56} ringColor={colors.primary} />
         <Text style={styles.label} numberOfLines={1}>
           You

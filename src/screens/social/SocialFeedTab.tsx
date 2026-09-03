@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import StoriesRow from '../../components/StoriesRow';
 import StoryComposer from '../../components/social/StoryComposer';
-import PostCard from '../../components/PostCard';
+import PostCard, { type Post as FeedPost } from '../../components/PostCard';
 import SegmentedControl from '../../components/SegmentedControl';
 import BlogCard from '../../components/social/BlogCard';
 import AIAssistantModal from '../../components/social/AIAssistantModal';
@@ -76,6 +76,29 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.image}));
   const activeStory=activeStoryId ? socialStories.data.find(item=>item.id===activeStoryId) : undefined;
   const [storyComposerOpen, setStoryComposerOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Instagram-style pull-to-refresh: swipe down at the top of the feed to reload.
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetch(), socialStories.refetch()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
+  const keyExtractor = useCallback((item: { id: string }) => item.id, []);
+
+  const renderPost = useCallback(({ item }: { item: FeedPost }) => (
+    <PostCard
+      post={item}
+      onComment={(postId) => navigation.navigate('Comments', { postId })}
+      onPressAuthor={item.authorId ? () => {
+        navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName });
+      } : undefined}
+    />
+  ), [navigation]);
 
   // Reset transient reply/like UI whenever a different story opens.
   useEffect(() => {
@@ -187,7 +210,13 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   return (
     <View style={styles.flex}>
       <View style={styles.storiesWrap}>
-        <StoriesRow currentUserAvatar={user?.avatar||''} stories={storyCards} onAddStory={() => setStoryComposerOpen(true)} onPressStory={setActiveStoryId} />
+        <StoriesRow
+          currentUserAvatar={user?.avatar||''}
+          stories={storyCards}
+          onAddStory={() => setStoryComposerOpen(true)}
+          onPressStory={setActiveStoryId}
+          onPressYou={user?.id ? () => navigation.navigate('UserProfile', { userId: user.id, username: user.name ?? 'You' }) : undefined}
+        />
       </View>
 
       <View style={styles.subTabsWrap}>
@@ -197,9 +226,21 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
       {subTab === 'Blogs' ? (
         <FlatList
           data={blogCards}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={11}
+          refreshControl={
+            <RefreshControl
+              refreshing={socialBlogs.loading}
+              onRefresh={socialBlogs.refetch}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
           renderItem={({ item }) => (
             <BlogCard post={item} onPressSeeAll={() => navigation.navigate('BlogDetail', { blogId: item.id })} />
           )}
@@ -213,28 +254,29 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
       ) : subTab === 'Events' ? (
         <SocialEventsTab />
       ) : (
-        <KeyboardAvoidingView 
-          style={styles.flex} 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
-          <FlatList
+        <FlatList
             data={posts}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <PostCard 
-                post={item} 
-                onComment={(postId) => navigation.navigate('Comments', { postId })} 
-                onPressAuthor={item.authorId ? () => {
-                  console.log('Navigating to profile:', item.authorId, item.authorName);
-                  navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName });
-                } : undefined} 
-              />
-            )}
+            keyExtractor={keyExtractor}
+            renderItem={renderPost}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="on-drag"
-            ItemSeparatorComponent={() => null}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            }
+            onEndReachedThreshold={0.5}
+            removeClippedSubviews
+            initialNumToRender={6}
+            maxToRenderPerBatch={8}
+            windowSize={11}
+            updateCellsBatchingPeriod={50}
+            ItemSeparatorComponent={null}
             ListEmptyComponent={
               <Text style={styles.empty}>
                 {feedLoading ? 'Loading posts…' : feedError ? `Unable to load posts: ${feedError}` : 'No posts yet. Share the first update.'}
@@ -297,7 +339,6 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
               </View>
             }
           />
-        </KeyboardAvoidingView>
       )}
 
       <AIAssistantModal
@@ -309,8 +350,19 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
       <Modal visible={Boolean(activeStory)} animationType="fade" transparent onRequestClose={() => setActiveStoryId(null)}>
         <KeyboardAvoidingView style={styles.storyViewer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.storyHeader}>
-            <Image source={{ uri: activeStory?.user?.avatar || activeStory?.image }} style={styles.storyAvatar} />
-            <Text style={styles.storyAuthor} numberOfLines={1}>{activeStory?.user?.name || 'Story'}</Text>
+            <TouchableOpacity
+              style={styles.storyAuthorTouchable}
+              disabled={!activeStory?.user?.id}
+              onPress={() => {
+                if (!activeStory?.user?.id) return;
+                const { id, name } = activeStory.user;
+                setActiveStoryId(null);
+                navigation.navigate('UserProfile', { userId: id, username: name || 'Member' });
+              }}
+            >
+              <Image source={{ uri: activeStory?.user?.avatar || activeStory?.image }} style={styles.storyAvatar} />
+              <Text style={styles.storyAuthor} numberOfLines={1}>{activeStory?.user?.name || 'Story'}</Text>
+            </TouchableOpacity>
             <TouchableOpacity accessibilityLabel="Close story" onPress={() => setActiveStoryId(null)} hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
               <Ionicons name="close" size={30} color={colors.white} />
             </TouchableOpacity>
@@ -423,6 +475,7 @@ const styles = StyleSheet.create({
   },
   storyViewer: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
   storyHeader: { position: 'absolute', zIndex: 1, top: 48, left: spacing.lg, right: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  storyAuthorTouchable: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   storyAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.border },
   storyAuthor: { flex: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
   storyImage: { width: '100%', height: '100%' },

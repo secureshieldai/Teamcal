@@ -50,6 +50,13 @@ export interface CreateStreamPayload {
 const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://teamcal-mr7g.onrender.com/api')
   .replace('/api', '');
 
+// Public, shareable URL for a stream. Matches the app's deep-link config
+// (App.tsx linking) so tapping it opens the LiveViewer screen when TeamCal is
+// installed, and falls back to the web page otherwise.
+export function getStreamShareUrl(streamId: string): string {
+  return `https://teamcal.app/live/${streamId}`;
+}
+
 let socket: Socket | null = null;
 
 async function getSocket(): Promise<Socket> {
@@ -69,6 +76,8 @@ function disconnectSocket() {
 }
 
 export const liveService = {
+  getStreamShareUrl,
+
   // ── REST ──────────────────────────────────────────────────────────────────
   async listStreams(): Promise<LiveStream[]> {
     try {
