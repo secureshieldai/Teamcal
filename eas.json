@@ -13,7 +13,15 @@
     },
     "production": {
       "environment": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "GOOGLE_SERVICES_JSON": "@GOOGLE_SERVICES_JSON"
+      }
+    }
+  },
+  "hooks": {
+    "preBuild": {
+      "command": "bash eas-hooks/eas-build-pre-install.sh"
     }
   },
   "submit": {
