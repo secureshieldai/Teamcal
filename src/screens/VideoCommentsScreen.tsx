@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -63,7 +63,13 @@ export default function VideoCommentsScreen({ route, navigation }: Props) {
           <Ionicons name="options-outline" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
-      <FlatList
+      
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <FlatList
         data={comments}
         keyExtractor={c => c.id}
         contentContainerStyle={s.list}
@@ -111,6 +117,7 @@ export default function VideoCommentsScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         </View>
       )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

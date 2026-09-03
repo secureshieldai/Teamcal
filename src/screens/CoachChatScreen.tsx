@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -157,7 +157,7 @@ export default function CoachChatScreen() {
   }, [draft, selectedImage, sending]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
       <View style={styles.header}>
@@ -171,12 +171,17 @@ export default function CoachChatScreen() {
         </View>
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        >
         <View style={styles.profileCard}>
           <CoachMascotAvatar size={64} />
           <View style={styles.profileNameRow}>
@@ -209,40 +214,41 @@ export default function CoachChatScreen() {
             />
           );
         })}
-      </ScrollView>
+        </ScrollView>
 
-      <View style={styles.composer}>
-        {selectedImage ? (
-          <View style={styles.imagePreviewWrap}>
-            <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
-            <TouchableOpacity style={styles.removeImageButton} onPress={() => setSelectedImage(null)} accessibilityLabel="Remove selected image">
-              <Ionicons name="close" size={16} color={colors.white} />
+        <View style={styles.composer}>
+          {selectedImage ? (
+            <View style={styles.imagePreviewWrap}>
+              <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
+              <TouchableOpacity style={styles.removeImageButton} onPress={() => setSelectedImage(null)} accessibilityLabel="Remove selected image">
+                <Ionicons name="close" size={16} color={colors.white} />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          <View style={styles.inputBar}>
+            <TouchableOpacity style={styles.imageButton} onPress={pickImage} disabled={sending} accessibilityLabel="Select an image">
+              <Ionicons name="image-outline" size={21} color={colors.primary} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder={selectedImage ? 'Add a message (optional)...' : 'Type a message...'}
+              placeholderTextColor={colors.textMuted}
+              value={draft}
+              onChangeText={setDraft}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              editable={!sending}
+            />
+            <TouchableOpacity style={styles.micButton} onPress={handleSend} disabled={sending || (!draft.trim() && !selectedImage)}>
+              {sending ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons name={draft.trim() || selectedImage ? 'send' : 'mic'} size={18} color={colors.white} />
+              )}
             </TouchableOpacity>
           </View>
-        ) : null}
-        <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.imageButton} onPress={pickImage} disabled={sending} accessibilityLabel="Select an image">
-            <Ionicons name="image-outline" size={21} color={colors.primary} />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder={selectedImage ? 'Add a message (optional)...' : 'Type a message...'}
-            placeholderTextColor={colors.textMuted}
-            value={draft}
-            onChangeText={setDraft}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-            editable={!sending}
-          />
-          <TouchableOpacity style={styles.micButton} onPress={handleSend} disabled={sending || (!draft.trim() && !selectedImage)}>
-            {sending ? (
-              <ActivityIndicator size="small" color={colors.white} />
-            ) : (
-              <Ionicons name={draft.trim() || selectedImage ? 'send' : 'mic'} size={18} color={colors.white} />
-            )}
-          </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
     </SafeAreaView>
   );
