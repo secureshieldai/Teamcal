@@ -64,10 +64,9 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
       keyboardVerticalOffset={0}
     >
       {video.thumbnail ? (
-        <Image 
-          source={{ uri: video.thumbnail }} 
+        <Image
+          source={{ uri: video.thumbnail }}
           style={styles.media}
-          defaultSource={require('../../assets/video-placeholder.png') as never}
           onError={(e) => {
             console.log('[VideoFeedCard] Image load error:', e.nativeEvent.error);
           }}
