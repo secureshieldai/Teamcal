@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, spacing } from '../../theme';
@@ -25,6 +25,8 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [following, setFollowing] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
     personalService.list('saved-video').then((rows) => setSaved(rows.some((r) => r.external_key === video.id))).catch(() => {});
@@ -56,7 +58,11 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
   };
 
   return (
-    <View style={[styles.card, { height }]}>
+    <KeyboardAvoidingView 
+      style={[styles.card, { height }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       {video.thumbnail ? (
         <Image 
           source={{ uri: video.thumbnail }} 
@@ -100,10 +106,10 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={26} color={liked ? colors.macroProtein : colors.white} />
           <Text style={styles.actionText}>{likes}</Text>
         </TouchableOpacity>
-        <View style={styles.actionItem}>
+        <TouchableOpacity style={styles.actionItem} onPress={() => setShowComments(!showComments)}>
           <Ionicons name="chatbubble-outline" size={23} color={colors.white} />
           <Text style={styles.actionText}>{video.comments}</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.actionItem}>
           <Ionicons name="share-social-outline" size={24} color={colors.white} />
         </View>
@@ -118,7 +124,27 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
       <View style={styles.durationBadge}>
         <Text style={styles.durationText}>{video.duration}</Text>
       </View>
-    </View>
+
+      {showComments && (
+        <View style={styles.commentSection}>
+          <Text style={styles.commentTitle}>Comments</Text>
+          <View style={styles.commentInputWrap}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Add a comment..."
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity style={styles.sendBtn} disabled={!commentText.trim()}>
+              <Ionicons name="send" size={18} color={commentText.trim() ? colors.primary : 'rgba(255,255,255,0.3)'} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </KeyboardAvoidingView>
   );
 }
 
@@ -228,5 +254,47 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 10.5,
     fontWeight: '700',
+  },
+  placeholderBg: {
+    backgroundColor: colors.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commentSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  commentTitle: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+  },
+  commentInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  commentInput: {
+    flex: 1,
+    color: colors.white,
+    fontSize: 13,
+    maxHeight: 80,
+    paddingVertical: spacing.xs,
+  },
+  sendBtn: {
+    padding: spacing.xs,
   },
 });
