@@ -11,12 +11,12 @@ export const APP_CONFIG = {
   // Deep Linking
   DEEP_LINK_SCHEME: 'teamcal://',
   
-  // Cache Keys
+  // Cache Keys (SecureStore compatible - only alphanumeric, '.', '-', '_')
   CACHE_KEYS: {
-    AUTH_TOKEN: '@teamcal:auth_token',
-    USER: '@teamcal:user',
-    ONBOARDING: '@teamcal:onboarding_complete',
-    THEME: '@teamcal:theme',
+    AUTH_TOKEN: 'teamcal_auth_token',
+    USER: 'teamcal_user',
+    ONBOARDING: 'teamcal_onboarding_complete',
+    THEME: 'teamcal_theme',
   },
   
   // API

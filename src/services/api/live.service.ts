@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { io, Socket } from 'socket.io-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../auth/secureStorage';
 
 export interface LiveStream {
   id: string;
@@ -54,7 +54,7 @@ let socket: Socket | null = null;
 
 async function getSocket(): Promise<Socket> {
   if (socket?.connected) return socket;
-  const token = await AsyncStorage.getItem('auth_token');
+  const token = await storage.getToken();
   socket = io(BASE_URL, {
     path: '/realtime',
     auth: { token },

@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-09-03T06:03:09.886Z",
+  "backendUrl": "https://teamcal-mr7g.onrender.com/api",
+  "summary": {
+    "total": 10,
+    "passed": 8,
+    "warnings": 1,
+    "failed": 1,
+    "passRate": "80.0%"
+  },
+  "results": {
+    "passed": [
+      {
+        "test": "Backend Health",
+        "details": "Server is responding correctly",
+        "timestamp": "2026-09-03T06:03:05.941Z"
+      },
+      {
+        "test": "CORS Configuration",
+        "details": "CORS headers present for Expo Web",
+        "timestamp": "2026-09-03T06:03:06.767Z"
+      },
+      {
+        "test": "Auth Validation",
+        "details": "Auth endpoints validating input correctly",
+        "timestamp": "2026-09-03T06:03:07.092Z"
+      },
+      {
+        "test": "Protected Routes",
+        "details": "JWT middleware working correctly",
+        "timestamp": "2026-09-03T06:03:07.393Z"
+      },
+      {
+        "test": "Frontend Services",
+        "details": "All API service files present",
+        "timestamp": "2026-09-03T06:03:07.394Z"
+      },
+      {
+        "test": "Environment Config",
+        "details": "All required env vars present",
+        "timestamp": "2026-09-03T06:03:07.397Z"
+      },
+      {
+        "test": "TypeScript Types",
+        "details": "API types defined",
+        "timestamp": "2026-09-03T06:03:09.883Z"
+      },
+      {
+        "test": "Common Issues Check",
+        "details": "No common configuration issues found",
+        "timestamp": "2026-09-03T06:03:09.884Z"
+      }
+    ],
+    "failed": [
+      {
+        "test": "API Client Config",
+        "details": "Missing required imports",
+        "timestamp": "2026-09-03T06:03:07.396Z"
+      }
+    ],
+    "warnings": [
+      {
+        "test": "Backend Routes",
+        "details": "6/8 routes responding",
+        "timestamp": "2026-09-03T06:03:09.880Z"
+      }
+    ]
+  }
+}

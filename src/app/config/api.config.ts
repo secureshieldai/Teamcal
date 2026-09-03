@@ -125,7 +125,7 @@ export const API_ENDPOINTS = {
     BASE: '/channels',
     DETAIL: (id: string) => `/channels/${id}`,
     POSTS: (id: string) => `/channels/${id}/posts`,
-    SUBSCRIBE: (id: string) => `/channels/${id}/subscribe',
+    SUBSCRIBE: (id: string) => `/channels/${id}/subscribe`,
     ANALYTICS: (id: string) => `/channels/${id}/analytics`,
   },
 } as const;
@@ -143,7 +143,7 @@ export function buildQueryString(params: Record<string, unknown>): string {
 // Helper to check if error is retryable
 export function isRetryableError(statusCode?: number): boolean {
   if (!statusCode) return false;
-  return API_CONFIG.RETRY.STATUS_CODES.includes(statusCode);
+  return API_CONFIG.RETRY.STATUS_CODES.includes(statusCode as 429 | 503);
 }
 
 // Map HTTP status to error code

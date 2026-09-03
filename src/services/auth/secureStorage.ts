@@ -24,10 +24,14 @@ class SecureStorageService {
   async getToken(): Promise<string | null> {
     try {
       if (IS_SECURE_AVAILABLE) {
-        return await SecureStore.getItemAsync(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN);
+        const token = await SecureStore.getItemAsync(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN);
+        console.log('[SecureStorage] Token retrieved from SecureStore:', token ? 'Found' : 'Not found');
+        return token;
       }
       // Fallback for web (dev only - not secure!)
-      return await AsyncStorage.getItem(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN);
+      const token = await AsyncStorage.getItem(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN);
+      console.log('[SecureStorage] Token retrieved from AsyncStorage (web):', token ? 'Found' : 'Not found');
+      return token;
     } catch (error) {
       console.error('[SecureStorage] Error getting token:', error);
       return null;
@@ -36,10 +40,13 @@ class SecureStorageService {
   
   async setToken(token: string): Promise<void> {
     try {
+      console.log('[SecureStorage] Saving token:', token.substring(0, 20) + '...');
       if (IS_SECURE_AVAILABLE) {
         await SecureStore.setItemAsync(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN, token);
+        console.log('[SecureStorage] Token saved to SecureStore successfully');
       } else {
         await AsyncStorage.setItem(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN, token);
+        console.log('[SecureStorage] Token saved to AsyncStorage (web fallback)');
       }
     } catch (error) {
       console.error('[SecureStorage] Error setting token:', error);

@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.md,
     textAlign: 'center',
   },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   devInfo: {
     marginTop: spacing.xl,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
     borderRadius: 8,
     padding: spacing.md,
     maxHeight: 200,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   devTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.error,
+    color: colors.macroProtein,
     marginBottom: spacing.sm,
   },
   devText: {

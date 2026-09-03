@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from './auth/secureStorage';
 import { io, type Socket } from 'socket.io-client';
 import type { EarnAsset } from './api/earn.service';
 import type { DirectMessage } from './api/social.service';
@@ -12,7 +12,7 @@ export type AssetChange = {
 };
 
 export async function subscribeToAssetChanges(onChange: (change: AssetChange) => void) {
-  const token = await AsyncStorage.getItem('auth_token');
+  const token = await storage.getToken();
   if (!token) return () => undefined;
 
   const socket: Socket = io(REALTIME_URL, {
@@ -30,7 +30,7 @@ export async function subscribeToAssetChanges(onChange: (change: AssetChange) =>
 }
 
 export async function subscribeToStoreCommerce(storeId: string, onChange: () => void) {
-  const token = await AsyncStorage.getItem('auth_token');
+  const token = await storage.getToken();
   if (!token) return () => undefined;
   const socket: Socket = io(REALTIME_URL, { path: '/realtime', transports: ['websocket'], auth: { token }, reconnection: true });
   const listener = (event: { storeId: string }) => { if (event.storeId === storeId) onChange(); };
@@ -45,7 +45,7 @@ let dmSocket: Socket | null = null;
 let dmRefs = 0;
 
 async function acquireDmSocket(): Promise<Socket | null> {
-  const token = await AsyncStorage.getItem('auth_token');
+  const token = await storage.getToken();
   if (!token) return null;
   if (!dmSocket) {
     dmSocket = io(REALTIME_URL, { path: '/realtime', transports: ['websocket'], auth: { token }, reconnection: true });

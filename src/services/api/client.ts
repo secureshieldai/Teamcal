@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../auth/secureStorage';
 import { ENV } from '../../app/config/env';
 import { APP_CONFIG } from '../../app/config/constants';
 
@@ -13,9 +13,13 @@ export const apiClient = axios.create({
 
 // Attach JWT to every request
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const token = await AsyncStorage.getItem(APP_CONFIG.CACHE_KEYS.AUTH_TOKEN);
+  const token = await storage.getToken();
+  console.log('[API Client] Token retrieved:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('[API Client] Authorization header set');
+  } else {
+    console.warn('[API Client] No token found - request will be unauthenticated');
   }
   return config;
 });

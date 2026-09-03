@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: APP_CONFIG.QUERY.STALE_TIME,
-      cacheTime: APP_CONFIG.QUERY.CACHE_TIME,
+      gcTime: APP_CONFIG.QUERY.CACHE_TIME, // renamed from cacheTime in v5
       retry: APP_CONFIG.QUERY.RETRY,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,

@@ -32,7 +32,7 @@ export function useNotifications() {
 export function useNotificationPreferences() {
   return useQuery({
     queryKey: notificationKeys.preferences(),
-    queryFn: () => notificationsService.getPreferences(),
+    queryFn: () => notificationsService.getPrefs(),
     staleTime: APP_CONFIG.QUERY.STALE_TIME,
   });
 }
@@ -75,7 +75,7 @@ export function useUpdateNotificationPreferences() {
   
   return useMutation({
     mutationFn: (preferences: Record<string, boolean>) => 
-      notificationsService.updatePreferences(preferences),
+      notificationsService.updatePrefs(preferences),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.preferences() });
     },
