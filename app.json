@@ -19,7 +19,6 @@
     },
     "android": {
       "package": "com.teamcal.app",
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/AppIcon.png",
