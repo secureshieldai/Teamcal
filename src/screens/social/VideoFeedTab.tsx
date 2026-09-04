@@ -1,4 +1,5 @@
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, useWindowDimensions, View, ViewToken } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
 import { colors, spacing } from '../../theme';
 import VideoFeedCard, { type VideoFeedItem } from '../../components/social/VideoFeedCard';
 
@@ -10,8 +11,29 @@ type Props = {
 
 export default function VideoFeedTab({ videos, loading, ListHeaderComponent }: Props) {
   const { height } = useWindowDimensions();
-  // Use full viewport height for TikTok-like experience
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(videos[0]?.id || null);
+  
+  // Use full viewport height for Instagram Reels-like experience
   const itemHeight = height;
+
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0) {
+      // Get the first viewable item (the one most visible on screen)
+      const activeItem = viewableItems[0];
+      if (activeItem?.item?.id) {
+        setActiveVideoId(activeItem.item.id);
+      }
+    }
+  }, []);
+
+  const viewabilityConfigCallbackPairs = useRef([
+    {
+      viewabilityConfig: {
+        itemVisiblePercentThreshold: 50,
+      },
+      onViewableItemsChanged,
+    },
+  ]);
 
   if (!loading && videos.length === 0) {
     return (
@@ -31,9 +53,7 @@ export default function VideoFeedTab({ videos, loading, ListHeaderComponent }: P
       snapToInterval={itemHeight}
       snapToAlignment="start"
       ListHeaderComponent={ListHeaderComponent}
-      viewabilityConfig={{
-        itemVisiblePercentThreshold: 50,
-      }}
+      viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
       getItemLayout={(_, index) => ({
         length: itemHeight,
         offset: itemHeight * index,
@@ -41,7 +61,11 @@ export default function VideoFeedTab({ videos, loading, ListHeaderComponent }: P
       })}
       renderItem={({ item }) => (
         <View style={{ height: itemHeight }}>
-          <VideoFeedCard video={item} height={itemHeight} />
+          <VideoFeedCard 
+            video={item} 
+            height={itemHeight} 
+            isActive={item.id === activeVideoId}
+          />
         </View>
       )}
     />

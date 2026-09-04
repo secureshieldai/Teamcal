@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, spacing } from '../../theme';
@@ -18,19 +19,65 @@ export type VideoFeedItem = {
   caption: string;
   likes: number;
   comments: number;
+  videoUrl: string;
 };
 
-export default function VideoFeedCard({ video, height }: { video: VideoFeedItem; height: number }) {
+export default function VideoFeedCard({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) {
+  const videoRef = useRef<Video>(null);
   const [likes, setLikes] = useState(video.likes);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [following, setFollowing] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(true);
 
   useEffect(() => {
     personalService.list('saved-video').then((rows) => setSaved(rows.some((r) => r.external_key === video.id))).catch(() => {});
   }, [video.id]);
+
+  // Auto-play when card becomes active
+  useEffect(() => {
+    if (isActive && videoRef.current) {
+      videoRef.current.playAsync();
+      setIsPlaying(true);
+    } else if (!isActive && videoRef.current) {
+      videoRef.current.pauseAsync();
+      setIsPlaying(false);
+    }
+  }, [isActive]);
+
+  const togglePlayPause = async () => {
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      await videoRef.current.pauseAsync();
+      setIsPlaying(false);
+    } else {
+      await videoRef.current.playAsync();
+      setIsPlaying(true);
+    }
+  };
+
+  const toggleMute = async () => {
+    if (!videoRef.current) return;
+    await videoRef.current.setIsMutedAsync(!isMuted);
+    setIsMuted(!isMuted);
+  };
+
+  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    if (status.isLoaded) {
+      setIsBuffering(status.isBuffering);
+      setIsPlaying(status.isPlaying);
+      
+      // Loop video when it ends
+      if (status.didJustFinish) {
+        videoRef.current?.replayAsync();
+      }
+    }
+  };
 
   const toggleLike = () => {
     setLiked((prev) => !prev);
@@ -63,20 +110,43 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
-      {video.thumbnail ? (
-        <Image
-          source={{ uri: video.thumbnail }}
-          style={styles.media}
-          onError={(e) => {
-            console.log('[VideoFeedCard] Image load error:', e.nativeEvent.error);
-          }}
-        />
+      {/* Video Player */}
+      {video.videoUrl ? (
+        <TouchableOpacity 
+          style={styles.media} 
+          activeOpacity={1} 
+          onPress={togglePlayPause}
+        >
+          <Video
+            ref={videoRef}
+            source={{ uri: video.videoUrl }}
+            style={styles.media}
+            resizeMode={ResizeMode.COVER}
+            isLooping
+            isMuted={isMuted}
+            shouldPlay={isActive}
+            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+            onError={(error: string) => {
+              console.log('[VideoFeedCard] Video error:', error);
+            }}
+          />
+          
+          {/* Show thumbnail while buffering */}
+          {isBuffering && video.thumbnail && (
+            <Image
+              source={{ uri: video.thumbnail }}
+              style={styles.media}
+            />
+          )}
+        </TouchableOpacity>
       ) : (
         <View style={[styles.media, styles.placeholderBg]}>
           <Ionicons name="videocam" size={64} color="rgba(255,255,255,0.3)" />
+          <Text style={styles.noVideoText}>Video not available</Text>
         </View>
       )}
 
+      {/* Top Row - Author Info */}
       <View style={styles.topRow}>
         <View style={styles.authorAvatarWrap}>
           <Avatar uri={video.authorAvatar} size={34} />
@@ -96,10 +166,21 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
         <Ionicons name="ellipsis-horizontal" size={20} color={colors.white} />
       </View>
 
-      <View style={styles.playCircle}>
-        <Ionicons name="play" size={24} color="rgba(255,255,255,0.85)" />
-      </View>
+      {/* Play/Pause Indicator */}
+      {!isPlaying && !isBuffering && (
+        <TouchableOpacity style={styles.playCircle} onPress={togglePlayPause}>
+          <Ionicons name="play" size={24} color="rgba(255,255,255,0.85)" />
+        </TouchableOpacity>
+      )}
 
+      {/* Buffering Indicator */}
+      {isBuffering && (
+        <View style={styles.playCircle}>
+          <Ionicons name="hourglass" size={24} color="rgba(255,255,255,0.85)" />
+        </View>
+      )}
+
+      {/* Action Rail - Right Side */}
       <View style={styles.actionRail}>
         <TouchableOpacity style={styles.actionItem} onPress={toggleLike}>
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={26} color={liked ? colors.macroProtein : colors.white} />
@@ -115,15 +196,22 @@ export default function VideoFeedCard({ video, height }: { video: VideoFeedItem;
         <TouchableOpacity style={styles.actionItem} onPress={toggleSaved}>
           <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={23} color={saved ? colors.primary : colors.white} />
         </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem} onPress={toggleMute}>
+          <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={23} color={colors.white} />
+        </TouchableOpacity>
       </View>
 
+      {/* Caption */}
       <View style={styles.captionWrap}>
         <Text style={styles.captionText} numberOfLines={2}>{video.caption}</Text>
       </View>
+
+      {/* Duration Badge */}
       <View style={styles.durationBadge}>
         <Text style={styles.durationText}>{video.duration}</Text>
       </View>
 
+      {/* Comment Section */}
       {showComments && (
         <View style={styles.commentSection}>
           <Text style={styles.commentTitle}>Comments</Text>
@@ -258,6 +346,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.navy,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noVideoText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    marginTop: spacing.sm,
   },
   commentSection: {
     position: 'absolute',
