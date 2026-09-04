@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, spacing } from '../../theme';
@@ -23,7 +23,11 @@ export type VideoFeedItem = {
 };
 
 export default function VideoFeedCard({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) {
-  const videoRef = useRef<Video>(null);
+  const player = useVideoPlayer(video.videoUrl, (player) => {
+    player.loop = true;
+    player.muted = false;
+  });
+  
   const [likes, setLikes] = useState(video.likes);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -32,7 +36,6 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
   const [commentText, setCommentText] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(true);
 
   useEffect(() => {
     personalService.list('saved-video').then((rows) => setSaved(rows.some((r) => r.external_key === video.id))).catch(() => {});
@@ -40,43 +43,42 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
 
   // Auto-play when card becomes active
   useEffect(() => {
-    if (isActive && videoRef.current) {
-      videoRef.current.playAsync();
+    if (isActive && player) {
+      player.play();
       setIsPlaying(true);
-    } else if (!isActive && videoRef.current) {
-      videoRef.current.pauseAsync();
+    } else if (!isActive && player) {
+      player.pause();
       setIsPlaying(false);
     }
-  }, [isActive]);
+  }, [isActive, player]);
+
+  // Monitor playing state
+  useEffect(() => {
+    if (!player) return;
+    
+    const subscription = player.addListener('playingChange', (event) => {
+      setIsPlaying(event.isPlaying);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [player]);
 
   const togglePlayPause = async () => {
-    if (!videoRef.current) return;
+    if (!player) return;
     
     if (isPlaying) {
-      await videoRef.current.pauseAsync();
-      setIsPlaying(false);
+      player.pause();
     } else {
-      await videoRef.current.playAsync();
-      setIsPlaying(true);
+      player.play();
     }
   };
 
   const toggleMute = async () => {
-    if (!videoRef.current) return;
-    await videoRef.current.setIsMutedAsync(!isMuted);
+    if (!player) return;
+    player.muted = !isMuted;
     setIsMuted(!isMuted);
-  };
-
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      setIsBuffering(status.isBuffering);
-      setIsPlaying(status.isPlaying);
-      
-      // Loop video when it ends
-      if (status.didJustFinish) {
-        videoRef.current?.replayAsync();
-      }
-    }
   };
 
   const toggleLike = () => {
@@ -117,27 +119,12 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
           activeOpacity={1} 
           onPress={togglePlayPause}
         >
-          <Video
-            ref={videoRef}
-            source={{ uri: video.videoUrl }}
+          <VideoView
+            player={player}
             style={styles.media}
-            resizeMode={ResizeMode.COVER}
-            isLooping
-            isMuted={isMuted}
-            shouldPlay={isActive}
-            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-            onError={(error: string) => {
-              console.log('[VideoFeedCard] Video error:', error);
-            }}
+            contentFit="cover"
+            nativeControls={false}
           />
-          
-          {/* Show thumbnail while buffering */}
-          {isBuffering && video.thumbnail && (
-            <Image
-              source={{ uri: video.thumbnail }}
-              style={styles.media}
-            />
-          )}
         </TouchableOpacity>
       ) : (
         <View style={[styles.media, styles.placeholderBg]}>
@@ -167,17 +154,10 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
       </View>
 
       {/* Play/Pause Indicator */}
-      {!isPlaying && !isBuffering && (
+      {!isPlaying && (
         <TouchableOpacity style={styles.playCircle} onPress={togglePlayPause}>
           <Ionicons name="play" size={24} color="rgba(255,255,255,0.85)" />
         </TouchableOpacity>
-      )}
-
-      {/* Buffering Indicator */}
-      {isBuffering && (
-        <View style={styles.playCircle}>
-          <Ionicons name="hourglass" size={24} color="rgba(255,255,255,0.85)" />
-        </View>
       )}
 
       {/* Action Rail - Right Side */}
