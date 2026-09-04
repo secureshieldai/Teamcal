@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "787986944045",
+    "project_id": "teamcal-cdff3",
+    "storage_bucket": "teamcal-cdff3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:787986944045:android:c9a9d8a6d00cd110c5e8a4",
+        "android_client_info": {
+          "package_name": "com.teamcal.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "787986944045-7rou6qdv3nsrefgip6k5bpd873th89es.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamcal.app",
+            "certificate_hash": "760aa61ba22e40f03478f1f29a4cdadb549bfc7a"
+          }
+        },
+        {
+          "client_id": "787986944045-qls9it8n5h1abdnae3gut3jh8s2k1f6t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8DaihYAkQu15pu7OYIHXc1pPfbHOICvA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "787986944045-qls9it8n5h1abdnae3gut3jh8s2k1f6t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
