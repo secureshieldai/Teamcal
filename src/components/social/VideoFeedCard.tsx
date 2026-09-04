@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,11 +23,6 @@ export type VideoFeedItem = {
 };
 
 export default function VideoFeedCard({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) {
-  const player = useVideoPlayer(video.videoUrl, (player) => {
-    player.loop = true;
-    player.muted = false;
-  });
-  
   const [likes, setLikes] = useState(video.likes);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -37,18 +32,24 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
+  // Initialize video player with configuration
+  const player = useVideoPlayer(video.videoUrl, (player) => {
+    player.loop = true;
+    player.muted = false;
+  });
+
   useEffect(() => {
     personalService.list('saved-video').then((rows) => setSaved(rows.some((r) => r.external_key === video.id))).catch(() => {});
   }, [video.id]);
 
-  // Auto-play when card becomes active
+  // Auto-play when card becomes visible
   useEffect(() => {
-    if (isActive && player) {
+    if (!player) return;
+    
+    if (isActive) {
       player.play();
-      setIsPlaying(true);
-    } else if (!isActive && player) {
+    } else {
       player.pause();
-      setIsPlaying(false);
     }
   }, [isActive, player]);
 
@@ -65,7 +66,7 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
     };
   }, [player]);
 
-  const togglePlayPause = async () => {
+  const togglePlayPause = () => {
     if (!player) return;
     
     if (isPlaying) {
@@ -75,7 +76,7 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
     }
   };
 
-  const toggleMute = async () => {
+  const toggleMute = () => {
     if (!player) return;
     player.muted = !isMuted;
     setIsMuted(!isMuted);
@@ -113,25 +114,18 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
       keyboardVerticalOffset={0}
     >
       {/* Video Player */}
-      {video.videoUrl ? (
-        <TouchableOpacity 
-          style={styles.media} 
-          activeOpacity={1} 
-          onPress={togglePlayPause}
-        >
-          <VideoView
-            player={player}
-            style={styles.media}
-            contentFit="cover"
-            nativeControls={false}
-          />
-        </TouchableOpacity>
-      ) : (
-        <View style={[styles.media, styles.placeholderBg]}>
-          <Ionicons name="videocam" size={64} color="rgba(255,255,255,0.3)" />
-          <Text style={styles.noVideoText}>Video not available</Text>
-        </View>
-      )}
+      <TouchableOpacity 
+        style={styles.media} 
+        activeOpacity={1} 
+        onPress={togglePlayPause}
+      >
+        <VideoView
+          player={player}
+          style={styles.media}
+          contentFit="cover"
+          nativeControls={false}
+        />
+      </TouchableOpacity>
 
       {/* Top Row - Author Info */}
       <View style={styles.topRow}>
