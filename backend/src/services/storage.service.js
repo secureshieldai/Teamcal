@@ -84,4 +84,14 @@ async function uploadPublicAudio(folder, userId, file) {
   return supabase.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
 }
 
-module.exports = { uploadPublicImage, uploadPublicFile, uploadPublicAudio };
+async function uploadPublicVideo(folder, userId, file) {
+  if (!file?.buffer) throw new Error("Video buffer is missing");
+  await ensureBucket();
+  const fromMime = { "video/mp4": ".mp4", "video/quicktime": ".mov", "video/webm": ".webm", "video/x-m4v": ".m4v" };
+  const extension = path.extname(file.originalname || "").toLowerCase() || fromMime[file.mimetype] || ".mp4";
+  const objectPath = `${folder}/${userId}/${randomUUID()}${extension}`;
+  await uploadObject(objectPath, file, "31536000");
+  return supabase.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
+}
+
+module.exports = { uploadPublicImage, uploadPublicFile, uploadPublicAudio, uploadPublicVideo };
