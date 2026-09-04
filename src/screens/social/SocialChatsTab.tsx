@@ -18,7 +18,12 @@ function labelFor(tab: string, unreadCount: number, requestCount: number) {
   return tab;
 }
 
-export default function SocialChatsTab({ navigation }: { navigation: NativeStackNavigationProp<RootStackParamList> }) {
+type Props = {
+  navigation: NativeStackNavigationProp<RootStackParamList>;
+  headerComponent?: React.ReactNode;
+};
+
+export default function SocialChatsTab({ navigation, headerComponent }: Props) {
   const [subTab, setSubTab] = useState(chatsSubTabs[0]);
   const [requests, setRequests] = useState<MessageRequest[]>([]);
   const [conversations, setConversations] = useState<SocialConversation[]>([]);
@@ -72,21 +77,25 @@ export default function SocialChatsTab({ navigation }: { navigation: NativeStack
 
   return (
     <View style={styles.flex}>
-      <View style={styles.subTabsWrap}>
-        <SegmentedControl
-          options={labels}
-          value={currentLabel}
-          onChange={(label) => setSubTab(chatsSubTabs[labels.indexOf(label)])}
-          variant="pill"
-        />
-      </View>
-
       {subTab === 'Requests' ? (
         <FlatList
           data={requests}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              {headerComponent}
+              <View style={styles.subTabsWrap}>
+                <SegmentedControl
+                  options={labels}
+                  value={currentLabel}
+                  onChange={(label) => setSubTab(chatsSubTabs[labels.indexOf(label)])}
+                  variant="pill"
+                />
+              </View>
+            </>
+          }
           ListEmptyComponent={<Text style={styles.empty}>{loading ? 'Loading…' : emptyText}</Text>}
           renderItem={({ item }) => (
             <RequestRow
@@ -104,6 +113,19 @@ export default function SocialChatsTab({ navigation }: { navigation: NativeStack
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              {headerComponent}
+              <View style={styles.subTabsWrap}>
+                <SegmentedControl
+                  options={labels}
+                  value={currentLabel}
+                  onChange={(label) => setSubTab(chatsSubTabs[labels.indexOf(label)])}
+                  variant="pill"
+                />
+              </View>
+            </>
+          }
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <Text style={styles.empty}>{loading ? 'Loading conversations…' : error ? `Unable to load chats: ${error}` : emptyText}</Text>

@@ -10,9 +10,10 @@ import Avatar from '../../components/Avatar';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
+  headerComponent?: React.ReactNode;
 };
 
-export default function SocialChannelsTab({ navigation }: Props) {
+export default function SocialChannelsTab({ navigation, headerComponent }: Props) {
   const [view, setView] = useState<'feed' | 'all' | 'owned'>('feed');
   const [following, setFollowing] = useState<Channel[]>([]);
   const [discover, setDiscover] = useState<Channel[]>([]);
@@ -105,6 +106,7 @@ export default function SocialChannelsTab({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
+              {headerComponent}
               {/* Header with title and action icons */}
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>Channels</Text>
@@ -208,13 +210,13 @@ export default function SocialChannelsTab({ navigation }: Props) {
               onPress={() => navigation.navigate('ChannelFeed', { channelId: item.id })}
               activeOpacity={0.85}
             >
-              <Avatar uri={item.avatar} size={52} />
+              <Avatar uri={item.avatar || ''} size={52} />
               <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Text style={styles.channelName}>{item.name}</Text>
                   {item.is_monetized && <Ionicons name="checkmark-circle" size={15} color={colors.primary} />}
                 </View>
-                <Text style={styles.channelSubtitle}>{item.description || `@${item.username}`}</Text>
+                <Text style={styles.channelSubtitle}>{item.description ?? `@${item.username}`}</Text>
                 <Text style={styles.channelMeta}>
                   {item.follower_count.toLocaleString()} followers · {item.post_count} posts
                 </Text>

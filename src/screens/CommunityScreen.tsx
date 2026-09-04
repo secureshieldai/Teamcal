@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,10 +18,9 @@ export default function CommunityScreen() {
   const [tab, setTab] = useState(socialTopTabs[0]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-
+  // Header component to pass to child tabs
+  const HeaderComponent = (
+    <>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.pageTitle}>Come have fun</Text>
@@ -60,17 +59,23 @@ export default function CommunityScreen() {
       <View style={styles.tabsWrap}>
         <SegmentedControl options={socialTopTabs} value={tab} onChange={setTab} variant="pill" />
       </View>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       {tab === 'Chats' ? (
-        <SocialChatsTab navigation={navigation} />
+        <SocialChatsTab navigation={navigation} headerComponent={HeaderComponent} />
       ) : tab === 'Communities' ? (
-        <SocialCommunitiesTab navigation={navigation} />
+        <SocialCommunitiesTab navigation={navigation} headerComponent={HeaderComponent} />
       ) : tab === 'Games' ? (
-        <PlayGamesTab />
+        <PlayGamesTab headerComponent={HeaderComponent} />
       ) : tab === 'Me' ? (
-        <SocialMeTab navigation={navigation} />
+        <SocialMeTab navigation={navigation} headerComponent={HeaderComponent} />
       ) : (
-        <SocialFeedTab navigation={navigation} />
+        <SocialFeedTab navigation={navigation} headerComponent={HeaderComponent} />
       )}
     </SafeAreaView>
   );

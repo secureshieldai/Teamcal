@@ -14,9 +14,10 @@ import {groupsService} from '../../services/api/groups.service';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
+  headerComponent?: React.ReactNode;
 };
 
-export default function SocialCommunitiesTab({ navigation }: Props) {
+export default function SocialCommunitiesTab({ navigation, headerComponent }: Props) {
   const [subTab, setSubTab] = useState(communitiesSubTabs[0]);
   const [query, setQuery] = useState('');
   const { groups: myGroups,refetch:refetchMine } = useGroups();
@@ -37,25 +38,23 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
 
   return (
     <View style={styles.flex}>
-      {subTab === 'Groups' ? (
-        <View style={styles.searchWrap}>
-          <SearchBar placeholder="Search communities" value={query} onChangeText={setQuery} />
-        </View>
-      ) : null}
-
-      <View style={styles.subTabsWrap}>
-        <SegmentedControl options={communitiesSubTabs} value={subTab} onChange={changeSubTab} variant="pill" />
-      </View>
-
       {subTab === 'Channels' ? (
-        <SocialChannelsTab navigation={navigation} />
+        <SocialChannelsTab navigation={navigation} headerComponent={headerComponent} />
       ) : subTab === 'Me' ? (
         <FlatList
           data={myGroups}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<SectionHeader title="Your Groups" />}
+          ListHeaderComponent={
+            <>
+              {headerComponent}
+              <View style={styles.subTabsWrap}>
+                <SegmentedControl options={communitiesSubTabs} value={subTab} onChange={changeSubTab} variant="pill" />
+              </View>
+              <SectionHeader title="Your Groups" />
+            </>
+          }
           ListEmptyComponent={<Text style={styles.empty}>You have not joined any groups yet.</Text>}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -79,6 +78,14 @@ export default function SocialCommunitiesTab({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
+              {headerComponent}
+              <View style={styles.searchWrap}>
+                <SearchBar placeholder="Search communities" value={query} onChangeText={setQuery} />
+              </View>
+              <View style={styles.subTabsWrap}>
+                <SegmentedControl options={communitiesSubTabs} value={subTab} onChange={changeSubTab} variant="pill" />
+              </View>
+
               <TouchableOpacity style={[styles.browseRow, shadow.card]} activeOpacity={0.85} onPress={() => navigation.navigate('PowerSquad')}>
                 <View style={styles.flexInfo}>
                   <Text style={styles.groupName}>Browse all communities</Text>
@@ -128,11 +135,11 @@ const styles = StyleSheet.create({
   },
   searchWrap: {
     paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   subTabsWrap: {
     paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   list: {
     padding: spacing.lg,

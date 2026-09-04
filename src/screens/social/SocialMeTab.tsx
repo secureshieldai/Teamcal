@@ -14,6 +14,7 @@ import {postsService} from '../../services/api/posts.service';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
+  headerComponent?: React.ReactNode;
 };
 
 function useSavedPosts(candidates: Post[]) {
@@ -34,7 +35,7 @@ function useSavedPosts(candidates: Post[]) {
   return saved;
 }
 
-export default function SocialMeTab({ navigation }: Props) {
+export default function SocialMeTab({ navigation, headerComponent }: Props) {
   const [subTab, setSubTab] = useState(meSubTabs[0]);
   const { profileUser, profileStats } = useProfile();
   const { posts: myPosts, loading: myPostsLoading, error: myPostsError,refetch } = useMyPosts();
@@ -60,43 +61,47 @@ export default function SocialMeTab({ navigation }: Props) {
 
   return (
     <View style={styles.flex}>
-      <View style={styles.headerCard}>
-        <Avatar uri={profileUser.avatar} size={56} />
-        <View style={styles.headerInfo}>
-          <Text style={styles.name}>{profileUser.name || 'You'}</Text>
-          <Text style={styles.handle}>{profileUser.handle}</Text>
-          {profileUser.bio ? <Text style={styles.bio}>{profileUser.bio}</Text> : null}
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.edit}>Edit</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{myPosts.length}</Text>
-          <Text style={styles.statLabel}>POSTS</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{following}</Text>
-          <Text style={styles.statLabel}>FOLLOWING</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{followers}</Text>
-          <Text style={styles.statLabel}>FOLLOWERS</Text>
-        </View>
-      </View>
-
-      <View style={styles.subTabsWrap}>
-        <SegmentedControl options={meSubTabs} value={subTab} onChange={setSubTab} variant="pill" />
-      </View>
-
       <FlatList
         data={data}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+        ListHeaderComponent={
+          <>
+            {headerComponent}
+            <View style={styles.headerCard}>
+              <Avatar uri={profileUser.avatar} size={56} />
+              <View style={styles.headerInfo}>
+                <Text style={styles.name}>{profileUser.name || 'You'}</Text>
+                <Text style={styles.handle}>{profileUser.handle}</Text>
+                {profileUser.bio ? <Text style={styles.bio}>{profileUser.bio}</Text> : null}
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={styles.edit}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{myPosts.length}</Text>
+                <Text style={styles.statLabel}>POSTS</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{following}</Text>
+                <Text style={styles.statLabel}>FOLLOWING</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{followers}</Text>
+                <Text style={styles.statLabel}>FOLLOWERS</Text>
+              </View>
+            </View>
+
+            <View style={styles.subTabsWrap}>
+              <SegmentedControl options={meSubTabs} value={subTab} onChange={setSubTab} variant="pill" />
+            </View>
+          </>
+        }
         ListEmptyComponent={<Text style={styles.empty}>{emptyText}</Text>}
         renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onDelete={async id=>{await postsService.delete(id);await refetch();}} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
       />

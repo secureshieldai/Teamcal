@@ -28,9 +28,10 @@ import * as ImagePicker from 'expo-image-picker';
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
   initialSubTab?: string;
+  headerComponent?: React.ReactNode;
 };
 
-export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
+export default function SocialFeedTab({ navigation, initialSubTab, headerComponent }: Props) {
   const [subTab, setSubTab] = useState(initialSubTab ?? feedSubTabs[0]);
   const { posts, loading: feedLoading, error: feedError, refetch } = useFeed();
   const { createPost, loading: posting } = useCreatePost();
@@ -210,6 +211,7 @@ export default function SocialFeedTab({ navigation, initialSubTab }: Props) {
   // Shared header for all tabs
   const SharedHeader = (
     <>
+      {headerComponent}
       <View style={styles.storiesWrap}>
         <StoriesRow
           currentUserAvatar={user?.avatar||''}
