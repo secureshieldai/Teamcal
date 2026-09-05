@@ -221,6 +221,18 @@ export default function SocialChannelsTab({ navigation, headerComponent }: Props
                   {item.follower_count.toLocaleString()} followers · {item.post_count} posts
                 </Text>
               </View>
+              {view === 'owned' && (
+                <TouchableOpacity
+                  style={styles.ownerIcon}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    navigation.navigate('CreateChannelPost', { channelId: item.id });
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="add-circle" size={20} color="#10B981" />
+                </TouchableOpacity>
+              )}
               {view === 'all' && !item.isFollowing && (
                 <TouchableOpacity
                   style={styles.followBtn}
@@ -272,4 +284,5 @@ const styles = StyleSheet.create({
   channelSubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 3, lineHeight: 18 },
   channelMeta: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
   followBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  ownerIcon: { marginLeft: spacing.sm, alignItems: 'center', justifyContent: 'center' },
 });

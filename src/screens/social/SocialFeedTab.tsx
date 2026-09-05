@@ -69,10 +69,10 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
     verified:item.user?.verified,
     time:new Date(item.created_at).toLocaleDateString(),
     duration:String(item.metadata?.duration||'0:00'),
-    caption:item.description||item.title||'',
-    likes:item.metrics?.likes||0,
-    comments:item.metrics?.comments||0,
-    videoUrl:item.metadata?.fileUrl||item.video||'',
+    caption:item.description||item.title||item.text||'',
+    likes:item.metrics?.likes||item.likes||0,
+    comments:item.metrics?.comments||item.comments_count||0,
+    videoUrl:item.video||item.metadata?.fileUrl||'',
   }));
   const storyCards=socialStories.data.map(item=>({id:item.id,label:item.user?.name||'Creator',avatar:item.image}));
   const activeStory=activeStoryId ? socialStories.data.find(item=>item.id===activeStoryId) : undefined;

@@ -84,6 +84,8 @@ function channelPermission(permission) {
       const channelId = req.params.channelId;
       const userId = req.user.id;
 
+      console.log(`[ChannelPermission] Checking ${permission} for user ${userId} in channel ${channelId}`);
+
       const { data: channel, error: channelError } = await supabase
         .from('channels')
         .select('owner_id')
@@ -91,11 +93,13 @@ function channelPermission(permission) {
         .single();
 
       if (channelError || !channel) {
+        console.log('[ChannelPermission] Channel not found:', channelError);
         return res.status(404).json({ message: 'Channel not found' });
       }
 
       // Owner has all permissions
       if (channel.owner_id === userId) {
+        console.log('[ChannelPermission] User is channel owner, granting permission');
         req.channel = channel;
         req.isOwner = true;
         return next();
@@ -109,19 +113,25 @@ function channelPermission(permission) {
         .eq('user_id', userId)
         .single();
 
+      console.log('[ChannelPermission] Member data:', member, 'Error:', memberError);
+
       if (memberError || !member) {
-        return res.status(403).json({ message: 'Not a channel member' });
+        console.log('[ChannelPermission] User is not a channel member');
+        return res.status(403).json({ message: 'Not a channel member. Please join or follow the channel first.' });
       }
 
       if (!member[permission] && member.role !== 'admin') {
-        return res.status(403).json({ message: `Permission denied: ${permission}` });
+        console.log(`[ChannelPermission] User does not have ${permission} permission`);
+        return res.status(403).json({ message: `Permission denied: ${permission}. Contact channel admin for access.` });
       }
 
+      console.log('[ChannelPermission] Permission granted');
       req.channel = channel;
       req.member = member;
       req.isOwner = false;
       next();
     } catch (error) {
+      console.error('[ChannelPermission] Error:', error);
       res.status(500).json({ message: error.message });
     }
   };

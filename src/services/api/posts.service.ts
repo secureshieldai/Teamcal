@@ -49,11 +49,30 @@ export const postsService = {
       console.log('PostsService uploadVideo - fileName:', input.fileName);
     }
     
-    form.append('video', {
-      uri: input.uri,
-      type: input.mimeType || 'video/mp4',
-      name: input.fileName || 'social-video.mp4',
-    } as never);
+    // Handle different URI formats
+    if (input.uri.startsWith('data:')) {
+      // Data URI - convert to blob
+      const blob = await (await fetch(input.uri)).blob();
+      form.append('video', blob, input.fileName || 'social-video.mp4');
+    } else if (input.uri.startsWith('file://')) {
+      // File URI - use as is
+      form.append('video', {
+        uri: input.uri,
+        type: input.mimeType || 'video/mp4',
+        name: input.fileName || 'social-video.mp4',
+      } as never);
+    } else {
+      // Assume it's a regular path
+      form.append('video', {
+        uri: input.uri,
+        type: input.mimeType || 'video/mp4',
+        name: input.fileName || 'social-video.mp4',
+      } as never);
+    }
+    
+    if (__DEV__) {
+      console.log('PostsService uploadVideo - FormData prepared, uploading...');
+    }
     
     const { data } = await apiClient.post<{ success: boolean; url: string }>('/posts/video', form, {
       headers: { 'Content-Type': 'multipart/form-data' },

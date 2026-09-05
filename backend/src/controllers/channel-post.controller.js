@@ -182,27 +182,63 @@ async function addReaction(req, res) {
     const userId = req.user.id;
     const { emoji } = req.body;
 
+    console.log('[addReaction] Request:', { postId, userId, emoji });
+
     const validEmojis = ['👍', '❤️', '😂', '🙏', '😢', '😮', '🔥'];
     if (!validEmojis.includes(emoji)) {
+      console.log('[addReaction] Invalid emoji:', emoji);
       return res.status(400).json({ message: 'Invalid emoji' });
     }
 
-    const { data, error } = await supabase
+    // Check if user already reacted
+    const { data: existing } = await supabase
       .from('channel_post_reactions')
-      .upsert({
-        post_id: postId,
-        user_id: userId,
-        emoji,
-      }, {
-        onConflict: 'post_id,user_id'
-      })
-      .select()
+      .select('*')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
       .single();
 
-    if (error) throw error;
+    let wasUpdate = false;
+    if (existing) {
+      // Update existing reaction
+      const { error: updateError } = await supabase
+        .from('channel_post_reactions')
+        .update({ emoji })
+        .eq('post_id', postId)
+        .eq('user_id', userId);
+      
+      if (updateError) throw updateError;
+      wasUpdate = true;
+    } else {
+      // Insert new reaction
+      const { error: insertError } = await supabase
+        .from('channel_post_reactions')
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          emoji,
+        });
+      
+      if (insertError) throw insertError;
+    }
 
-    res.json({ data, message: 'Reaction added' });
+    // Update reaction count on post
+    const { data: reactions } = await supabase
+      .from('channel_post_reactions')
+      .select('id')
+      .eq('post_id', postId);
+
+    const reactionCount = reactions?.length || 0;
+
+    await supabase
+      .from('channel_posts')
+      .update({ reaction_count: reactionCount })
+      .eq('id', postId);
+
+    console.log('[addReaction] Success:', { wasUpdate, reactionCount });
+    res.json({ message: 'Reaction added', reactionCount });
   } catch (error) {
+    console.error('[addReaction] Error:', error);
     res.status(500).json({ message: error.message });
   }
 }
@@ -215,6 +251,8 @@ async function removeReaction(req, res) {
     const { postId } = req.params;
     const userId = req.user.id;
 
+    console.log('[removeReaction] Request:', { postId, userId });
+
     const { error } = await supabase
       .from('channel_post_reactions')
       .delete()
@@ -223,8 +261,23 @@ async function removeReaction(req, res) {
 
     if (error) throw error;
 
-    res.json({ message: 'Reaction removed' });
+    // Update reaction count on post
+    const { data: reactions } = await supabase
+      .from('channel_post_reactions')
+      .select('id')
+      .eq('post_id', postId);
+
+    const reactionCount = reactions?.length || 0;
+
+    await supabase
+      .from('channel_posts')
+      .update({ reaction_count: reactionCount })
+      .eq('id', postId);
+
+    console.log('[removeReaction] Success:', { reactionCount });
+    res.json({ message: 'Reaction removed', reactionCount });
   } catch (error) {
+    console.error('[removeReaction] Error:', error);
     res.status(500).json({ message: error.message });
   }
 }

@@ -94,9 +94,12 @@ export default function ChannelFeedScreen() {
 
   const handleReaction = async (postId: string, emoji: string) => {
     try {
+      console.log('[ChannelFeed] Adding reaction:', { postId, emoji });
       await channelsService.addReaction(postId, emoji);
+      console.log('[ChannelFeed] Reaction added, refreshing posts...');
       loadPosts(); // Refresh to show updated counts
     } catch (error) {
+      console.error('[ChannelFeed] Reaction error:', error);
       Alert.alert('Error', (error as Error).message);
     }
   };
@@ -229,14 +232,17 @@ export default function ChannelFeedScreen() {
         data={posts}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        style={{ overflow: 'visible' }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListHeaderComponent={
-          <View>
+          <View style={{ overflow: 'visible' }}>
             {channel.cover_image && <Image source={{ uri: channel.cover_image }} style={styles.coverImage} />}
             <View style={styles.profileRow}>
-              <Avatar uri={channel.avatar || ''} size={64} />
-              <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <View style={styles.avatarContainer}>
+                <Avatar uri={channel.avatar || ''} size={80} />
+              </View>
+              <View style={{ alignItems: 'center', marginTop: spacing.sm }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={styles.profileName}>{channel.name}</Text>
                   {channel.is_monetized && (
@@ -250,6 +256,31 @@ export default function ChannelFeedScreen() {
               </View>
             </View>
             {channel.description && <Text style={styles.description}>{channel.description}</Text>}
+            
+            <View style={styles.quickLinks}>
+              <TouchableOpacity
+                style={styles.quickLink}
+                onPress={() => navigation.navigate('ChannelMedia', { channelId: channel.id })}
+              >
+                <Ionicons name="images-outline" size={20} color={colors.primary} />
+                <Text style={styles.quickLinkText}>Media</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickLink}
+                onPress={() => navigation.navigate('ChannelPoll', { channelId: channel.id })}
+              >
+                <Ionicons name="stats-chart-outline" size={20} color={colors.primary} />
+                <Text style={styles.quickLinkText}>Polls</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickLink}
+                onPress={() => navigation.navigate('ChannelAbout', { channelId: channel.id })}
+              >
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+                <Text style={styles.quickLinkText}>About</Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.actionRow}>
               <TouchableOpacity
                 style={[styles.followBtn, channel.isFollowing && styles.followingBtn]}
@@ -294,13 +325,53 @@ const styles = StyleSheet.create({
   channelName: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   channelMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   list: { paddingBottom: spacing.xxl },
-  coverImage: { width: '100%', height: 160, backgroundColor: colors.card },
-  profileRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, marginTop: -32, marginBottom: spacing.md },
+  coverImage: { 
+    width: '100%', 
+    height: 160, 
+    backgroundColor: colors.card,
+  },
+  profileRow: { 
+    alignItems: 'center', 
+    paddingHorizontal: spacing.lg, 
+    marginTop: -40,
+    marginBottom: spacing.md,
+    zIndex: 10,
+  },
+  avatarContainer: {
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: colors.white,
+    backgroundColor: colors.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   verifiedBadge: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   profileName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
   profileUsername: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
   profileStats: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  description: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
+  description: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, paddingHorizontal: spacing.lg, marginBottom: spacing.md, textAlign: 'center' },
+  quickLinks: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.card,
+    marginBottom: spacing.md,
+    borderRadius: radii.lg,
+    marginHorizontal: spacing.lg,
+  },
+  quickLink: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  quickLinkText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
   actionRow: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
   followBtn: { flex: 1, backgroundColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.sm, alignItems: 'center' },
   followingBtn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },

@@ -20,16 +20,18 @@ export default function VideoFeedTab({ videos, loading, ListHeaderComponent }: P
     if (viewableItems.length > 0) {
       // Get the first viewable item (the one most visible on screen)
       const activeItem = viewableItems[0];
-      if (activeItem?.item?.id) {
+      if (activeItem?.item?.id && activeItem.item.id !== activeVideoId) {
         setActiveVideoId(activeItem.item.id);
       }
     }
-  }, []);
+  }, [activeVideoId]);
 
   const viewabilityConfigCallbackPairs = useRef([
     {
       viewabilityConfig: {
-        itemVisiblePercentThreshold: 50,
+        itemVisiblePercentThreshold: 80,
+        minimumViewTime: 100,
+        waitForInteraction: false,
       },
       onViewableItemsChanged,
     },
@@ -59,6 +61,10 @@ export default function VideoFeedTab({ videos, loading, ListHeaderComponent }: P
         offset: itemHeight * index,
         index,
       })}
+      removeClippedSubviews
+      maxToRenderPerBatch={2}
+      windowSize={5}
+      initialNumToRender={2}
       renderItem={({ item }) => (
         <View style={{ height: itemHeight }}>
           <VideoFeedCard 

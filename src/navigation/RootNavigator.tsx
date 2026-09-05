@@ -55,6 +55,9 @@ import ReportChannelScreen from '../screens/ReportChannelScreen';
 import ChannelAnalyticsScreen from '../screens/ChannelAnalyticsScreen';
 import ChannelDiscoveryScreen from '../screens/ChannelDiscoveryScreen';
 import ChannelAdminManagementScreen from '../screens/ChannelAdminManagementScreen';
+import ChannelMediaScreen from '../screens/ChannelMediaScreen';
+import ChannelPollScreen from '../screens/ChannelPollScreen';
+import ChannelAboutScreen from '../screens/ChannelAboutScreen';
 import ChannelMonetizationScreen from '../screens/ChannelMonetizationScreen';
 import ChannelEarningsScreen from '../screens/ChannelEarningsScreen';
 import CreateCommunityScreen from '../screens/CreateCommunityScreen';
@@ -209,6 +212,9 @@ export default function RootNavigator() {
       <Stack.Screen name="ChannelMonetization" component={ChannelMonetizationScreen} />
       <Stack.Screen name="ChannelEarnings" component={ChannelEarningsScreen} />
       <Stack.Screen name="ChannelAnalytics" component={ChannelAnalyticsScreen} />
+      <Stack.Screen name="ChannelMedia" component={ChannelMediaScreen} />
+      <Stack.Screen name="ChannelPoll" component={ChannelPollScreen} />
+      <Stack.Screen name="ChannelAbout" component={ChannelAboutScreen} />
       <Stack.Screen name="AudienceEngine" component={AudienceEngineScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="DirectMessage" component={DirectMessageScreen} />
       <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />

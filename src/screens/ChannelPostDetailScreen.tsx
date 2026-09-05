@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -22,6 +22,7 @@ export default function ChannelPostDetailScreen() {
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   useEffect(() => {
     loadPost();
@@ -62,6 +63,39 @@ export default function ChannelPostDetailScreen() {
     }
   };
 
+  const handlePinPost = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Pin Post', 'This post has been pinned to the top of the channel');
+  };
+
+  const handleEditPost = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Edit Post', 'Edit functionality coming soon');
+  };
+
+  const handleDeletePost = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => navigation.goBack() },
+    ]);
+  };
+
+  const handleCopyLink = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Link Copied', 'Post link copied to clipboard');
+  };
+
+  const handleSharePost = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Share Post', 'Sharing options coming soon');
+  };
+
+  const handleTurnOffNotifications = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Notifications Off', 'You will no longer receive notifications for this post');
+  };
+
   if (loading || !post) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -79,10 +113,16 @@ export default function ChannelPostDetailScreen() {
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post</Text>
-        <View style={{ width: 22 }} />
+        <TouchableOpacity onPress={() => setShowOptionsMenu(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="ellipsis-vertical" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <FlatList
           data={comments}
           keyExtractor={(item) => item.id}
@@ -156,6 +196,43 @@ export default function ChannelPostDetailScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showOptionsMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowOptionsMenu(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowOptionsMenu(false)}>
+          <View style={styles.optionsMenu}>
+            <TouchableOpacity style={styles.optionItem} onPress={handlePinPost}>
+              <Ionicons name="pin-outline" size={22} color={colors.textPrimary} />
+              <Text style={styles.optionText}>Pin Post</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.optionItem} onPress={handleEditPost}>
+              <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+              <Text style={styles.optionText}>Edit Post</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.optionItem} onPress={handleDeletePost}>
+              <Ionicons name="trash-outline" size={22} color="#DC2626" />
+              <Text style={[styles.optionText, { color: '#DC2626' }]}>Delete Post</Text>
+            </TouchableOpacity>
+            <View style={styles.optionDivider} />
+            <TouchableOpacity style={styles.optionItem} onPress={handleTurnOffNotifications}>
+              <Ionicons name="notifications-off-outline" size={22} color={colors.textPrimary} />
+              <Text style={styles.optionText}>Turn off notifications</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.optionItem} onPress={handleCopyLink}>
+              <Ionicons name="link-outline" size={22} color={colors.textPrimary} />
+              <Text style={styles.optionText}>Copy Link</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.optionItem} onPress={handleSharePost}>
+              <Ionicons name="share-outline" size={22} color={colors.textPrimary} />
+              <Text style={styles.optionText}>Share Post</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -184,4 +261,34 @@ const styles = StyleSheet.create({
   input: { flex: 1, backgroundColor: colors.background, borderRadius: radii.xl, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: 14, color: colors.textPrimary, maxHeight: 80 },
   sendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  optionsMenu: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  optionDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginVertical: spacing.sm,
+    marginHorizontal: spacing.xl,
+  },
 });

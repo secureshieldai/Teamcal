@@ -1,10 +1,23 @@
-import { useEffect, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { memo, useEffect, useRef, useState } from 'react';
+import { 
+  Animated, 
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet, 
+  Text, 
+  TextInput,
+  TouchableOpacity, 
+  TouchableWithoutFeedback,
+  View 
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../Avatar';
 import { colors, spacing } from '../../theme';
-import { personalService } from '../../services/api/personal.service';
 import { socialService } from '../../services/api/social.service';
 
 export type VideoFeedItem = {
@@ -22,15 +35,25 @@ export type VideoFeedItem = {
   videoUrl: string;
 };
 
-export default function VideoFeedCard({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) {
+const VideoFeedCard = ({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) => {
+  const insets = useSafeAreaInsets();
   const [likes, setLikes] = useState(video.likes);
   const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [liking, setLiking] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(video.comments);
   const [following, setFollowing] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [showPlayIcon, setShowPlayIcon] = useState(true);
+  
+  // Double-tap animation
+  const heartScale = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef<number | null>(null);
 
   // Initialize video player with configuration
   const player = useVideoPlayer(video.videoUrl, (player) => {
@@ -38,11 +61,7 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
     player.muted = false;
   });
 
-  useEffect(() => {
-    personalService.list('saved-video').then((rows) => setSaved(rows.some((r) => r.external_key === video.id))).catch(() => {});
-  }, [video.id]);
-
-  // Auto-play when card becomes visible
+  // Auto-play when card becomes visible, pause when not
   useEffect(() => {
     if (!player) return;
     
@@ -66,6 +85,16 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
     };
   }, [player]);
 
+  // Hide play icon after a short delay when playing
+  useEffect(() => {
+    if (isPlaying) {
+      const timer = setTimeout(() => setShowPlayIcon(false), 500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowPlayIcon(true);
+    }
+  }, [isPlaying]);
+
   const togglePlayPause = () => {
     if (!player) return;
     
@@ -76,291 +105,493 @@ export default function VideoFeedCard({ video, height, isActive }: { video: Vide
     }
   };
 
+  const handleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (lastTap.current && now - lastTap.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      handleDoubleTap();
+      lastTap.current = null;
+    } else {
+      // Single tap
+      lastTap.current = now;
+      setTimeout(() => {
+        if (lastTap.current === now) {
+          togglePlayPause();
+        }
+      }, DOUBLE_TAP_DELAY);
+    }
+  };
+
+  const handleDoubleTap = () => {
+    if (!liked) {
+      // Animate heart
+      heartScale.setValue(0);
+      Animated.sequence([
+        Animated.spring(heartScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          friction: 3,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 0,
+          duration: 400,
+          delay: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Like the video
+      toggleLike();
+    }
+  };
+
   const toggleMute = () => {
     if (!player) return;
     player.muted = !isMuted;
     setIsMuted(!isMuted);
   };
 
-  const toggleLike = () => {
-    setLiked((prev) => !prev);
-    setLikes((prev) => prev + (liked ? -1 : 1));
-  };
+  const toggleLike = async () => {
+    if (liking) return;
 
-  const toggleSaved = async () => {
-    const previous = saved;
-    setSaved(!saved);
+    const previousLiked = liked;
+    const previousLikes = likes;
+
+    // Optimistic update
+    setLiked(!liked);
+    setLikes(liked ? likes - 1 : likes + 1);
+    setLiking(true);
+
     try {
-      setSaved(await personalService.toggle('saved-video', video.id, { caption: video.caption, thumbnail: video.thumbnail }));
-    } catch {
-      setSaved(previous);
+      // TODO: Call your actual API here
+      // await socialService.toggleVideoLike(video.id);
+      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API call
+    } catch (error) {
+      // Rollback on error
+      setLiked(previousLiked);
+      setLikes(previousLikes);
+      console.error('Failed to toggle like:', error);
+    } finally {
+      setLiking(false);
     }
   };
 
   const toggleFollow = async () => {
     const previous = following;
     setFollowing(!following);
+    
     try {
-      setFollowing(await socialService.toggleFollow(video.authorId));
-    } catch {
+      const result = await socialService.toggleFollow(video.authorId);
+      setFollowing(result);
+    } catch (error) {
       setFollowing(previous);
+      console.error('Failed to toggle follow:', error);
+    }
+  };
+
+  const openComments = async () => {
+    setShowComments(true);
+    setLoadingComments(true);
+    
+    try {
+      // TODO: Replace with actual comments API
+      // const fetchedComments = await socialService.getVideoComments(video.id);
+      // setComments(fetchedComments);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+      setComments([]); // Empty for now
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const postComment = async () => {
+    if (!commentText.trim() || postingComment) return;
+
+    setPostingComment(true);
+    
+    try {
+      // TODO: Replace with actual API
+      // const newComment = await socialService.addVideoComment(video.id, commentText.trim());
+      // setComments([newComment, ...comments]);
+      setCommentsCount(commentsCount + 1);
+      setCommentText('');
+    } catch (error) {
+      console.error('Failed to post comment:', error);
+    } finally {
+      setPostingComment(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={[styles.card, { height }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
-    >
+    <View style={[styles.card, { height }]}>
       {/* Video Player */}
-      <TouchableOpacity 
-        style={styles.media} 
-        activeOpacity={1} 
-        onPress={togglePlayPause}
-      >
-        <VideoView
-          player={player}
-          style={styles.media}
-          contentFit="cover"
-          nativeControls={false}
-        />
-      </TouchableOpacity>
+      <TouchableWithoutFeedback onPress={handleTap}>
+        <View style={styles.media}>
+          <VideoView
+            player={player}
+            style={styles.media}
+            contentFit="cover"
+            nativeControls={false}
+          />
 
-      {/* Top Row - Author Info */}
-      <View style={styles.topRow}>
-        <View style={styles.authorAvatarWrap}>
-          <Avatar uri={video.authorAvatar} size={34} />
-          {!following && (
-            <TouchableOpacity style={styles.followBadge} onPress={toggleFollow} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-              <Ionicons name="add" size={12} color={colors.white} />
-            </TouchableOpacity>
+          {/* Loading indicator */}
+          {!isPlaying && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="rgba(255,255,255,0.9)" />
+            </View>
           )}
+
+          {/* Double-tap heart animation */}
+          <Animated.View
+            style={[
+              styles.doubleTapHeart,
+              {
+                opacity: heartScale,
+                transform: [{ scale: heartScale }],
+              },
+            ]}
+          >
+            <Ionicons name="heart" size={120} color="rgba(255,255,255,0.95)" />
+          </Animated.View>
         </View>
-        <View style={styles.authorInfo}>
-          <View style={styles.authorRow}>
-            <Text style={styles.authorName}>{video.author}</Text>
-            {video.verified && <Ionicons name="checkmark-circle" size={13} color={colors.primary} />}
-          </View>
-          <Text style={styles.time}>{video.time}</Text>
-        </View>
-        <Ionicons name="ellipsis-horizontal" size={20} color={colors.white} />
-      </View>
+      </TouchableWithoutFeedback>
 
       {/* Play/Pause Indicator */}
-      {!isPlaying && (
-        <TouchableOpacity style={styles.playCircle} onPress={togglePlayPause}>
-          <Ionicons name="play" size={24} color="rgba(255,255,255,0.85)" />
-        </TouchableOpacity>
+      {!isPlaying && showPlayIcon && (
+        <View style={styles.playCircle} pointerEvents="none">
+          <Ionicons name="play" size={32} color="rgba(255,255,255,0.9)" />
+        </View>
       )}
 
-      {/* Action Rail - Right Side */}
-      <View style={styles.actionRail}>
-        <TouchableOpacity style={styles.actionItem} onPress={toggleLike}>
-          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={26} color={liked ? colors.macroProtein : colors.white} />
-          <Text style={styles.actionText}>{likes}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem} onPress={() => setShowComments(!showComments)}>
-          <Ionicons name="chatbubble-outline" size={23} color={colors.white} />
-          <Text style={styles.actionText}>{video.comments}</Text>
-        </TouchableOpacity>
-        <View style={styles.actionItem}>
-          <Ionicons name="share-social-outline" size={24} color={colors.white} />
-        </View>
-        <TouchableOpacity style={styles.actionItem} onPress={toggleSaved}>
-          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={23} color={saved ? colors.primary : colors.white} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem} onPress={toggleMute}>
-          <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={23} color={colors.white} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Caption */}
-      <View style={styles.captionWrap}>
-        <Text style={styles.captionText} numberOfLines={2}>{video.caption}</Text>
-      </View>
-
-      {/* Duration Badge */}
-      <View style={styles.durationBadge}>
-        <Text style={styles.durationText}>{video.duration}</Text>
-      </View>
-
-      {/* Comment Section */}
-      {showComments && (
-        <View style={styles.commentSection}>
-          <Text style={styles.commentTitle}>Comments</Text>
-          <View style={styles.commentInputWrap}>
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Add a comment..."
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              value={commentText}
-              onChangeText={setCommentText}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity style={styles.sendBtn} disabled={!commentText.trim()}>
-              <Ionicons name="send" size={18} color={commentText.trim() ? colors.primary : 'rgba(255,255,255,0.3)'} />
+      {/* Bottom-left: User Info */}
+      <View style={styles.userInfo}>
+        <View style={styles.userRow}>
+          <View style={styles.avatarContainer}>
+            <Avatar uri={video.authorAvatar} size={44} />
+          </View>
+          <View style={styles.userTextContainer}>
+            <View style={styles.usernameRow}>
+              <Text style={styles.username}>{video.author}</Text>
+              {video.verified && <Ionicons name="checkmark-circle" size={14} color={colors.primary} />}
+            </View>
+            <TouchableOpacity 
+              style={styles.followBtn} 
+              onPress={toggleFollow}
+              disabled={following}
+            >
+              <Text style={styles.followBtnText}>{following ? 'Following' : 'Follow'}</Text>
             </TouchableOpacity>
           </View>
         </View>
-      )}
-    </KeyboardAvoidingView>
+      </View>
+
+      {/* Right-side Action Bar */}
+      <View style={styles.actionRail}>
+        {/* Like */}
+        <TouchableOpacity 
+          style={styles.actionItem} 
+          onPress={toggleLike}
+          disabled={liking}
+        >
+          <Ionicons 
+            name={liked ? 'heart' : 'heart-outline'} 
+            size={32} 
+            color={liked ? '#FF3B5C' : colors.white} 
+          />
+          <Text style={styles.actionText}>{likes}</Text>
+        </TouchableOpacity>
+
+        {/* Comments */}
+        <TouchableOpacity style={styles.actionItem} onPress={openComments}>
+          <Ionicons name="chatbubble-outline" size={28} color={colors.white} />
+          <Text style={styles.actionText}>{commentsCount}</Text>
+        </TouchableOpacity>
+
+        {/* Mute/Unmute */}
+        <TouchableOpacity style={styles.actionItem} onPress={toggleMute}>
+          <Ionicons 
+            name={isMuted ? 'volume-mute' : 'volume-high'} 
+            size={28} 
+            color={colors.white} 
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Comments Bottom Sheet Modal */}
+      <Modal
+        visible={showComments}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowComments(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowComments(false)}>
+            <View style={styles.modalBackdrop}>
+              <TouchableWithoutFeedback>
+                <View style={[styles.commentsSheet, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+                  <View style={styles.sheetHandle} />
+                  <Text style={styles.commentsTitle}>Comments</Text>
+
+                  {loadingComments ? (
+                    <View style={styles.commentsLoading}>
+                      <ActivityIndicator size="large" color={colors.primary} />
+                    </View>
+                  ) : comments.length === 0 ? (
+                    <View style={styles.commentsEmpty}>
+                      <Ionicons name="chatbubbles-outline" size={48} color={colors.textMuted} />
+                      <Text style={styles.emptyText}>No comments yet</Text>
+                      <Text style={styles.emptySubtext}>Be the first to comment</Text>
+                    </View>
+                  ) : (
+                    <ScrollView 
+                      style={styles.commentsList}
+                      keyboardShouldPersistTaps="handled"
+                    >
+                      {comments.map((comment) => (
+                        <View key={comment.id} style={styles.commentItem}>
+                          {/* Comment rendering logic here */}
+                        </View>
+                      ))}
+                    </ScrollView>
+                  )}
+
+                  <View style={styles.commentInputContainer}>
+                    <TextInput
+                      style={styles.commentInput}
+                      placeholder="Add a comment..."
+                      placeholderTextColor={colors.textMuted}
+                      value={commentText}
+                      onChangeText={setCommentText}
+                      multiline
+                      maxLength={500}
+                    />
+                    <TouchableOpacity 
+                      style={[styles.postBtn, !commentText.trim() && styles.postBtnDisabled]} 
+                      onPress={postComment}
+                      disabled={!commentText.trim() || postingComment}
+                    >
+                      {postingComment ? (
+                        <ActivityIndicator size="small" color={colors.white} />
+                      ) : (
+                        <Ionicons name="send" size={20} color={colors.white} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+    </View>
   );
-}
+};
+
+export default memo(VideoFeedCard);
 
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',
     backgroundColor: colors.navy,
+    position: 'relative',
   },
   media: {
     width: '100%',
     height: '100%',
     position: 'absolute',
+    top: 0,
+    left: 0,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  authorAvatarWrap: {
-    position: 'relative',
-  },
-  followBadge: {
+  loadingOverlay: {
     position: 'absolute',
-    right: -3,
-    bottom: -3,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.primary,
-    borderWidth: 2,
-    borderColor: colors.navy,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  authorInfo: {
-    flex: 1,
-  },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  authorName: {
-    color: colors.white,
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  time: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 11.5,
-    marginTop: 1,
+  doubleTapHeart: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -60,
+    marginLeft: -60,
   },
   playCircle: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginTop: -30,
-    marginLeft: -30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    marginTop: -40,
+    marginLeft: -40,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  userInfo: {
+    position: 'absolute',
+    left: spacing.md,
+    bottom: spacing.xl + spacing.md,
+    right: 80,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  userTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  username: {
+    color: colors.white,
+    fontWeight: '800',
+    fontSize: 15,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  followBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  followBtnText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '700',
   },
   actionRail: {
     position: 'absolute',
     right: spacing.md,
     bottom: spacing.xxl + spacing.xl,
     alignItems: 'center',
-    gap: spacing.lg,
+    gap: spacing.xl,
   },
   actionItem: {
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   actionText: {
     color: colors.white,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  captionWrap: {
-    position: 'absolute',
-    left: spacing.md,
-    right: 64,
-    bottom: spacing.lg,
-  },
-  captionText: {
-    color: colors.white,
-    fontSize: 13.5,
-    fontWeight: '600',
-    lineHeight: 19,
-  },
-  durationBadge: {
-    position: 'absolute',
-    right: spacing.md,
-    top: spacing.md,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  durationText: {
-    color: colors.white,
-    fontSize: 10.5,
-    fontWeight: '700',
-  },
-  placeholderBg: {
-    backgroundColor: colors.navy,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noVideoText: {
-    color: 'rgba(255,255,255,0.5)',
     fontSize: 13,
-    marginTop: spacing.sm,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  commentSection: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+  // Comments Modal
+  modalContainer: {
+    flex: 1,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  commentsSheet: {
+    backgroundColor: colors.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    maxHeight: '70%',
   },
-  commentTitle: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
-  commentInputWrap: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  commentsLoading: {
+    padding: spacing.xxl,
+    alignItems: 'center',
+  },
+  commentsEmpty: {
+    padding: spacing.xxl,
+    alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  commentsList: {
+    paddingHorizontal: spacing.lg,
+    maxHeight: 300,
+  },
+  commentItem: {
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: spacing.md,
   },
   commentInput: {
     flex: 1,
-    color: colors.white,
-    fontSize: 13,
+    backgroundColor: colors.background,
+    borderRadius: 20,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 14,
+    color: colors.textPrimary,
     maxHeight: 80,
-    paddingVertical: spacing.xs,
   },
-  sendBtn: {
-    padding: spacing.xs,
+  postBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postBtnDisabled: {
+    opacity: 0.5,
   },
 });

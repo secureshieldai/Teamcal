@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -12,6 +12,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Comments'>;
 
 export default function CommentsScreen({ route, navigation }: Props) {
   const { postId } = route.params;
+  const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<PostComment[]>([]);
   const [value, setValue] = useState('');
   const [posting, setPosting] = useState(false);
@@ -45,7 +46,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} />
@@ -53,60 +54,85 @@ export default function CommentsScreen({ route, navigation }: Props) {
         <Text style={styles.title}>Comments</Text>
         <View style={{ width: 24 }} />
       </View>
-      <FlatList
-        data={comments}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>Be the first to comment.</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <TouchableOpacity
-              disabled={!item.user?.id}
-              onPress={() => item.user?.id && navigation.navigate('UserProfile', { userId: item.user.id, username: item.user.name })}
-            >
-              <Avatar uri={item.user?.avatar || ''} size={36} />
-            </TouchableOpacity>
-            <View style={styles.bubble}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        <FlatList
+          data={comments}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={<Text style={styles.empty}>Be the first to comment.</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.row}>
               <TouchableOpacity
                 disabled={!item.user?.id}
                 onPress={() => item.user?.id && navigation.navigate('UserProfile', { userId: item.user.id, username: item.user.name })}
               >
-                <Text style={styles.name}>{item.user?.name || 'Member'}</Text>
+                <Avatar uri={item.user?.avatar || ''} size={36} />
               </TouchableOpacity>
-              <Text style={styles.comment}>{item.meta.text}</Text>
-              <Text style={styles.time}>{new Date(item.ts).toLocaleString()}</Text>
+              <View style={styles.bubble}>
+                <TouchableOpacity
+                  disabled={!item.user?.id}
+                  onPress={() => item.user?.id && navigation.navigate('UserProfile', { userId: item.user.id, username: item.user.name })}
+                >
+                  <Text style={styles.name}>{item.user?.name || 'Member'}</Text>
+                </TouchableOpacity>
+                <Text style={styles.comment}>{item.meta.text}</Text>
+                <Text style={styles.time}>{new Date(item.ts).toLocaleString()}</Text>
+              </View>
             </View>
-          </View>
-        )}
-      />
-      <View style={styles.composer}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={setValue}
-          placeholder="Write a comment…"
-          multiline
+          )}
         />
-        <TouchableOpacity style={styles.send} onPress={send} disabled={posting}>
-          <Ionicons name="send" size={20} color={colors.white} />
-        </TouchableOpacity>
-      </View>
+        <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+          <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={setValue}
+            placeholder="Write a comment…"
+            placeholderTextColor={colors.textMuted}
+            multiline
+          />
+          <TouchableOpacity style={styles.send} onPress={send} disabled={posting}>
+            <Ionicons name="send" size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg },
   title: { ...typography.h2 },
-  list: { padding: spacing.lg, gap: spacing.md },
+  list: { padding: spacing.lg, gap: spacing.md, flexGrow: 1 },
   row: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   bubble: { flex: 1, backgroundColor: colors.card, borderRadius: radii.lg, padding: spacing.md },
   name: { ...typography.bodyBold },
   comment: { ...typography.body, marginTop: 3, color: colors.textPrimary },
   time: { ...typography.small, color: colors.textMuted, marginTop: 5 },
   empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card },
-  input: { flex: 1, maxHeight: 100, backgroundColor: colors.background, borderRadius: radii.lg, padding: spacing.md },
+  composer: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-end', 
+    gap: spacing.sm, 
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1, 
+    borderTopColor: colors.border, 
+    backgroundColor: colors.card 
+  },
+  input: { 
+    flex: 1, 
+    maxHeight: 100, 
+    backgroundColor: colors.background, 
+    borderRadius: radii.lg, 
+    padding: spacing.md,
+    color: colors.textPrimary,
+  },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
 });

@@ -50,6 +50,9 @@ export type RootStackParamList = {
   CreateChannelPost: { channelId: string };
   ChannelPostDetail: { postId: string };
   ChannelAnalytics: { channelId: string };
+  ChannelMedia: { channelId: string };
+  ChannelPoll: { channelId: string };
+  ChannelAbout: { channelId: string };
   CreateChallenge: { challengeId?: string } | undefined;
   ProfileCollection: { kind: 'measurements' | 'photos' | 'achievements' };
   MarketplaceDetail: { productId: string };

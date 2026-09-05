@@ -74,10 +74,30 @@ async function uploadPostImage(req, res, next) {
 /** POST /api/posts/video */
 async function uploadPostVideo(req, res, next) {
   try {
-    if (!req.file) return res.status(400).json({ success: false, message: "No file" });
+    console.log('[uploadPostVideo] Request received');
+    console.log('[uploadPostVideo] Has file:', !!req.file);
+    console.log('[uploadPostVideo] Has body:', !!req.body);
+    console.log('[uploadPostVideo] Content-Type:', req.headers['content-type']);
+    
+    if (req.file) {
+      console.log('[uploadPostVideo] File details:', {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+      });
+    }
+    
+    if (!req.file) {
+      console.log('[uploadPostVideo] No file received');
+      return res.status(400).json({ success: false, message: "No file" });
+    }
+    
     const url = await uploadPublicVideo("posts", req.user.id, req.file);
+    console.log('[uploadPostVideo] Upload successful, URL:', url);
     res.json({ success: true, url });
   } catch (err) {
+    console.error('[uploadPostVideo] Error:', err);
     next(err);
   }
 }
