@@ -76,6 +76,7 @@ Keep replies concise (2-4 sentences max), warm, and data-driven. No markdown hea
  * POST /api/coach/scan-meal
  * Multipart: image file
  * Uses Gemini Vision to identify foods and estimate macros.
+ * Falls back to CalorieNinjas API if AI Vision is not configured.
  */
 async function scanMeal(req, res, next) {
   try {
@@ -83,12 +84,13 @@ async function scanMeal(req, res, next) {
       return res.status(400).json({ success: false, message: "Image required" });
     }
 
-    if (!AI_ENABLED) return res.status(503).json({ success: false, message: "AI Vision is not configured on the server" });
+    // Try AI Vision first if available
+    if (AI_ENABLED) {
+      try {
+        const base64 = req.file.buffer.toString("base64");
+        const mimeType = req.file.mimetype;
 
-    const base64 = req.file.buffer.toString("base64");
-    const mimeType = req.file.mimetype;
-
-    const prompt = `Analyze this food image. Return ONLY valid JSON (no markdown) with this exact shape:
+        const prompt = `Analyze this food image. Return ONLY valid JSON (no markdown) with this exact shape:
 {
   "items": [
     { "name": "Food name", "grams": 150, "kcal": 200, "p": 20, "c": 25, "f": 8, "confidence": 0.9 }
@@ -97,32 +99,142 @@ async function scanMeal(req, res, next) {
 }
 Estimate realistic portion sizes and macros per 100g scaled to estimated grams.`;
 
-    const visionModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
-    const result = await visionModel.generateContent([
-      prompt,
-      { inlineData: { data: base64, mimeType } },
-    ]);
+        const visionModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+        const result = await visionModel.generateContent([
+          prompt,
+          { inlineData: { data: base64, mimeType } },
+        ]);
 
-    let parsed;
-    try {
-      const text = result.response.text().replace(/```json|```/g, "").trim();
-      parsed = JSON.parse(text);
-    } catch {
-      return res.status(502).json({ success: false, message: "AI Vision returned an unreadable result. Please retake the photo." });
+        let parsed;
+        try {
+          const text = result.response.text().replace(/```json|```/g, "").trim();
+          parsed = JSON.parse(text);
+        } catch {
+          // AI Vision failed to parse, fall through to CalorieNinjas
+          throw new Error("AI Vision returned unreadable result");
+        }
+
+        return res.json({
+          success: true,
+          source: 'ai-vision',
+          result: {
+            id: `scan-${Date.now()}`,
+            ts: Date.now(),
+            items: parsed.items || [],
+            totals: parsed.totals || { kcal: 0, p: 0, c: 0, f: 0 },
+          },
+        });
+      } catch (aiError) {
+        console.log('AI Vision failed, falling back to CalorieAPI:', aiError.message);
+        // Fall through to CalorieAPI fallback
+      }
     }
+
+    // Fallback: Use CalorieAPI.com with natural language query
+    // Since we can't analyze the image, prompt user to describe what they see
+    return res.status(202).json({ 
+      success: true, 
+      source: 'fallback-prompt',
+      message: 'AI Vision is not available. Please describe what food you see.',
+      requiresDescription: true,
+      result: null
+    });
+
+  } catch (err) {
+    const message = err?.message || "Meal scan request failed";
+    res.status(502).json({ 
+      success: false, 
+      message: process.env.NODE_ENV === "production" 
+        ? "Meal scanning is temporarily unavailable" 
+        : message 
+    });
+  }
+}
+
+/**
+ * POST /api/coach/scan-meal-text
+ * Body: { query: "chicken breast with rice and broccoli" }
+ * Uses CalorieNinjas API to get nutrition info from text description.
+ */
+async function scanMealText(req, res, next) {
+  try {
+    const query = String(req.body.query || "").trim();
+    if (!query) {
+      return res.status(400).json({ success: false, message: "Food description required" });
+    }
+
+    if (!process.env.CALORIE_NINJAS_API_KEY) {
+      return res.status(503).json({ 
+        success: false, 
+        message: "Nutrition lookup is not configured on the server" 
+      });
+    }
+
+    // CalorieNinjas API endpoint
+    const response = await fetch(
+      `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          'X-Api-Key': process.env.CALORIE_NINJAS_API_KEY,
+        },
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`CalorieNinjas API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.items || data.items.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No nutrition data found for this food" 
+      });
+    }
+
+    // Transform CalorieNinjas format to our format
+    const items = data.items.map(item => ({
+      name: item.name,
+      grams: item.serving_size_g || 100,
+      kcal: Math.round(item.calories || 0),
+      p: Math.round((item.protein_g || 0) * 10) / 10,
+      c: Math.round((item.carbohydrates_total_g || 0) * 10) / 10,
+      f: Math.round((item.fat_total_g || 0) * 10) / 10,
+      confidence: 0.85,
+      source: 'calorieninjas',
+    }));
+
+    const totals = items.reduce(
+      (acc, item) => ({
+        kcal: acc.kcal + item.kcal,
+        p: acc.p + item.p,
+        c: acc.c + item.c,
+        f: acc.f + item.f,
+      }),
+      { kcal: 0, p: 0, c: 0, f: 0 }
+    );
+
+    // Round totals
+    totals.kcal = Math.round(totals.kcal);
+    totals.p = Math.round(totals.p * 10) / 10;
+    totals.c = Math.round(totals.c * 10) / 10;
+    totals.f = Math.round(totals.f * 10) / 10;
 
     res.json({
       success: true,
+      source: 'calorieninjas',
       result: {
-        id: `scan-${Date.now()}`,
+        id: `scan-text-${Date.now()}`,
         ts: Date.now(),
-        items: parsed.items || [],
-        totals: parsed.totals || { kcal: 0, p: 0, c: 0, f: 0 },
+        items,
+        totals,
       },
     });
+
   } catch (err) {
-    const message = err?.message || "AI Vision request failed";
-    res.status(502).json({ success: false, message: process.env.NODE_ENV === "production" ? "AI Vision is temporarily unavailable" : message });
+    next(err);
   }
 }
 
@@ -283,4 +395,4 @@ function buildSuggestions(message) {
   return [];
 }
 
-module.exports = { chat, scanMeal, lookupBarcode, generateAudience, generateArticleContent, aiRateLimit, genAI, model, AI_ENABLED };
+module.exports = { chat, scanMeal, scanMealText, lookupBarcode, generateAudience, generateArticleContent, aiRateLimit, genAI, model, AI_ENABLED };

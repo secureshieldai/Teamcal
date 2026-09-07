@@ -105,7 +105,7 @@ export default function HomeScreen() {
           ...tile,
           onPress: tile.id === 'steps' ? () => navigation.navigate('Steps')
             : tile.id === 'water' ? () => navigation.navigate('Water')
-            : tile.id === 'workouts' ? () => navigation.navigate('Workouts')
+            : tile.id === 'meals' ? () => navigation.navigate('QuickLogEntry', { kind: 'meal' })
             : tile.id === 'fasting' ? () => navigation.navigate('Fasting')
             : undefined,
         }))} />

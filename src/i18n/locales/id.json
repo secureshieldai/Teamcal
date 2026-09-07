@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "Lanjutkan",
+    "back": "Kembali",
+    "next": "Berikutnya",
+    "skip": "Lewati",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "done": "Selesai",
+    "close": "Tutup",
+    "confirm": "Konfirmasi",
+    "yes": "Ya",
+    "no": "Tidak",
+    "ok": "OK",
+    "loading": "Memuat...",
+    "error": "Kesalahan",
+    "success": "Berhasil",
+    "tryAgain": "Coba lagi",
+    "learnMore": "Pelajari lebih lanjut"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "Lebih sehat, hari demi hari."
+  },
+  "languageSelection": {
+    "title": "Pilih bahasamu",
+    "subtitle": "Pilih bahasa pilihanmu untuk melanjutkan",
+    "continue": "Lanjutkan"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "Lacak. Bersaing.\nMenang bersama.",
+      "titleHighlight": "Menang bersama.",
+      "subtitle": "Pelacak kalori sosial yang dibuat untuk tim, tantangan, dan akuntabilitas nyata."
+    },
+    "slide2": {
+      "title": "Lacak Lebih Banyak.\nLakukan Lebih Banyak.",
+      "titleHighlight": "Lebih Banyak.",
+      "subtitle": "Semua yang kamu butuhkan dalam satu aplikasi yang canggih."
+    },
+    "slide3": {
+      "title": "AI Cerdas.\nHasil Nyata.",
+      "titleHighlight": "AI.",
+      "subtitle": "Dapatkan pelatihan personal, rencana makan, bantuan belanja, dan analisis makanan cerdas."
+    },
+    "slide4": {
+      "title": "Tim AI-mu.\nSelalu Aktif.",
+      "titleHighlight": "Tim AI.",
+      "subtitle": "Lima spesialis AI bekerja sepanjang waktu untuk membantumu menang."
+    },
+    "slide5": {
+      "title": "Pindai Apa Saja.\nCatat Seketika.",
+      "titleHighlight": "Apa Saja.",
+      "subtitle": "Pindai makanan, barcode, atau menu. AI melakukan sisanya."
+    },
+    "slide6": {
+      "title": "Tantangan yang\nMembuatmu Lebih Baik.",
+      "titleHighlight": "yang",
+      "subtitle": "Ikuti tantangan seru, capai target, dapatkan hadiah, dan naiki papan peringkat."
+    },
+    "slide7": {
+      "title": "Bersaing. Naik.\nRayakan.",
+      "titleHighlight": "Naik.",
+      "subtitle": "Lihat peringkatmu, dukung timmu, dan rayakan setiap kemenangan bersama."
+    },
+    "slide8": {
+      "title": "Komunitasmu.\nMotivasimu.",
+      "titleHighlight": "Komunitasmu.",
+      "subtitle": "Tetap termotivasi dengan postingan, pembaruan, tips, dan kemenangan dari timmu dan komunitas."
+    },
+    "slide9": {
+      "title": "Bayangkan di Mana\nKamu Akan Berada\n30 Hari dari Sekarang.",
+      "titleHighlight": "30 Hari dari Sekarang.",
+      "subtitle": "Beberapa menit setiap hari dapat membangun kebiasaan yang lebih sehat, akuntabilitas yang lebih kuat, dan hasil yang bertahan lama."
+    },
+    "slide10": {
+      "title": "Semua yang Kamu Dapatkan",
+      "titleHighlight": "Kamu Dapatkan",
+      "subtitle": "Semua alat yang kamu butuhkan untuk sukses — bahkan sebagai pemula."
+    },
+    "slide11": {
+      "title": "Kami ingin kamu mencoba TeamCal secara gratis.",
+      "titleHighlight": "TeamCal",
+      "subtitle": "Nikmati semua fitur premium dengan uji coba gratis 3 hari."
+    },
+    "slide12": {
+      "title": "Kami akan mengirimkan notifikasi sehari sebelumnya agar kamu tidak ketinggalan.",
+      "titleHighlight": "notifikasi",
+      "subtitle": "Batalkan kapan saja sebelum uji coba berakhir, tanpa biaya."
+    },
+    "plan": {
+      "title": "Pilih Paketmu",
+      "subtitle": "Mulai uji coba gratis 3 hari",
+      "startTrial": "Mulai Uji Coba Gratis",
+      "caption": "Kamu tidak akan ditagih sampai uji cobamu berakhir. Batalkan kapan saja."
+    },
+    "final": {
+      "title": "Semua Siap!",
+      "titleHighlight": "Siap!",
+      "subtitle": "Ayo bangun kebiasaan sehat, capai target, dan menang bersama!",
+      "startJourney": "Mulai Perjalananmu"
+    },
+    "letsGo": "Ayo Mulai!"
+  },
+  "auth": {
+    "login": "Masuk",
+    "signUp": "Daftar",
+    "logout": "Keluar",
+    "loggingOut": "Keluar…",
+    "email": "Email",
+    "password": "Kata sandi",
+    "confirmPassword": "Konfirmasi kata sandi",
+    "forgotPassword": "Lupa kata sandi?",
+    "dontHaveAccount": "Belum punya akun?",
+    "alreadyHaveAccount": "Sudah punya akun?",
+    "createAccount": "Buat akun",
+    "resetPassword": "Atur ulang kata sandi",
+    "verifyCode": "Verifikasi kode",
+    "enterCode": "Masukkan kode yang dikirim ke emailmu",
+    "sendCode": "Kirim kode",
+    "resendCode": "Kirim ulang kode"
+  },
+  "navigation": {
+    "home": "Beranda",
+    "explore": "Jelajahi",
+    "community": "Komunitas",
+    "earn": "Hasilkan"
+  },
+  "home": {
+    "title": "Beranda",
+    "welcome": "Selamat datang kembali",
+    "dailyProgress": "Progres harian",
+    "calories": "Kalori",
+    "protein": "Protein",
+    "carbs": "Karbohidrat",
+    "fat": "Lemak",
+    "water": "Air",
+    "steps": "Langkah",
+    "weight": "Berat badan",
+    "sleep": "Tidur"
+  },
+  "explore": {
+    "title": "Jelajahi",
+    "search": "Cari",
+    "discover": "Temukan",
+    "trending": "Sedang tren",
+    "categories": "Kategori"
+  },
+  "community": {
+    "title": "Komunitas",
+    "feed": "Beranda",
+    "challenges": "Tantangan",
+    "leaderboard": "Papan peringkat",
+    "groups": "Grup",
+    "messages": "Pesan"
+  },
+  "earn": {
+    "title": "Hasilkan",
+    "dashboard": "Dasbor",
+    "content": "Konten",
+    "videos": "Video",
+    "pdfs": "PDF",
+    "blogs": "Blog",
+    "memberships": "Keanggotaan",
+    "stores": "Toko"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "account": "Akun",
+    "editProfile": "Edit profil",
+    "changePassword": "Ubah kata sandi",
+    "notifications": "Notifikasi",
+    "privacy": "Privasi",
+    "helpSupport": "Bantuan & dukungan",
+    "termsOfUse": "Ketentuan Penggunaan",
+    "privacyPolicy": "Kebijakan Privasi",
+    "communityGuidelines": "Pedoman Komunitas",
+    "language": "Bahasa",
+    "deleteAccount": "Hapus akun",
+    "stepSync": {
+      "title": "Langkah otomatis",
+      "titleIOS": "Langkah Apple Health",
+      "titleAndroid": "Langkah Health Connect",
+      "connected": "Terhubung · disinkronkan saat aplikasi dibuka dan secara berkala di latar belakang.",
+      "notConnected": "Hubungkan total langkah dari ponsel atau perangkat wearable-mu.",
+      "connect": "Hubungkan",
+      "disconnect": "Putuskan",
+      "syncNow": "Sinkronkan sekarang",
+      "pleaseWait": "Mohon tunggu…",
+      "syncSuccess": "Langkah disinkronkan",
+      "syncFailed": "Sinkronisasi gagal",
+      "connectSuccess": "Langkah terhubung",
+      "connectFailed": "Tidak dapat menghubungkan langkah"
+    },
+    "deleteAccountConfirm": "Hapus akun?",
+    "deleteAccountMessage": "Tindakan ini menghapus akun TeamCal dan data terkait secara permanen. Tindakan ini tidak dapat dibatalkan.",
+    "deleteAccountFinal": "Konfirmasi akhir",
+    "deleteAccountFinalMessage": "Hapus akunmu secara permanen sekarang?",
+    "deleteAccountError": "Tidak dapat menghapus akun"
+  },
+  "profile": {
+    "title": "Profil",
+    "editProfile": "Edit profil",
+    "followers": "Pengikut",
+    "following": "Mengikuti",
+    "posts": "Postingan",
+    "bio": "Bio"
+  },
+  "challenges": {
+    "title": "Tantangan",
+    "active": "Aktif",
+    "completed": "Selesai",
+    "browse": "Telusuri",
+    "create": "Buat tantangan",
+    "join": "Gabung",
+    "leave": "Keluar",
+    "details": "Detail",
+    "leaderboard": "Papan peringkat",
+    "participants": "Peserta"
+  },
+  "meals": {
+    "title": "Makanan",
+    "breakfast": "Sarapan",
+    "lunch": "Makan siang",
+    "dinner": "Makan malam",
+    "snacks": "Camilan",
+    "addMeal": "Tambah makanan",
+    "logFood": "Catat makanan",
+    "scanFood": "Pindai makanan",
+    "mealPlanner": "Perencana makan",
+    "recipes": "Resep",
+    "groceryList": "Daftar belanja"
+  },
+  "workout": {
+    "title": "Latihan",
+    "today": "Hari ini",
+    "history": "Riwayat",
+    "plans": "Program",
+    "startWorkout": "Mulai latihan",
+    "exercises": "Gerakan",
+    "sets": "Set",
+    "reps": "Repetisi",
+    "duration": "Durasi",
+    "intensity": "Intensitas"
+  },
+  "progress": {
+    "title": "Progres",
+    "weekly": "Mingguan",
+    "monthly": "Bulanan",
+    "yearly": "Tahunan",
+    "weight": "Berat badan",
+    "measurements": "Pengukuran",
+    "photos": "Foto",
+    "goals": "Target"
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "all": "Semua",
+    "unread": "Belum dibaca",
+    "settings": "Pengaturan notifikasi",
+    "empty": "Belum ada notifikasi",
+    "markAllRead": "Tandai semua telah dibaca"
+  },
+  "search": {
+    "title": "Cari",
+    "placeholder": "Cari...",
+    "recent": "Terbaru",
+    "noResults": "Tidak ada hasil ditemukan",
+    "tryAgain": "Coba pencarian lain"
+  },
+  "errors": {
+    "generic": "Terjadi kesalahan",
+    "network": "Kesalahan jaringan. Silakan periksa koneksimu.",
+    "unauthorized": "Kamu perlu masuk untuk melanjutkan",
+    "notFound": "Tidak ditemukan",
+    "serverError": "Kesalahan server. Silakan coba lagi nanti.",
+    "invalidInput": "Input tidak valid",
+    "required": "Kolom ini wajib diisi",
+    "invalidEmail": "Masukkan email yang valid",
+    "passwordTooShort": "Kata sandi harus minimal 8 karakter",
+    "passwordsMismatch": "Kata sandi tidak cocok"
+  },
+  "empty": {
+    "generic": "Belum ada apa-apa di sini",
+    "noData": "Tidak ada data tersedia",
+    "noResults": "Tidak ada hasil ditemukan",
+    "noPosts": "Belum ada postingan",
+    "noMessages": "Belum ada pesan",
+    "noChallenges": "Belum ada tantangan",
+    "noWorkouts": "Belum ada latihan",
+    "noMeals": "Belum ada makanan yang dicatat"
+  },
+  "buttons": {
+    "add": "Tambah",
+    "create": "Buat",
+    "update": "Perbarui",
+    "remove": "Hapus",
+    "share": "Bagikan",
+    "like": "Suka",
+    "comment": "Komentar",
+    "follow": "Ikuti",
+    "unfollow": "Berhenti mengikuti",
+    "send": "Kirim",
+    "post": "Posting",
+    "upload": "Unggah",
+    "download": "Unduh",
+    "viewMore": "Lihat lebih banyak",
+    "seeAll": "Lihat semua"
+  },
+  "forms": {
+    "name": "Nama",
+    "email": "Email",
+    "phone": "Telepon",
+    "message": "Pesan",
+    "description": "Deskripsi",
+    "title": "Judul",
+    "category": "Kategori",
+    "tags": "Tag",
+    "price": "Harga",
+    "quantity": "Jumlah"
+  },
+  "subscription": {
+    "title": "Langganan",
+    "freeTrial": "Uji coba gratis",
+    "subscribe": "Berlangganan",
+    "unsubscribe": "Berhenti berlangganan",
+    "manageSubscription": "Kelola langganan",
+    "currentPlan": "Paket saat ini",
+    "upgradePlan": "Tingkatkan paket",
+    "cancelSubscription": "Batalkan langganan"
+  },
+  "ai": {
+    "coach": "Pelatih AI",
+    "mealPlanner": "Perencana Makan AI",
+    "foodAnalyzer": "Penganalisis Makanan AI",
+    "groceryAssistant": "Asisten Belanja AI",
+    "supplementAdvisor": "Penasihat Suplemen AI"
+  },
+  "tracking": {
+    "calories": "Kalori",
+    "macros": "Makro",
+    "water": "Air",
+    "weight": "Berat badan",
+    "sleep": "Tidur",
+    "steps": "Langkah",
+    "fasting": "Puasa",
+    "period": "Pelacak Menstruasi",
+    "mood": "Jurnal Suasana Hati",
+    "supplements": "Suplemen"
+  }
+}

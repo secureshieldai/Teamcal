@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "Continuar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "skip": "Saltar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "done": "Listo",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "ok": "OK",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "tryAgain": "Intentar de nuevo",
+    "learnMore": "Más información"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "Más saludable, día a día."
+  },
+  "languageSelection": {
+    "title": "Elige tu idioma",
+    "subtitle": "Selecciona tu idioma preferido para continuar",
+    "continue": "Continuar"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "Rastrea. Compite.\nGana juntos.",
+      "titleHighlight": "Gana juntos.",
+      "subtitle": "El rastreador social de calorías creado para equipos, desafíos y responsabilidad real."
+    },
+    "slide2": {
+      "title": "Rastrea más.\nHaz más.",
+      "titleHighlight": "más.",
+      "subtitle": "Todo lo que necesitas en una aplicación potente."
+    },
+    "slide3": {
+      "title": "IA inteligente.\nResultados reales.",
+      "titleHighlight": "IA.",
+      "subtitle": "Obtén entrenamiento personalizado, planes de comidas, ayuda con las compras y análisis inteligente de alimentos."
+    },
+    "slide4": {
+      "title": "Tu equipo de IA.\nSiempre activo.",
+      "titleHighlight": "equipo de IA.",
+      "subtitle": "Cinco especialistas de IA trabajando las 24 horas para ayudarte a ganar."
+    },
+    "slide5": {
+      "title": "Escanea cualquier cosa.\nRegistra al instante.",
+      "titleHighlight": "cualquier cosa.",
+      "subtitle": "Escanea comida, códigos de barras o menús. La IA hace el resto."
+    },
+    "slide6": {
+      "title": "Desafíos que\nte hacen mejor.",
+      "titleHighlight": "que",
+      "subtitle": "Únete a desafíos divertidos, alcanza objetivos, gana recompensas y escala en las clasificaciones."
+    },
+    "slide7": {
+      "title": "Compite. Escala.\nCelebra.",
+      "titleHighlight": "Escala.",
+      "subtitle": "Mira tu posición, apoya a tu equipo y celebra cada victoria juntos."
+    },
+    "slide8": {
+      "title": "Tu comunidad.\nTu motivación.",
+      "titleHighlight": "comunidad.",
+      "subtitle": "Mantente inspirado con publicaciones, actualizaciones, consejos y victorias de tu equipo y la comunidad."
+    },
+    "slide9": {
+      "title": "Imagina dónde\nestarás\nen 30 días.",
+      "titleHighlight": "en 30 días.",
+      "subtitle": "Unos minutos al día pueden crear hábitos más saludables, mayor responsabilidad y resultados duraderos."
+    },
+    "slide10": {
+      "title": "Todo lo que obtienes",
+      "titleHighlight": "obtienes",
+      "subtitle": "Todas las herramientas que necesitas para tener éxito, incluso como principiante."
+    },
+    "slide11": {
+      "title": "Queremos que pruebes TeamCal gratis.",
+      "titleHighlight": "TeamCal",
+      "subtitle": "Disfruta de todas las funciones premium con una prueba gratuita de 3 días."
+    },
+    "slide12": {
+      "title": "Te enviaremos una notificación un día antes para que no te lo pierdas.",
+      "titleHighlight": "notificación",
+      "subtitle": "Cancela en cualquier momento antes de que finalice la prueba, sin cargo."
+    },
+    "plan": {
+      "title": "Elige tu plan",
+      "subtitle": "Comienza tu prueba gratuita de 3 días",
+      "startTrial": "Iniciar prueba gratuita",
+      "caption": "No se te cobrará hasta que finalice tu prueba. Cancela en cualquier momento."
+    },
+    "final": {
+      "title": "¡Todo listo!",
+      "titleHighlight": "¡Todo listo!",
+      "subtitle": "¡Construyamos hábitos saludables, alcancemos objetivos y ganemos juntos!",
+      "startJourney": "Comenzar tu viaje"
+    },
+    "letsGo": "¡Vamos!"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "logout": "Cerrar sesión",
+    "loggingOut": "Cerrando sesión…",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "dontHaveAccount": "¿No tienes una cuenta?",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "createAccount": "Crear cuenta",
+    "resetPassword": "Restablecer contraseña",
+    "verifyCode": "Verificar código",
+    "enterCode": "Ingresa el código enviado a tu correo",
+    "sendCode": "Enviar código",
+    "resendCode": "Reenviar código"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "explore": "Explorar",
+    "community": "Comunidad",
+    "earn": "Ganar"
+  },
+  "home": {
+    "title": "Inicio",
+    "welcome": "Bienvenido de nuevo",
+    "dailyProgress": "Progreso diario",
+    "calories": "Calorías",
+    "protein": "Proteína",
+    "carbs": "Carbohidratos",
+    "fat": "Grasa",
+    "water": "Agua",
+    "steps": "Pasos",
+    "weight": "Peso",
+    "sleep": "Sueño"
+  },
+  "explore": {
+    "title": "Explorar",
+    "search": "Buscar",
+    "discover": "Descubrir",
+    "trending": "Tendencias",
+    "categories": "Categorías"
+  },
+  "community": {
+    "title": "Comunidad",
+    "feed": "Feed",
+    "challenges": "Desafíos",
+    "leaderboard": "Clasificación",
+    "groups": "Grupos",
+    "messages": "Mensajes"
+  },
+  "earn": {
+    "title": "Ganar",
+    "dashboard": "Panel",
+    "content": "Contenido",
+    "videos": "Videos",
+    "pdfs": "PDFs",
+    "blogs": "Blogs",
+    "memberships": "Membresías",
+    "stores": "Tiendas"
+  },
+  "settings": {
+    "title": "Configuración",
+    "account": "Cuenta",
+    "editProfile": "Editar perfil",
+    "changePassword": "Cambiar contraseña",
+    "notifications": "Notificaciones",
+    "privacy": "Privacidad",
+    "helpSupport": "Ayuda y soporte",
+    "termsOfUse": "Términos de uso",
+    "privacyPolicy": "Política de privacidad",
+    "communityGuidelines": "Normas de la comunidad",
+    "language": "Idioma",
+    "deleteAccount": "Eliminar cuenta",
+    "stepSync": {
+      "title": "Pasos automáticos",
+      "titleIOS": "Pasos de Apple Health",
+      "titleAndroid": "Pasos de Health Connect",
+      "connected": "Conectado · se sincroniza cuando se abre la aplicación y periódicamente en segundo plano.",
+      "notConnected": "Conecta el total de pasos de tu teléfono o wearable.",
+      "connect": "Conectar",
+      "disconnect": "Desconectar",
+      "syncNow": "Sincronizar ahora",
+      "pleaseWait": "Por favor espera…",
+      "syncSuccess": "Pasos sincronizados",
+      "syncFailed": "Error al sincronizar",
+      "connectSuccess": "Pasos conectados",
+      "connectFailed": "No se pudieron conectar los pasos"
+    },
+    "deleteAccountConfirm": "¿Eliminar cuenta?",
+    "deleteAccountMessage": "Esto elimina permanentemente tu cuenta de TeamCal y los datos asociados. Esta acción no se puede deshacer.",
+    "deleteAccountFinal": "Confirmación final",
+    "deleteAccountFinalMessage": "¿Eliminar tu cuenta permanentemente ahora?",
+    "deleteAccountError": "No se puede eliminar la cuenta"
+  },
+  "profile": {
+    "title": "Perfil",
+    "editProfile": "Editar perfil",
+    "followers": "Seguidores",
+    "following": "Siguiendo",
+    "posts": "Publicaciones",
+    "bio": "Biografía"
+  },
+  "challenges": {
+    "title": "Desafíos",
+    "active": "Activos",
+    "completed": "Completados",
+    "browse": "Explorar",
+    "create": "Crear desafío",
+    "join": "Unirse",
+    "leave": "Salir",
+    "details": "Detalles",
+    "leaderboard": "Clasificación",
+    "participants": "Participantes"
+  },
+  "meals": {
+    "title": "Comidas",
+    "breakfast": "Desayuno",
+    "lunch": "Almuerzo",
+    "dinner": "Cena",
+    "snacks": "Snacks",
+    "addMeal": "Agregar comida",
+    "logFood": "Registrar comida",
+    "scanFood": "Escanear comida",
+    "mealPlanner": "Planificador de comidas",
+    "recipes": "Recetas",
+    "groceryList": "Lista de compras"
+  },
+  "workout": {
+    "title": "Entrenamientos",
+    "today": "Hoy",
+    "history": "Historial",
+    "plans": "Planes",
+    "startWorkout": "Iniciar entrenamiento",
+    "exercises": "Ejercicios",
+    "sets": "Series",
+    "reps": "Repeticiones",
+    "duration": "Duración",
+    "intensity": "Intensidad"
+  },
+  "progress": {
+    "title": "Progreso",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "weight": "Peso",
+    "measurements": "Medidas",
+    "photos": "Fotos",
+    "goals": "Objetivos"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "all": "Todas",
+    "unread": "No leídas",
+    "settings": "Configuración de notificaciones",
+    "empty": "No hay notificaciones aún",
+    "markAllRead": "Marcar todas como leídas"
+  },
+  "search": {
+    "title": "Buscar",
+    "placeholder": "Buscar...",
+    "recent": "Reciente",
+    "noResults": "No se encontraron resultados",
+    "tryAgain": "Intenta una búsqueda diferente"
+  },
+  "errors": {
+    "generic": "Algo salió mal",
+    "network": "Error de red. Por favor verifica tu conexión.",
+    "unauthorized": "Necesitas iniciar sesión para continuar",
+    "notFound": "No encontrado",
+    "serverError": "Error del servidor. Por favor intenta más tarde.",
+    "invalidInput": "Entrada inválida",
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Por favor ingresa un correo válido",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+    "passwordsMismatch": "Las contraseñas no coinciden"
+  },
+  "empty": {
+    "generic": "Nada aquí aún",
+    "noData": "No hay datos disponibles",
+    "noResults": "No se encontraron resultados",
+    "noPosts": "No hay publicaciones aún",
+    "noMessages": "No hay mensajes aún",
+    "noChallenges": "No hay desafíos aún",
+    "noWorkouts": "No hay entrenamientos aún",
+    "noMeals": "No hay comidas registradas aún"
+  },
+  "buttons": {
+    "add": "Agregar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "remove": "Eliminar",
+    "share": "Compartir",
+    "like": "Me gusta",
+    "comment": "Comentar",
+    "follow": "Seguir",
+    "unfollow": "Dejar de seguir",
+    "send": "Enviar",
+    "post": "Publicar",
+    "upload": "Subir",
+    "download": "Descargar",
+    "viewMore": "Ver más",
+    "seeAll": "Ver todo"
+  },
+  "forms": {
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "message": "Mensaje",
+    "description": "Descripción",
+    "title": "Título",
+    "category": "Categoría",
+    "tags": "Etiquetas",
+    "price": "Precio",
+    "quantity": "Cantidad"
+  },
+  "subscription": {
+    "title": "Suscripción",
+    "freeTrial": "Prueba gratuita",
+    "subscribe": "Suscribirse",
+    "unsubscribe": "Cancelar suscripción",
+    "manageSubscription": "Administrar suscripción",
+    "currentPlan": "Plan actual",
+    "upgradePlan": "Actualizar plan",
+    "cancelSubscription": "Cancelar suscripción"
+  },
+  "ai": {
+    "coach": "Entrenador IA",
+    "mealPlanner": "Planificador de comidas IA",
+    "foodAnalyzer": "Analizador de alimentos IA",
+    "groceryAssistant": "Asistente de compras IA",
+    "supplementAdvisor": "Asesor de suplementos IA"
+  },
+  "tracking": {
+    "calories": "Calorías",
+    "macros": "Macros",
+    "water": "Agua",
+    "weight": "Peso",
+    "sleep": "Sueño",
+    "steps": "Pasos",
+    "fasting": "Ayuno",
+    "period": "Ciclo menstrual",
+    "mood": "Diario de ánimo",
+    "supplements": "Suplementos"
+  }
+}

@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { 
   Animated, 
   ActivityIndicator,
@@ -229,11 +229,11 @@ const VideoFeedCard = ({ video, height, isActive }: { video: VideoFeedItem; heig
   return (
     <View style={[styles.card, { height }]}>
       {/* Video Player */}
-      <TouchableWithoutFeedback onPress={handleTap}>
-        <View style={styles.media}>
+      <TouchableWithoutFeedback onPress={handleTap} style={styles.videoContainer}>
+        <View style={styles.videoContainer}>
           <VideoView
             player={player}
-            style={styles.media}
+            style={styles.videoView}
             contentFit="cover"
             nativeControls={false}
           />
@@ -400,14 +400,14 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: colors.navy,
-    position: 'relative',
   },
-  media: {
+  videoContainer: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
+  },
+  videoView: {
+    width: '100%',
+    height: '100%',
   },
   loadingOverlay: {
     position: 'absolute',

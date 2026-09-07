@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "जारी रखें",
+    "back": "वापस",
+    "next": "आगे",
+    "skip": "छोड़ें",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "done": "पूर्ण",
+    "close": "बंद करें",
+    "confirm": "पुष्टि करें",
+    "yes": "हां",
+    "no": "नहीं",
+    "ok": "ठीक है",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "tryAgain": "फिर से प्रयास करें",
+    "learnMore": "और जानें"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "हर दिन, अधिक स्वस्थ।"
+  },
+  "languageSelection": {
+    "title": "अपनी भाषा चुनें",
+    "subtitle": "जारी रखने के लिए अपनी पसंदीदा भाषा चुनें",
+    "continue": "जारी रखें"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "ट्रैक करें। मुकाबला करें।\nसाथ में जीतें।",
+      "titleHighlight": "साथ में जीतें।",
+      "subtitle": "टीमों, चुनौतियों और असली जवाबदेही के लिए बनाया गया सोशल कैलोरी ट्रैकर।"
+    },
+    "slide2": {
+      "title": "ज़्यादा ट्रैक करें।\nज़्यादा करें।",
+      "titleHighlight": "ज़्यादा।",
+      "subtitle": "एक शक्तिशाली ऐप में वह सब कुछ जो आपको चाहिए।"
+    },
+    "slide3": {
+      "title": "स्मार्ट AI।\nअसली नतीजे।",
+      "titleHighlight": "AI।",
+      "subtitle": "व्यक्तिगत कोचिंग, भोजन योजनाएं, ग्रोसरी में मदद और स्मार्ट फूड विश्लेषण पाएं।"
+    },
+    "slide4": {
+      "title": "आपकी AI टीम।\nहमेशा तैयार।",
+      "titleHighlight": "AI टीम।",
+      "subtitle": "पांच AI विशेषज्ञ आपकी जीत में मदद के लिए चौबीसों घंटे काम करते हैं।"
+    },
+    "slide5": {
+      "title": "कुछ भी स्कैन करें।\nतुरंत लॉग करें।",
+      "titleHighlight": "कुछ भी।",
+      "subtitle": "भोजन, बारकोड या मेन्यू स्कैन करें। बाकी AI कर देता है।"
+    },
+    "slide6": {
+      "title": "चुनौतियां जो\nआपको बेहतर बनाती हैं।",
+      "titleHighlight": "जो",
+      "subtitle": "मज़ेदार चुनौतियों में शामिल हों, लक्ष्य पूरे करें, इनाम कमाएं और लीडरबोर्ड पर चढ़ें।"
+    },
+    "slide7": {
+      "title": "मुकाबला करें। ऊपर चढ़ें।\nजश्न मनाएं।",
+      "titleHighlight": "ऊपर चढ़ें।",
+      "subtitle": "देखें आप कहां हैं, अपनी टीम का साथ दें और हर जीत का साथ मिलकर जश्न मनाएं।"
+    },
+    "slide8": {
+      "title": "आपका समुदाय।\nआपकी प्रेरणा।",
+      "titleHighlight": "समुदाय।",
+      "subtitle": "अपनी टीम और समुदाय की पोस्ट, अपडेट, टिप्स और जीत से प्रेरित रहें।"
+    },
+    "slide9": {
+      "title": "कल्पना करें कि आप\nअब से 30 दिन बाद\nकहां होंगे।",
+      "titleHighlight": "अब से 30 दिन बाद।",
+      "subtitle": "हर दिन कुछ मिनट स्वस्थ आदतें, मज़बूत जवाबदेही और स्थायी नतीजे बना सकते हैं।"
+    },
+    "slide10": {
+      "title": "आपको जो कुछ मिलता है",
+      "titleHighlight": "जो मिलता है",
+      "subtitle": "सफल होने के लिए सभी ज़रूरी टूल — भले ही आप शुरुआती हों।"
+    },
+    "slide11": {
+      "title": "हम चाहते हैं कि आप TeamCal को मुफ़्त में आज़माएं।",
+      "titleHighlight": "TeamCal",
+      "subtitle": "3 दिन के मुफ़्त ट्रायल के साथ सभी प्रीमियम सुविधाओं का आनंद लें।"
+    },
+    "slide12": {
+      "title": "हम एक दिन पहले आपको सूचना भेजेंगे ताकि आप चूकें नहीं।",
+      "titleHighlight": "सूचना",
+      "subtitle": "ट्रायल खत्म होने से पहले कभी भी रद्द करें, कोई शुल्क नहीं।"
+    },
+    "plan": {
+      "title": "अपना प्लान चुनें",
+      "subtitle": "अपना 3 दिन का मुफ़्त ट्रायल शुरू करें",
+      "startTrial": "मुफ़्त ट्रायल शुरू करें",
+      "caption": "आपके ट्रायल के खत्म होने तक कोई शुल्क नहीं लिया जाएगा। कभी भी रद्द करें।"
+    },
+    "final": {
+      "title": "सब तैयार है!",
+      "titleHighlight": "तैयार है!",
+      "subtitle": "आइए स्वस्थ आदतें बनाएं, लक्ष्य पूरे करें और साथ में जीतें!",
+      "startJourney": "अपनी यात्रा शुरू करें"
+    },
+    "letsGo": "चलिए शुरू करें!"
+  },
+  "auth": {
+    "login": "लॉग इन करें",
+    "signUp": "साइन अप करें",
+    "logout": "लॉग आउट करें",
+    "loggingOut": "लॉग आउट हो रहा है…",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "dontHaveAccount": "खाता नहीं है?",
+    "alreadyHaveAccount": "पहले से खाता है?",
+    "createAccount": "खाता बनाएं",
+    "resetPassword": "पासवर्ड रीसेट करें",
+    "verifyCode": "कोड सत्यापित करें",
+    "enterCode": "आपके ईमेल पर भेजा गया कोड दर्ज करें",
+    "sendCode": "कोड भेजें",
+    "resendCode": "कोड फिर से भेजें"
+  },
+  "navigation": {
+    "home": "होम",
+    "explore": "एक्सप्लोर",
+    "community": "समुदाय",
+    "earn": "कमाएं"
+  },
+  "home": {
+    "title": "होम",
+    "welcome": "वापसी पर स्वागत है",
+    "dailyProgress": "दैनिक प्रगति",
+    "calories": "कैलोरी",
+    "protein": "प्रोटीन",
+    "carbs": "कार्ब्स",
+    "fat": "फैट",
+    "water": "पानी",
+    "steps": "कदम",
+    "weight": "वज़न",
+    "sleep": "नींद"
+  },
+  "explore": {
+    "title": "एक्सप्लोर",
+    "search": "खोजें",
+    "discover": "खोजबीन करें",
+    "trending": "ट्रेंडिंग",
+    "categories": "श्रेणियां"
+  },
+  "community": {
+    "title": "समुदाय",
+    "feed": "फ़ीड",
+    "challenges": "चुनौतियां",
+    "leaderboard": "लीडरबोर्ड",
+    "groups": "समूह",
+    "messages": "संदेश"
+  },
+  "earn": {
+    "title": "कमाएं",
+    "dashboard": "डैशबोर्ड",
+    "content": "सामग्री",
+    "videos": "वीडियो",
+    "pdfs": "PDF",
+    "blogs": "ब्लॉग",
+    "memberships": "सदस्यताएं",
+    "stores": "स्टोर"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "account": "खाता",
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "changePassword": "पासवर्ड बदलें",
+    "notifications": "सूचनाएं",
+    "privacy": "गोपनीयता",
+    "helpSupport": "सहायता और समर्थन",
+    "termsOfUse": "उपयोग की शर्तें",
+    "privacyPolicy": "गोपनीयता नीति",
+    "communityGuidelines": "समुदाय दिशानिर्देश",
+    "language": "भाषा",
+    "deleteAccount": "खाता हटाएं",
+    "stepSync": {
+      "title": "स्वचालित कदम",
+      "titleIOS": "Apple Health कदम",
+      "titleAndroid": "Health Connect कदम",
+      "connected": "कनेक्ट किया गया · ऐप खुलने पर और पृष्ठभूमि में समय-समय पर सिंक होता है।",
+      "notConnected": "अपने फ़ोन या वियरेबल के कुल कदम कनेक्ट करें।",
+      "connect": "कनेक्ट करें",
+      "disconnect": "डिस्कनेक्ट करें",
+      "syncNow": "अभी सिंक करें",
+      "pleaseWait": "कृपया प्रतीक्षा करें…",
+      "syncSuccess": "कदम सिंक हो गए",
+      "syncFailed": "सिंक विफल रहा",
+      "connectSuccess": "कदम कनेक्ट हो गए",
+      "connectFailed": "कदम कनेक्ट नहीं हो सके"
+    },
+    "deleteAccountConfirm": "खाता हटाएं?",
+    "deleteAccountMessage": "यह आपके TeamCal खाते और संबंधित डेटा को स्थायी रूप से हटा देता है। इस क्रिया को पूर्ववत नहीं किया जा सकता।",
+    "deleteAccountFinal": "अंतिम पुष्टि",
+    "deleteAccountFinalMessage": "अभी अपना खाता स्थायी रूप से हटाएं?",
+    "deleteAccountError": "खाता हटाने में असमर्थ"
+  },
+  "profile": {
+    "title": "प्रोफ़ाइल",
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "followers": "फ़ॉलोअर्स",
+    "following": "फ़ॉलोइंग",
+    "posts": "पोस्ट",
+    "bio": "बायो"
+  },
+  "challenges": {
+    "title": "चुनौतियां",
+    "active": "सक्रिय",
+    "completed": "पूर्ण",
+    "browse": "ब्राउज़ करें",
+    "create": "चुनौती बनाएं",
+    "join": "शामिल हों",
+    "leave": "छोड़ें",
+    "details": "विवरण",
+    "leaderboard": "लीडरबोर्ड",
+    "participants": "प्रतिभागी"
+  },
+  "meals": {
+    "title": "भोजन",
+    "breakfast": "नाश्ता",
+    "lunch": "दोपहर का भोजन",
+    "dinner": "रात का भोजन",
+    "snacks": "स्नैक्स",
+    "addMeal": "भोजन जोड़ें",
+    "logFood": "भोजन लॉग करें",
+    "scanFood": "भोजन स्कैन करें",
+    "mealPlanner": "भोजन योजनाकार",
+    "recipes": "रेसिपी",
+    "groceryList": "ग्रोसरी सूची"
+  },
+  "workout": {
+    "title": "वर्कआउट",
+    "today": "आज",
+    "history": "इतिहास",
+    "plans": "योजनाएं",
+    "startWorkout": "वर्कआउट शुरू करें",
+    "exercises": "व्यायाम",
+    "sets": "सेट",
+    "reps": "दोहराव",
+    "duration": "अवधि",
+    "intensity": "तीव्रता"
+  },
+  "progress": {
+    "title": "प्रगति",
+    "weekly": "साप्ताहिक",
+    "monthly": "मासिक",
+    "yearly": "वार्षिक",
+    "weight": "वज़न",
+    "measurements": "माप",
+    "photos": "फ़ोटो",
+    "goals": "लक्ष्य"
+  },
+  "notifications": {
+    "title": "सूचनाएं",
+    "all": "सभी",
+    "unread": "अपठित",
+    "settings": "सूचना सेटिंग्स",
+    "empty": "अभी तक कोई सूचना नहीं",
+    "markAllRead": "सभी को पढ़ा हुआ चिह्नित करें"
+  },
+  "search": {
+    "title": "खोजें",
+    "placeholder": "खोजें...",
+    "recent": "हाल की",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "tryAgain": "कोई दूसरी खोज आज़माएं"
+  },
+  "errors": {
+    "generic": "कुछ गलत हो गया",
+    "network": "नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें।",
+    "unauthorized": "जारी रखने के लिए आपको लॉग इन करना होगा",
+    "notFound": "नहीं मिला",
+    "serverError": "सर्वर त्रुटि। कृपया बाद में फिर से प्रयास करें।",
+    "invalidInput": "अमान्य इनपुट",
+    "required": "यह फ़ील्ड आवश्यक है",
+    "invalidEmail": "कृपया एक मान्य ईमेल दर्ज करें",
+    "passwordTooShort": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए",
+    "passwordsMismatch": "पासवर्ड मेल नहीं खाते"
+  },
+  "empty": {
+    "generic": "अभी यहां कुछ नहीं है",
+    "noData": "कोई डेटा उपलब्ध नहीं",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "noPosts": "अभी तक कोई पोस्ट नहीं",
+    "noMessages": "अभी तक कोई संदेश नहीं",
+    "noChallenges": "अभी तक कोई चुनौती नहीं",
+    "noWorkouts": "अभी तक कोई वर्कआउट नहीं",
+    "noMeals": "अभी तक कोई भोजन लॉग नहीं किया गया"
+  },
+  "buttons": {
+    "add": "जोड़ें",
+    "create": "बनाएं",
+    "update": "अपडेट करें",
+    "remove": "हटाएं",
+    "share": "साझा करें",
+    "like": "पसंद",
+    "comment": "टिप्पणी",
+    "follow": "फ़ॉलो करें",
+    "unfollow": "अनफ़ॉलो करें",
+    "send": "भेजें",
+    "post": "पोस्ट करें",
+    "upload": "अपलोड करें",
+    "download": "डाउनलोड करें",
+    "viewMore": "और देखें",
+    "seeAll": "सभी देखें"
+  },
+  "forms": {
+    "name": "नाम",
+    "email": "ईमेल",
+    "phone": "फ़ोन",
+    "message": "संदेश",
+    "description": "विवरण",
+    "title": "शीर्षक",
+    "category": "श्रेणी",
+    "tags": "टैग",
+    "price": "मूल्य",
+    "quantity": "मात्रा"
+  },
+  "subscription": {
+    "title": "सदस्यता",
+    "freeTrial": "मुफ़्त ट्रायल",
+    "subscribe": "सदस्यता लें",
+    "unsubscribe": "सदस्यता समाप्त करें",
+    "manageSubscription": "सदस्यता प्रबंधित करें",
+    "currentPlan": "वर्तमान प्लान",
+    "upgradePlan": "प्लान अपग्रेड करें",
+    "cancelSubscription": "सदस्यता रद्द करें"
+  },
+  "ai": {
+    "coach": "AI कोच",
+    "mealPlanner": "AI भोजन योजनाकार",
+    "foodAnalyzer": "AI फूड एनालाइज़र",
+    "groceryAssistant": "AI ग्रोसरी असिस्टेंट",
+    "supplementAdvisor": "AI सप्लीमेंट सलाहकार"
+  },
+  "tracking": {
+    "calories": "कैलोरी",
+    "macros": "मैक्रोज़",
+    "water": "पानी",
+    "weight": "वज़न",
+    "sleep": "नींद",
+    "steps": "कदम",
+    "fasting": "उपवास",
+    "period": "पीरियड ट्रैकर",
+    "mood": "मूड जर्नल",
+    "supplements": "सप्लीमेंट"
+  }
+}

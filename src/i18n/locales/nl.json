@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "Doorgaan",
+    "back": "Terug",
+    "next": "Volgende",
+    "skip": "Overslaan",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "done": "Klaar",
+    "close": "Sluiten",
+    "confirm": "Bevestigen",
+    "yes": "Ja",
+    "no": "Nee",
+    "ok": "Oké",
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Gelukt",
+    "tryAgain": "Opnieuw proberen",
+    "learnMore": "Meer informatie"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "Elke dag een beetje gezonder."
+  },
+  "languageSelection": {
+    "title": "Kies je taal",
+    "subtitle": "Selecteer je voorkeurstaal om door te gaan",
+    "continue": "Doorgaan"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "Volg. Strijd.\nWin samen.",
+      "titleHighlight": "Win samen.",
+      "subtitle": "De sociale calorieteller gemaakt voor teams, uitdagingen en echte verantwoordelijkheid."
+    },
+    "slide2": {
+      "title": "Volg meer.\nDoe meer.",
+      "titleHighlight": "meer.",
+      "subtitle": "Alles wat je nodig hebt in één krachtige app."
+    },
+    "slide3": {
+      "title": "Slimme AI.\nEchte resultaten.",
+      "titleHighlight": "AI.",
+      "subtitle": "Krijg persoonlijke coaching, maaltijdplannen, hulp bij boodschappen en slimme voedingsanalyse."
+    },
+    "slide4": {
+      "title": "Jouw AI-team.\nAltijd paraat.",
+      "titleHighlight": "AI-team.",
+      "subtitle": "Vijf AI-specialisten die dag en nacht werken om jou te laten winnen."
+    },
+    "slide5": {
+      "title": "Scan alles.\nLog direct.",
+      "titleHighlight": "alles.",
+      "subtitle": "Scan voeding, barcodes of menu's. De AI doet de rest."
+    },
+    "slide6": {
+      "title": "Uitdagingen die\nje beter maken.",
+      "titleHighlight": "die",
+      "subtitle": "Doe mee aan leuke uitdagingen, haal doelen, verdien beloningen en klim in de ranglijsten."
+    },
+    "slide7": {
+      "title": "Strijd. Klim.\nVier.",
+      "titleHighlight": "Klim.",
+      "subtitle": "Zie hoe je scoort, steun je team en vier elke overwinning samen."
+    },
+    "slide8": {
+      "title": "Jouw community.\nJouw motivatie.",
+      "titleHighlight": "community.",
+      "subtitle": "Blijf geïnspireerd met posts, updates, tips en successen van je team en de community."
+    },
+    "slide9": {
+      "title": "Stel je voor waar\nje over\n30 dagen bent.",
+      "titleHighlight": "30 dagen",
+      "subtitle": "Een paar minuten per dag kunnen zorgen voor gezondere gewoontes, sterkere verantwoordelijkheid en blijvende resultaten."
+    },
+    "slide10": {
+      "title": "Alles wat je krijgt",
+      "titleHighlight": "je krijgt",
+      "subtitle": "Alle tools die je nodig hebt om te slagen — ook als beginner."
+    },
+    "slide11": {
+      "title": "We willen dat je TeamCal gratis probeert.",
+      "titleHighlight": "TeamCal",
+      "subtitle": "Geniet van alle premiumfuncties met een gratis proefperiode van 3 dagen."
+    },
+    "slide12": {
+      "title": "We sturen je een dag van tevoren een melding zodat je niets mist.",
+      "titleHighlight": "melding",
+      "subtitle": "Zeg op elk moment op vóór het einde van de proefperiode, zonder kosten."
+    },
+    "plan": {
+      "title": "Kies je abonnement",
+      "subtitle": "Start je gratis proefperiode van 3 dagen",
+      "startTrial": "Gratis proefperiode starten",
+      "caption": "Er worden geen kosten in rekening gebracht tot je proefperiode afloopt. Op elk moment opzegbaar."
+    },
+    "final": {
+      "title": "Alles klaar!",
+      "titleHighlight": "klaar!",
+      "subtitle": "Laten we gezonde gewoontes opbouwen, doelen halen en samen winnen!",
+      "startJourney": "Begin je reis"
+    },
+    "letsGo": "Aan de slag!"
+  },
+  "auth": {
+    "login": "Inloggen",
+    "signUp": "Registreren",
+    "logout": "Uitloggen",
+    "loggingOut": "Uitloggen…",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "confirmPassword": "Wachtwoord bevestigen",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "dontHaveAccount": "Nog geen account?",
+    "alreadyHaveAccount": "Heb je al een account?",
+    "createAccount": "Account aanmaken",
+    "resetPassword": "Wachtwoord opnieuw instellen",
+    "verifyCode": "Code verifiëren",
+    "enterCode": "Voer de code in die naar je e-mail is gestuurd",
+    "sendCode": "Code verzenden",
+    "resendCode": "Code opnieuw verzenden"
+  },
+  "navigation": {
+    "home": "Start",
+    "explore": "Ontdekken",
+    "community": "Community",
+    "earn": "Verdienen"
+  },
+  "home": {
+    "title": "Start",
+    "welcome": "Welkom terug",
+    "dailyProgress": "Dagelijkse voortgang",
+    "calories": "Calorieën",
+    "protein": "Eiwitten",
+    "carbs": "Koolhydraten",
+    "fat": "Vet",
+    "water": "Water",
+    "steps": "Stappen",
+    "weight": "Gewicht",
+    "sleep": "Slaap"
+  },
+  "explore": {
+    "title": "Ontdekken",
+    "search": "Zoeken",
+    "discover": "Ontdek",
+    "trending": "Trending",
+    "categories": "Categorieën"
+  },
+  "community": {
+    "title": "Community",
+    "feed": "Feed",
+    "challenges": "Uitdagingen",
+    "leaderboard": "Ranglijst",
+    "groups": "Groepen",
+    "messages": "Berichten"
+  },
+  "earn": {
+    "title": "Verdienen",
+    "dashboard": "Dashboard",
+    "content": "Content",
+    "videos": "Video's",
+    "pdfs": "Pdf's",
+    "blogs": "Blogs",
+    "memberships": "Lidmaatschappen",
+    "stores": "Winkels"
+  },
+  "settings": {
+    "title": "Instellingen",
+    "account": "Account",
+    "editProfile": "Profiel bewerken",
+    "changePassword": "Wachtwoord wijzigen",
+    "notifications": "Meldingen",
+    "privacy": "Privacy",
+    "helpSupport": "Help en ondersteuning",
+    "termsOfUse": "Gebruiksvoorwaarden",
+    "privacyPolicy": "Privacybeleid",
+    "communityGuidelines": "Communityrichtlijnen",
+    "language": "Taal",
+    "deleteAccount": "Account verwijderen",
+    "stepSync": {
+      "title": "Automatische stappen",
+      "titleIOS": "Apple Health-stappen",
+      "titleAndroid": "Health Connect-stappen",
+      "connected": "Verbonden · synchroniseert bij het openen van de app en periodiek op de achtergrond.",
+      "notConnected": "Verbind het totale aantal stappen van je telefoon of wearable.",
+      "connect": "Verbinden",
+      "disconnect": "Verbinding verbreken",
+      "syncNow": "Nu synchroniseren",
+      "pleaseWait": "Even geduld…",
+      "syncSuccess": "Stappen gesynchroniseerd",
+      "syncFailed": "Synchronisatie mislukt",
+      "connectSuccess": "Stappen verbonden",
+      "connectFailed": "Kon stappen niet verbinden"
+    },
+    "deleteAccountConfirm": "Account verwijderen?",
+    "deleteAccountMessage": "Hiermee worden je TeamCal-account en bijbehorende gegevens permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteAccountFinal": "Laatste bevestiging",
+    "deleteAccountFinalMessage": "Je account nu permanent verwijderen?",
+    "deleteAccountError": "Kan account niet verwijderen"
+  },
+  "profile": {
+    "title": "Profiel",
+    "editProfile": "Profiel bewerken",
+    "followers": "Volgers",
+    "following": "Volgend",
+    "posts": "Berichten",
+    "bio": "Bio"
+  },
+  "challenges": {
+    "title": "Uitdagingen",
+    "active": "Actief",
+    "completed": "Voltooid",
+    "browse": "Bladeren",
+    "create": "Uitdaging maken",
+    "join": "Deelnemen",
+    "leave": "Verlaten",
+    "details": "Details",
+    "leaderboard": "Ranglijst",
+    "participants": "Deelnemers"
+  },
+  "meals": {
+    "title": "Maaltijden",
+    "breakfast": "Ontbijt",
+    "lunch": "Lunch",
+    "dinner": "Diner",
+    "snacks": "Snacks",
+    "addMeal": "Maaltijd toevoegen",
+    "logFood": "Voeding loggen",
+    "scanFood": "Voeding scannen",
+    "mealPlanner": "Maaltijdplanner",
+    "recipes": "Recepten",
+    "groceryList": "Boodschappenlijst"
+  },
+  "workout": {
+    "title": "Workouts",
+    "today": "Vandaag",
+    "history": "Geschiedenis",
+    "plans": "Schema's",
+    "startWorkout": "Workout starten",
+    "exercises": "Oefeningen",
+    "sets": "Sets",
+    "reps": "Herhalingen",
+    "duration": "Duur",
+    "intensity": "Intensiteit"
+  },
+  "progress": {
+    "title": "Voortgang",
+    "weekly": "Wekelijks",
+    "monthly": "Maandelijks",
+    "yearly": "Jaarlijks",
+    "weight": "Gewicht",
+    "measurements": "Metingen",
+    "photos": "Foto's",
+    "goals": "Doelen"
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "all": "Alle",
+    "unread": "Ongelezen",
+    "settings": "Meldingsinstellingen",
+    "empty": "Nog geen meldingen",
+    "markAllRead": "Alles als gelezen markeren"
+  },
+  "search": {
+    "title": "Zoeken",
+    "placeholder": "Zoeken...",
+    "recent": "Recent",
+    "noResults": "Geen resultaten gevonden",
+    "tryAgain": "Probeer een andere zoekopdracht"
+  },
+  "errors": {
+    "generic": "Er is iets misgegaan",
+    "network": "Netwerkfout. Controleer je verbinding.",
+    "unauthorized": "Je moet inloggen om door te gaan",
+    "notFound": "Niet gevonden",
+    "serverError": "Serverfout. Probeer het later opnieuw.",
+    "invalidInput": "Ongeldige invoer",
+    "required": "Dit veld is verplicht",
+    "invalidEmail": "Voer een geldig e-mailadres in",
+    "passwordTooShort": "Wachtwoord moet minstens 8 tekens bevatten",
+    "passwordsMismatch": "Wachtwoorden komen niet overeen"
+  },
+  "empty": {
+    "generic": "Hier is nog niets",
+    "noData": "Geen gegevens beschikbaar",
+    "noResults": "Geen resultaten gevonden",
+    "noPosts": "Nog geen berichten",
+    "noMessages": "Nog geen berichten",
+    "noChallenges": "Nog geen uitdagingen",
+    "noWorkouts": "Nog geen workouts",
+    "noMeals": "Nog geen maaltijden gelogd"
+  },
+  "buttons": {
+    "add": "Toevoegen",
+    "create": "Maken",
+    "update": "Bijwerken",
+    "remove": "Verwijderen",
+    "share": "Delen",
+    "like": "Vinden leuk",
+    "comment": "Reageren",
+    "follow": "Volgen",
+    "unfollow": "Ontvolgen",
+    "send": "Verzenden",
+    "post": "Plaatsen",
+    "upload": "Uploaden",
+    "download": "Downloaden",
+    "viewMore": "Meer weergeven",
+    "seeAll": "Alles bekijken"
+  },
+  "forms": {
+    "name": "Naam",
+    "email": "E-mail",
+    "phone": "Telefoon",
+    "message": "Bericht",
+    "description": "Beschrijving",
+    "title": "Titel",
+    "category": "Categorie",
+    "tags": "Tags",
+    "price": "Prijs",
+    "quantity": "Aantal"
+  },
+  "subscription": {
+    "title": "Abonnement",
+    "freeTrial": "Gratis proefperiode",
+    "subscribe": "Abonneren",
+    "unsubscribe": "Afmelden",
+    "manageSubscription": "Abonnement beheren",
+    "currentPlan": "Huidig abonnement",
+    "upgradePlan": "Abonnement upgraden",
+    "cancelSubscription": "Abonnement opzeggen"
+  },
+  "ai": {
+    "coach": "AI-coach",
+    "mealPlanner": "AI-maaltijdplanner",
+    "foodAnalyzer": "AI-voedingsanalyse",
+    "groceryAssistant": "AI-boodschappenassistent",
+    "supplementAdvisor": "AI-supplementenadviseur"
+  },
+  "tracking": {
+    "calories": "Calorieën",
+    "macros": "Macro's",
+    "water": "Water",
+    "weight": "Gewicht",
+    "sleep": "Slaap",
+    "steps": "Stappen",
+    "fasting": "Vasten",
+    "period": "Menstruatietracker",
+    "mood": "Stemmingsdagboek",
+    "supplements": "Supplementen"
+  }
+}

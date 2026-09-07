@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "继续",
+    "back": "返回",
+    "next": "下一步",
+    "skip": "跳过",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "done": "完成",
+    "close": "关闭",
+    "confirm": "确认",
+    "yes": "是",
+    "no": "否",
+    "ok": "确定",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "tryAgain": "重试",
+    "learnMore": "了解更多"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "每一天，更健康。"
+  },
+  "languageSelection": {
+    "title": "选择你的语言",
+    "subtitle": "选择你偏好的语言以继续",
+    "continue": "继续"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "记录。竞赛。\n共同获胜。",
+      "titleHighlight": "共同获胜。",
+      "subtitle": "专为团队、挑战和真正的责任感打造的社交卡路里记录工具。"
+    },
+    "slide2": {
+      "title": "记录更多。\n成就更多。",
+      "titleHighlight": "更多。",
+      "subtitle": "你所需的一切，尽在一款强大的应用中。"
+    },
+    "slide3": {
+      "title": "智能 AI。\n真实成效。",
+      "titleHighlight": "AI。",
+      "subtitle": "获得个性化指导、膳食计划、购物帮助和智能食物分析。"
+    },
+    "slide4": {
+      "title": "你的 AI 团队。\n始终在线。",
+      "titleHighlight": "AI 团队。",
+      "subtitle": "五位 AI 专家全天候为你助力，帮你赢。"
+    },
+    "slide5": {
+      "title": "扫描一切。\n即刻记录。",
+      "titleHighlight": "一切。",
+      "subtitle": "扫描食物、条形码或菜单，剩下的交给 AI。"
+    },
+    "slide6": {
+      "title": "让你变得更好的\n挑战。",
+      "titleHighlight": "挑战。",
+      "subtitle": "参与有趣的挑战，达成目标，赢取奖励，登上排行榜。"
+    },
+    "slide7": {
+      "title": "竞赛。攀升。\n庆祝。",
+      "titleHighlight": "攀升。",
+      "subtitle": "查看你的排名，支持你的团队，一起庆祝每一次胜利。"
+    },
+    "slide8": {
+      "title": "你的社区。\n你的动力。",
+      "titleHighlight": "社区。",
+      "subtitle": "通过团队和社区的动态、更新、技巧和成果保持激励。"
+    },
+    "slide9": {
+      "title": "想象一下\n30 天后\n你会在哪里。",
+      "titleHighlight": "30 天后",
+      "subtitle": "每天几分钟就能养成更健康的习惯、更强的责任感和持久的成果。"
+    },
+    "slide10": {
+      "title": "你将获得的一切",
+      "titleHighlight": "获得",
+      "subtitle": "成功所需的所有工具——即使你是新手。"
+    },
+    "slide11": {
+      "title": "我们希望你免费试用 TeamCal。",
+      "titleHighlight": "TeamCal",
+      "subtitle": "通过 3 天免费试用，享受所有高级功能。"
+    },
+    "slide12": {
+      "title": "我们会在到期前一天发送通知，让你不会错过。",
+      "titleHighlight": "通知",
+      "subtitle": "试用结束前可随时取消，不收取费用。"
+    },
+    "plan": {
+      "title": "选择你的方案",
+      "subtitle": "开始你的 3 天免费试用",
+      "startTrial": "开始免费试用",
+      "caption": "试用结束前不会收费。可随时取消。"
+    },
+    "final": {
+      "title": "一切就绪！",
+      "titleHighlight": "就绪！",
+      "subtitle": "让我们一起养成健康习惯、达成目标、共同获胜！",
+      "startJourney": "开启你的旅程"
+    },
+    "letsGo": "出发吧！"
+  },
+  "auth": {
+    "login": "登录",
+    "signUp": "注册",
+    "logout": "退出登录",
+    "loggingOut": "正在退出…",
+    "email": "电子邮件",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码？",
+    "dontHaveAccount": "还没有账户？",
+    "alreadyHaveAccount": "已有账户？",
+    "createAccount": "创建账户",
+    "resetPassword": "重置密码",
+    "verifyCode": "验证代码",
+    "enterCode": "输入发送到你邮箱的代码",
+    "sendCode": "发送代码",
+    "resendCode": "重新发送代码"
+  },
+  "navigation": {
+    "home": "首页",
+    "explore": "探索",
+    "community": "社区",
+    "earn": "赚取"
+  },
+  "home": {
+    "title": "首页",
+    "welcome": "欢迎回来",
+    "dailyProgress": "每日进度",
+    "calories": "卡路里",
+    "protein": "蛋白质",
+    "carbs": "碳水化合物",
+    "fat": "脂肪",
+    "water": "水",
+    "steps": "步数",
+    "weight": "体重",
+    "sleep": "睡眠"
+  },
+  "explore": {
+    "title": "探索",
+    "search": "搜索",
+    "discover": "发现",
+    "trending": "热门",
+    "categories": "分类"
+  },
+  "community": {
+    "title": "社区",
+    "feed": "动态",
+    "challenges": "挑战",
+    "leaderboard": "排行榜",
+    "groups": "群组",
+    "messages": "消息"
+  },
+  "earn": {
+    "title": "赚取",
+    "dashboard": "仪表板",
+    "content": "内容",
+    "videos": "视频",
+    "pdfs": "PDF",
+    "blogs": "博客",
+    "memberships": "会员",
+    "stores": "商店"
+  },
+  "settings": {
+    "title": "设置",
+    "account": "账户",
+    "editProfile": "编辑个人资料",
+    "changePassword": "修改密码",
+    "notifications": "通知",
+    "privacy": "隐私",
+    "helpSupport": "帮助与支持",
+    "termsOfUse": "使用条款",
+    "privacyPolicy": "隐私政策",
+    "communityGuidelines": "社区准则",
+    "language": "语言",
+    "deleteAccount": "删除账户",
+    "stepSync": {
+      "title": "自动步数",
+      "titleIOS": "Apple 健康步数",
+      "titleAndroid": "Health Connect 步数",
+      "connected": "已连接 · 应用打开时同步，并在后台定期同步。",
+      "notConnected": "连接你手机或穿戴设备的步数总量。",
+      "connect": "连接",
+      "disconnect": "断开连接",
+      "syncNow": "立即同步",
+      "pleaseWait": "请稍候…",
+      "syncSuccess": "步数已同步",
+      "syncFailed": "同步失败",
+      "connectSuccess": "步数已连接",
+      "connectFailed": "无法连接步数"
+    },
+    "deleteAccountConfirm": "删除账户？",
+    "deleteAccountMessage": "此操作将永久删除你的 TeamCal 账户及相关数据。此操作无法撤销。",
+    "deleteAccountFinal": "最终确认",
+    "deleteAccountFinalMessage": "现在永久删除你的账户？",
+    "deleteAccountError": "无法删除账户"
+  },
+  "profile": {
+    "title": "个人资料",
+    "editProfile": "编辑个人资料",
+    "followers": "粉丝",
+    "following": "关注",
+    "posts": "帖子",
+    "bio": "简介"
+  },
+  "challenges": {
+    "title": "挑战",
+    "active": "进行中",
+    "completed": "已完成",
+    "browse": "浏览",
+    "create": "创建挑战",
+    "join": "加入",
+    "leave": "退出",
+    "details": "详情",
+    "leaderboard": "排行榜",
+    "participants": "参与者"
+  },
+  "meals": {
+    "title": "餐食",
+    "breakfast": "早餐",
+    "lunch": "午餐",
+    "dinner": "晚餐",
+    "snacks": "零食",
+    "addMeal": "添加餐食",
+    "logFood": "记录食物",
+    "scanFood": "扫描食物",
+    "mealPlanner": "膳食计划",
+    "recipes": "食谱",
+    "groceryList": "购物清单"
+  },
+  "workout": {
+    "title": "锻炼",
+    "today": "今天",
+    "history": "历史记录",
+    "plans": "计划",
+    "startWorkout": "开始锻炼",
+    "exercises": "动作",
+    "sets": "组数",
+    "reps": "次数",
+    "duration": "时长",
+    "intensity": "强度"
+  },
+  "progress": {
+    "title": "进度",
+    "weekly": "每周",
+    "monthly": "每月",
+    "yearly": "每年",
+    "weight": "体重",
+    "measurements": "围度",
+    "photos": "照片",
+    "goals": "目标"
+  },
+  "notifications": {
+    "title": "通知",
+    "all": "全部",
+    "unread": "未读",
+    "settings": "通知设置",
+    "empty": "暂无通知",
+    "markAllRead": "全部标为已读"
+  },
+  "search": {
+    "title": "搜索",
+    "placeholder": "搜索...",
+    "recent": "最近",
+    "noResults": "未找到结果",
+    "tryAgain": "尝试其他搜索"
+  },
+  "errors": {
+    "generic": "出了点问题",
+    "network": "网络错误。请检查你的连接。",
+    "unauthorized": "你需要登录才能继续",
+    "notFound": "未找到",
+    "serverError": "服务器错误。请稍后重试。",
+    "invalidInput": "输入无效",
+    "required": "此字段为必填项",
+    "invalidEmail": "请输入有效的电子邮件",
+    "passwordTooShort": "密码至少需要 8 个字符",
+    "passwordsMismatch": "密码不匹配"
+  },
+  "empty": {
+    "generic": "这里还没有内容",
+    "noData": "暂无数据",
+    "noResults": "未找到结果",
+    "noPosts": "暂无帖子",
+    "noMessages": "暂无消息",
+    "noChallenges": "暂无挑战",
+    "noWorkouts": "暂无锻炼",
+    "noMeals": "暂无餐食记录"
+  },
+  "buttons": {
+    "add": "添加",
+    "create": "创建",
+    "update": "更新",
+    "remove": "移除",
+    "share": "分享",
+    "like": "点赞",
+    "comment": "评论",
+    "follow": "关注",
+    "unfollow": "取消关注",
+    "send": "发送",
+    "post": "发布",
+    "upload": "上传",
+    "download": "下载",
+    "viewMore": "查看更多",
+    "seeAll": "查看全部"
+  },
+  "forms": {
+    "name": "姓名",
+    "email": "电子邮件",
+    "phone": "电话",
+    "message": "留言",
+    "description": "描述",
+    "title": "标题",
+    "category": "分类",
+    "tags": "标签",
+    "price": "价格",
+    "quantity": "数量"
+  },
+  "subscription": {
+    "title": "订阅",
+    "freeTrial": "免费试用",
+    "subscribe": "订阅",
+    "unsubscribe": "取消订阅",
+    "manageSubscription": "管理订阅",
+    "currentPlan": "当前方案",
+    "upgradePlan": "升级方案",
+    "cancelSubscription": "取消订阅"
+  },
+  "ai": {
+    "coach": "AI 教练",
+    "mealPlanner": "AI 膳食计划师",
+    "foodAnalyzer": "AI 食物分析器",
+    "groceryAssistant": "AI 购物助手",
+    "supplementAdvisor": "AI 补剂顾问"
+  },
+  "tracking": {
+    "calories": "卡路里",
+    "macros": "宏量营养素",
+    "water": "水",
+    "weight": "体重",
+    "sleep": "睡眠",
+    "steps": "步数",
+    "fasting": "断食",
+    "period": "经期记录",
+    "mood": "心情日记",
+    "supplements": "补剂"
+  }
+}

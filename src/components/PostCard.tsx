@@ -87,7 +87,18 @@ function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; on
           }
 
           return (
-            <View key={`${uri}-${i}`} style={[styles.photo, wrapStyle]}>
+            <TouchableOpacity 
+              key={`${uri}-${i}`} 
+              style={[styles.photo, wrapStyle]}
+              activeOpacity={isVideo ? 0.8 : 1}
+              disabled={!isVideo}
+              onPress={() => {
+                if (isVideo && post.videos?.[0]) {
+                  // TODO: Open video player with post.videos[0]
+                  Alert.alert('Video', 'Video player will open here');
+                }
+              }}
+            >
               <Image
                 source={{ uri }}
                 style={sizeStyle}
@@ -125,7 +136,7 @@ function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; on
                   </View>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           );
         })}
         {post.badge ? (

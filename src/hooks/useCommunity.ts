@@ -12,6 +12,26 @@ function mapPosts(posts: Post[]):PostCardItem[] {
     if (!authorId) {
       console.warn('Post missing authorId:', p.id, 'user:', p.user, 'user_id:', p.user_id);
     }
+    
+    // Build combined photos + video array with media types
+    const photos: string[] = [];
+    const mediaTypes: ('image' | 'video')[] = [];
+    
+    // Add images first
+    const imageUrls = p.image_urls?.length ? p.image_urls : p.image ? [p.image] : [];
+    imageUrls.forEach(url => {
+      photos.push(url);
+      mediaTypes.push('image');
+    });
+    
+    // Add video thumbnail if video exists
+    if (p.video) {
+      // For videos, we show a thumbnail (could be generated or a placeholder)
+      // and mark it as video type so PostCard shows the play button
+      photos.push(p.video);
+      mediaTypes.push('video');
+    }
+    
     return {
       id: p.id,
       authorId,
@@ -19,7 +39,9 @@ function mapPosts(posts: Post[]):PostCardItem[] {
       authorAvatar: p.user?.avatar ?? '',
       time: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       caption: p.text,
-      photos: p.image_urls?.length ? p.image_urls : p.image ? [p.image] : [],
+      photos,
+      mediaTypes,
+      videos: p.video ? [p.video] : undefined,
       likes: p.likes,
       comments: p.comments_count||0,
       liked: Boolean(p.liked),

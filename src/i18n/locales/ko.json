@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "계속",
+    "back": "뒤로",
+    "next": "다음",
+    "skip": "건너뛰기",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "done": "완료",
+    "close": "닫기",
+    "confirm": "확인",
+    "yes": "예",
+    "no": "아니요",
+    "ok": "확인",
+    "loading": "불러오는 중...",
+    "error": "오류",
+    "success": "성공",
+    "tryAgain": "다시 시도",
+    "learnMore": "자세히 보기"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "하루하루 더 건강하게."
+  },
+  "languageSelection": {
+    "title": "언어 선택",
+    "subtitle": "계속하려면 선호하는 언어를 선택하세요",
+    "continue": "계속"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "기록하세요. 경쟁하세요.\n함께 이기세요.",
+      "titleHighlight": "함께 이기세요.",
+      "subtitle": "팀과 챌린지, 그리고 진정한 책임감을 위해 만들어진 소셜 칼로리 트래커."
+    },
+    "slide2": {
+      "title": "더 많이 기록하세요.\n더 많이 이루세요.",
+      "titleHighlight": "더 많이.",
+      "subtitle": "필요한 모든 것을 강력한 앱 하나에."
+    },
+    "slide3": {
+      "title": "스마트한 AI.\n진짜 결과.",
+      "titleHighlight": "AI.",
+      "subtitle": "맞춤형 코칭, 식단 계획, 장보기 도움, 스마트 음식 분석을 받아보세요."
+    },
+    "slide4": {
+      "title": "당신의 AI 팀.\n언제나 함께.",
+      "titleHighlight": "AI 팀.",
+      "subtitle": "다섯 명의 AI 전문가가 당신의 성공을 위해 24시간 함께합니다."
+    },
+    "slide5": {
+      "title": "무엇이든 스캔하세요.\n바로 기록하세요.",
+      "titleHighlight": "무엇이든.",
+      "subtitle": "음식, 바코드, 메뉴를 스캔하세요. 나머지는 AI가 합니다."
+    },
+    "slide6": {
+      "title": "당신을 더 나아지게 하는\n챌린지.",
+      "titleHighlight": "챌린지.",
+      "subtitle": "재미있는 챌린지에 참여하고, 목표를 달성하고, 보상을 얻고, 리더보드를 올라가세요."
+    },
+    "slide7": {
+      "title": "경쟁하세요. 올라가세요.\n축하하세요.",
+      "titleHighlight": "올라가세요.",
+      "subtitle": "내 순위를 확인하고, 팀을 응원하고, 모든 승리를 함께 축하하세요."
+    },
+    "slide8": {
+      "title": "당신의 커뮤니티.\n당신의 동기부여.",
+      "titleHighlight": "커뮤니티.",
+      "subtitle": "팀과 커뮤니티의 게시물, 소식, 팁, 성과로 동기를 유지하세요."
+    },
+    "slide9": {
+      "title": "상상해 보세요\n지금으로부터\n30일 후의 당신을.",
+      "titleHighlight": "30일 후의",
+      "subtitle": "매일 몇 분이면 더 건강한 습관, 더 강한 책임감, 그리고 지속되는 결과를 만들 수 있습니다."
+    },
+    "slide10": {
+      "title": "당신이 받게 될 모든 것",
+      "titleHighlight": "받게 될",
+      "subtitle": "성공에 필요한 모든 도구 — 초보자라도 문제없습니다."
+    },
+    "slide11": {
+      "title": "TeamCal을 무료로 사용해 보세요.",
+      "titleHighlight": "TeamCal",
+      "subtitle": "3일 무료 체험으로 모든 프리미엄 기능을 즐기세요."
+    },
+    "slide12": {
+      "title": "놓치지 않도록 종료 하루 전에 알림을 보내드립니다.",
+      "titleHighlight": "알림",
+      "subtitle": "체험이 끝나기 전 언제든지 취소할 수 있으며, 요금이 청구되지 않습니다."
+    },
+    "plan": {
+      "title": "플랜 선택",
+      "subtitle": "3일 무료 체험 시작하기",
+      "startTrial": "무료 체험 시작",
+      "caption": "체험이 끝날 때까지 요금이 청구되지 않습니다. 언제든지 취소하세요."
+    },
+    "final": {
+      "title": "모든 준비 완료!",
+      "titleHighlight": "완료!",
+      "subtitle": "건강한 습관을 만들고, 목표를 달성하고, 함께 이겨봅시다!",
+      "startJourney": "여정 시작하기"
+    },
+    "letsGo": "시작해요!"
+  },
+  "auth": {
+    "login": "로그인",
+    "signUp": "회원가입",
+    "logout": "로그아웃",
+    "loggingOut": "로그아웃 중…",
+    "email": "이메일",
+    "password": "비밀번호",
+    "confirmPassword": "비밀번호 확인",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "dontHaveAccount": "계정이 없으신가요?",
+    "alreadyHaveAccount": "이미 계정이 있으신가요?",
+    "createAccount": "계정 만들기",
+    "resetPassword": "비밀번호 재설정",
+    "verifyCode": "코드 확인",
+    "enterCode": "이메일로 전송된 코드를 입력하세요",
+    "sendCode": "코드 전송",
+    "resendCode": "코드 재전송"
+  },
+  "navigation": {
+    "home": "홈",
+    "explore": "탐색",
+    "community": "커뮤니티",
+    "earn": "적립"
+  },
+  "home": {
+    "title": "홈",
+    "welcome": "다시 오신 것을 환영합니다",
+    "dailyProgress": "오늘의 진행 상황",
+    "calories": "칼로리",
+    "protein": "단백질",
+    "carbs": "탄수화물",
+    "fat": "지방",
+    "water": "물",
+    "steps": "걸음 수",
+    "weight": "체중",
+    "sleep": "수면"
+  },
+  "explore": {
+    "title": "탐색",
+    "search": "검색",
+    "discover": "발견",
+    "trending": "인기",
+    "categories": "카테고리"
+  },
+  "community": {
+    "title": "커뮤니티",
+    "feed": "피드",
+    "challenges": "챌린지",
+    "leaderboard": "리더보드",
+    "groups": "그룹",
+    "messages": "메시지"
+  },
+  "earn": {
+    "title": "적립",
+    "dashboard": "대시보드",
+    "content": "콘텐츠",
+    "videos": "동영상",
+    "pdfs": "PDF",
+    "blogs": "블로그",
+    "memberships": "멤버십",
+    "stores": "스토어"
+  },
+  "settings": {
+    "title": "설정",
+    "account": "계정",
+    "editProfile": "프로필 편집",
+    "changePassword": "비밀번호 변경",
+    "notifications": "알림",
+    "privacy": "개인정보",
+    "helpSupport": "도움말 및 지원",
+    "termsOfUse": "이용약관",
+    "privacyPolicy": "개인정보처리방침",
+    "communityGuidelines": "커뮤니티 가이드라인",
+    "language": "언어",
+    "deleteAccount": "계정 삭제",
+    "stepSync": {
+      "title": "자동 걸음 수",
+      "titleIOS": "Apple 건강 걸음 수",
+      "titleAndroid": "Health Connect 걸음 수",
+      "connected": "연결됨 · 앱을 열 때와 백그라운드에서 주기적으로 동기화됩니다.",
+      "notConnected": "휴대폰 또는 웨어러블의 총 걸음 수를 연결하세요.",
+      "connect": "연결",
+      "disconnect": "연결 해제",
+      "syncNow": "지금 동기화",
+      "pleaseWait": "잠시 기다려 주세요…",
+      "syncSuccess": "걸음 수가 동기화되었습니다",
+      "syncFailed": "동기화 실패",
+      "connectSuccess": "걸음 수가 연결되었습니다",
+      "connectFailed": "걸음 수를 연결할 수 없습니다"
+    },
+    "deleteAccountConfirm": "계정을 삭제하시겠습니까?",
+    "deleteAccountMessage": "TeamCal 계정과 관련 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "deleteAccountFinal": "최종 확인",
+    "deleteAccountFinalMessage": "지금 계정을 영구적으로 삭제하시겠습니까?",
+    "deleteAccountError": "계정을 삭제할 수 없습니다"
+  },
+  "profile": {
+    "title": "프로필",
+    "editProfile": "프로필 편집",
+    "followers": "팔로워",
+    "following": "팔로잉",
+    "posts": "게시물",
+    "bio": "소개"
+  },
+  "challenges": {
+    "title": "챌린지",
+    "active": "진행 중",
+    "completed": "완료됨",
+    "browse": "둘러보기",
+    "create": "챌린지 만들기",
+    "join": "참여",
+    "leave": "나가기",
+    "details": "세부정보",
+    "leaderboard": "리더보드",
+    "participants": "참가자"
+  },
+  "meals": {
+    "title": "식사",
+    "breakfast": "아침",
+    "lunch": "점심",
+    "dinner": "저녁",
+    "snacks": "간식",
+    "addMeal": "식사 추가",
+    "logFood": "음식 기록",
+    "scanFood": "음식 스캔",
+    "mealPlanner": "식단 플래너",
+    "recipes": "레시피",
+    "groceryList": "장보기 목록"
+  },
+  "workout": {
+    "title": "운동",
+    "today": "오늘",
+    "history": "기록",
+    "plans": "플랜",
+    "startWorkout": "운동 시작",
+    "exercises": "운동 동작",
+    "sets": "세트",
+    "reps": "횟수",
+    "duration": "시간",
+    "intensity": "강도"
+  },
+  "progress": {
+    "title": "진행 상황",
+    "weekly": "주간",
+    "monthly": "월간",
+    "yearly": "연간",
+    "weight": "체중",
+    "measurements": "신체 치수",
+    "photos": "사진",
+    "goals": "목표"
+  },
+  "notifications": {
+    "title": "알림",
+    "all": "전체",
+    "unread": "읽지 않음",
+    "settings": "알림 설정",
+    "empty": "아직 알림이 없습니다",
+    "markAllRead": "모두 읽음으로 표시"
+  },
+  "search": {
+    "title": "검색",
+    "placeholder": "검색...",
+    "recent": "최근",
+    "noResults": "결과를 찾을 수 없습니다",
+    "tryAgain": "다른 검색어로 시도해 보세요"
+  },
+  "errors": {
+    "generic": "문제가 발생했습니다",
+    "network": "네트워크 오류입니다. 연결을 확인해 주세요.",
+    "unauthorized": "계속하려면 로그인이 필요합니다",
+    "notFound": "찾을 수 없습니다",
+    "serverError": "서버 오류입니다. 나중에 다시 시도해 주세요.",
+    "invalidInput": "잘못된 입력입니다",
+    "required": "필수 항목입니다",
+    "invalidEmail": "유효한 이메일을 입력해 주세요",
+    "passwordTooShort": "비밀번호는 8자 이상이어야 합니다",
+    "passwordsMismatch": "비밀번호가 일치하지 않습니다"
+  },
+  "empty": {
+    "generic": "아직 아무것도 없습니다",
+    "noData": "사용 가능한 데이터가 없습니다",
+    "noResults": "결과를 찾을 수 없습니다",
+    "noPosts": "아직 게시물이 없습니다",
+    "noMessages": "아직 메시지가 없습니다",
+    "noChallenges": "아직 챌린지가 없습니다",
+    "noWorkouts": "아직 운동이 없습니다",
+    "noMeals": "아직 기록된 식사가 없습니다"
+  },
+  "buttons": {
+    "add": "추가",
+    "create": "만들기",
+    "update": "업데이트",
+    "remove": "제거",
+    "share": "공유",
+    "like": "좋아요",
+    "comment": "댓글",
+    "follow": "팔로우",
+    "unfollow": "팔로우 취소",
+    "send": "보내기",
+    "post": "게시",
+    "upload": "업로드",
+    "download": "다운로드",
+    "viewMore": "더 보기",
+    "seeAll": "전체 보기"
+  },
+  "forms": {
+    "name": "이름",
+    "email": "이메일",
+    "phone": "전화번호",
+    "message": "메시지",
+    "description": "설명",
+    "title": "제목",
+    "category": "카테고리",
+    "tags": "태그",
+    "price": "가격",
+    "quantity": "수량"
+  },
+  "subscription": {
+    "title": "구독",
+    "freeTrial": "무료 체험",
+    "subscribe": "구독하기",
+    "unsubscribe": "구독 해지",
+    "manageSubscription": "구독 관리",
+    "currentPlan": "현재 플랜",
+    "upgradePlan": "플랜 업그레이드",
+    "cancelSubscription": "구독 취소"
+  },
+  "ai": {
+    "coach": "AI 코치",
+    "mealPlanner": "AI 식단 플래너",
+    "foodAnalyzer": "AI 음식 분석기",
+    "groceryAssistant": "AI 장보기 어시스턴트",
+    "supplementAdvisor": "AI 보충제 어드바이저"
+  },
+  "tracking": {
+    "calories": "칼로리",
+    "macros": "다량영양소",
+    "water": "물",
+    "weight": "체중",
+    "sleep": "수면",
+    "steps": "걸음 수",
+    "fasting": "단식",
+    "period": "생리 주기 트래커",
+    "mood": "기분 일기",
+    "supplements": "보충제"
+  }
+}

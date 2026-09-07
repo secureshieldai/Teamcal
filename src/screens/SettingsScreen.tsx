@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import MenuListCard from '../components/MenuListCard';
 import { useAuth } from '../context/AuthContext';
 import { colors, radii, spacing, typography } from '../theme';
@@ -11,28 +12,32 @@ import type { RootStackParamList } from '../navigation/types';
 import { disableStepSync, enableStepSync, isStepSyncEnabled, syncSteps } from '../services/stepSync';
 import { authService } from '../services/api/auth.service';
 
-const accountItems = [
-  { id: 'edit-profile', icon: 'person-outline' as const, label: 'Edit Profile' },
-  { id: 'change-password', icon: 'lock-closed-outline' as const, label: 'Change Password' },
-  { id: 'notifications', icon: 'notifications-outline' as const, label: 'Notifications' },
-  { id: 'privacy', icon: 'shield-checkmark-outline' as const, label: 'Privacy' },
-  { id: 'help', icon: 'help-circle-outline' as const, label: 'Help & Support' },
-  { id: 'terms', icon: 'document-text-outline' as const, label: 'Terms of Use' },
-  { id: 'privacy-policy', icon: 'reader-outline' as const, label: 'Privacy Policy' },
-  { id: 'community-guidelines', icon: 'people-outline' as const, label: 'Community Guidelines' },
-];
-
 export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { logout } = useAuth();
+  const { t } = useTranslation();
   const [loggingOut, setLoggingOut] = useState(false);
   const [stepEnabled, setStepEnabled] = useState(false);
   const [stepBusy, setStepBusy] = useState(false);
   useEffect(() => { isStepSyncEnabled().then(setStepEnabled); }, []);
+  
+  const accountItems = [
+    { id: 'edit-profile', icon: 'person-outline' as const, label: t('settings.editProfile') },
+    { id: 'change-password', icon: 'lock-closed-outline' as const, label: t('settings.changePassword') },
+    { id: 'notifications', icon: 'notifications-outline' as const, label: t('settings.notifications') },
+    { id: 'language', icon: 'language-outline' as const, label: t('settings.language') },
+    { id: 'privacy', icon: 'shield-checkmark-outline' as const, label: t('settings.privacy') },
+    { id: 'help', icon: 'help-circle-outline' as const, label: t('settings.helpSupport') },
+    { id: 'terms', icon: 'document-text-outline' as const, label: t('settings.termsOfUse') },
+    { id: 'privacy-policy', icon: 'reader-outline' as const, label: t('settings.privacyPolicy') },
+    { id: 'community-guidelines', icon: 'people-outline' as const, label: t('settings.communityGuidelines') },
+  ];
+  
   const routes: Record<string, keyof RootStackParamList> = {
     'edit-profile': 'EditProfile',
     'change-password': 'ChangePassword',
     notifications: 'NotificationSettings',
+    language: 'LanguageSettings',
     privacy: 'Privacy',
     help: 'HelpSupport',
   };
@@ -81,7 +86,7 @@ export default function SettingsScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.pageTitle}>Settings</Text>
+        <Text style={styles.pageTitle}>{t('settings.title')}</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -92,14 +97,14 @@ export default function SettingsScreen() {
           <View style={styles.healthHeader}>
             <Ionicons name="walk-outline" size={24} color={colors.primary} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.healthTitle}>{Platform.OS === 'ios' ? 'Apple Health steps' : Platform.OS === 'android' ? 'Health Connect steps' : 'Automatic steps'}</Text>
-              <Text style={styles.healthText}>{stepEnabled ? 'Connected · syncs when the app opens and periodically in the background.' : 'Connect your phone or wearable step total.'}</Text>
+              <Text style={styles.healthTitle}>{Platform.OS === 'ios' ? t('settings.stepSync.titleIOS') : Platform.OS === 'android' ? t('settings.stepSync.titleAndroid') : t('settings.stepSync.title')}</Text>
+              <Text style={styles.healthText}>{stepEnabled ? t('settings.stepSync.connected') : t('settings.stepSync.notConnected')}</Text>
             </View>
           </View>
           <View style={styles.healthActions}>
-            {stepEnabled && <TouchableOpacity onPress={syncNow} disabled={stepBusy}><Text style={styles.syncText}>Sync now</Text></TouchableOpacity>}
+            {stepEnabled && <TouchableOpacity onPress={syncNow} disabled={stepBusy}><Text style={styles.syncText}>{t('settings.stepSync.syncNow')}</Text></TouchableOpacity>}
             <TouchableOpacity style={[styles.connectButton, stepEnabled && styles.disconnectButton]} onPress={toggleSteps} disabled={stepBusy || Platform.OS === 'web'}>
-              <Text style={styles.connectText}>{stepBusy ? 'Please wait…' : stepEnabled ? 'Disconnect' : 'Connect'}</Text>
+              <Text style={styles.connectText}>{stepBusy ? t('settings.stepSync.pleaseWait') : stepEnabled ? t('settings.stepSync.disconnect') : t('settings.stepSync.connect')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -111,10 +116,10 @@ export default function SettingsScreen() {
           disabled={loggingOut}
         >
           <Ionicons name="log-out-outline" size={18} color={colors.macroProtein} />
-          <Text style={styles.logoutText}>{loggingOut ? 'Logging Out…' : 'Log Out'}</Text>
+          <Text style={styles.logoutText}>{loggingOut ? t('auth.loggingOut') : t('auth.logout')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteButton} onPress={()=>Alert.alert('Delete account?','This permanently deletes your TeamCal account and associated data. This action cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Continue',style:'destructive',onPress:()=>Alert.alert('Final confirmation','Permanently delete your account now?',[{text:'Cancel',style:'cancel'},{text:'Delete Account',style:'destructive',onPress:async()=>{try{await authService.deleteAccount();await logout();navigation.reset({index:0,routes:[{name:'Login'}]});}catch(error){Alert.alert('Unable to delete account',(error as Error).message);}}}])}])}>
-          <Ionicons name="trash-outline" size={18} color={colors.macroProtein}/><Text style={styles.deleteText}>Delete Account</Text>
+        <TouchableOpacity style={styles.deleteButton} onPress={()=>Alert.alert(t('settings.deleteAccountConfirm'),t('settings.deleteAccountMessage'),[{text:t('common.cancel'),style:'cancel'},{text:t('common.continue'),style:'destructive',onPress:()=>Alert.alert(t('settings.deleteAccountFinal'),t('settings.deleteAccountFinalMessage'),[{text:t('common.cancel'),style:'cancel'},{text:t('settings.deleteAccount'),style:'destructive',onPress:async()=>{try{await authService.deleteAccount();await logout();navigation.reset({index:0,routes:[{name:'Login'}]});}catch(error){Alert.alert(t('settings.deleteAccountError'),(error as Error).message);}}}])}])}>
+          <Ionicons name="trash-outline" size={18} color={colors.macroProtein}/><Text style={styles.deleteText}>{t('settings.deleteAccount')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

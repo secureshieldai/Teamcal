@@ -8,6 +8,7 @@ import ExploreScreen from '../screens/ExploreScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import EarnScreen from '../screens/EarnScreen';
 import type { MainTabParamList, RootStackParamList } from './types';
+import '../i18n'; // Ensure i18n is initialized
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 

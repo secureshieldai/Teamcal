@@ -3,7 +3,7 @@
  * Centralized provider configuration for the entire application
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { AuthProvider } from '../../context/AuthContext';
 import { ErrorBoundary } from '../../shared/components/ErrorBoundary';
 import { validateEnv, ENV } from '../config/env';
 import { APP_CONFIG } from '../config/constants';
+import '../../i18n'; // Initialize i18n
 
 // Validate environment variables on app start
 if (ENV.IS_PROD) {

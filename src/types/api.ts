@@ -147,6 +147,7 @@ export interface Post {
   text: string;
   image: string | null;
   image_urls?: string[] | null;
+  video?: string | null;
   likes: number;
   liked?: boolean;
   comments_count?: number;

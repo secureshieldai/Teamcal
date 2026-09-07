@@ -2,17 +2,21 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { initializeLanguage } from '../i18n';
+import { useAuth } from '../context/AuthContext';
 import type { RootStackParamList } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { isAuthenticated, isLoading } = useAuth();
   const logoScale = useRef(new Animated.Value(0.7)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Start animations
     Animated.sequence([
       Animated.parallel([
         Animated.spring(logoScale, { toValue: 1, useNativeDriver: true, tension: 60, friction: 8 }),
@@ -20,13 +24,46 @@ export default function SplashScreen() {
       ]),
       Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
-
-    const timer = setTimeout(() => {
-      navigation.replace('Onboarding');
-    }, 2200);
-
-    return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    // Only navigate once auth is done loading
+    if (isLoading) return;
+
+    const initialize = async () => {
+      try {
+        const savedLanguage = await initializeLanguage();
+        
+        // Wait for animations to complete
+        await new Promise(resolve => setTimeout(resolve, 2200));
+        
+        // If user is already authenticated, go directly to main app
+        if (isAuthenticated) {
+          navigation.replace('MainTabs');
+          return;
+        }
+        
+        // Navigate based on whether language was previously selected
+        if (savedLanguage && savedLanguage !== 'en') {
+          // Language already selected, skip language selection
+          navigation.replace('Onboarding');
+        } else {
+          // First launch or default English - show language selection
+          navigation.replace('LanguageSelection');
+        }
+      } catch (error) {
+        console.error('[Splash] Error initializing:', error);
+        // On error, check auth status
+        if (isAuthenticated) {
+          navigation.replace('MainTabs');
+        } else {
+          navigation.replace('LanguageSelection');
+        }
+      }
+    };
+
+    initialize();
+  }, [isAuthenticated, isLoading, navigation]);
 
   return (
     <View style={styles.container}>

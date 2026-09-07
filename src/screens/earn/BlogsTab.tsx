@@ -135,14 +135,57 @@ export default function BlogsTab({ navigation }: Props) {
       </View>
       <View style={styles.quickActionsGrid}>
         {[
-          { label: 'Create Post', icon: 'create-outline' },
-          { label: 'Manage Posts', icon: 'list-outline' },
-          { label: 'Blog Settings', icon: 'settings-outline' },
-          { label: 'View Blog', icon: 'globe-outline' },
-          { label: 'Promote Blog', icon: 'megaphone-outline' },
-          { label: 'Copy Blog Link', icon: 'link-outline' },
+          { label: 'Create Post', icon: 'create-outline', action: () => {
+            if (!userBlogs.length) {
+              Alert.alert('No blog yet', 'Please create a blog first before creating a post.');
+              return;
+            }
+            navigation.navigate('ArticleEditor', { blogId: userBlogs[0].id });
+          }},
+          { label: 'Manage Posts', icon: 'list-outline', action: () => {
+            if (!userBlogs.length) {
+              Alert.alert('No blog yet', 'Please create a blog first.');
+              return;
+            }
+            navigation.navigate('BlogDashboard', { blogId: userBlogs[0].id });
+          }},
+          { label: 'Blog Settings', icon: 'settings-outline', action: () => {
+            if (!userBlogs.length) {
+              Alert.alert('No blog yet', 'Please create a blog first.');
+              return;
+            }
+            navigation.navigate('BlogDashboard', { blogId: userBlogs[0].id });
+          }},
+          { label: 'View Blog', icon: 'globe-outline', action: () => {
+            if (!userBlogs.length) {
+              Alert.alert('No blog yet', 'Please create a blog first.');
+              return;
+            }
+            const blog = userBlogs[0];
+            const url = `https://${blog.slug}.teamcal.blog`;
+            Alert.alert('View Blog', `Your blog is live at:\n${url}`, [
+              { text: 'Copy Link', onPress: async () => {
+                const Clipboard = await import('expo-clipboard');
+                await Clipboard.default.setStringAsync(url);
+                Alert.alert('Link copied to clipboard');
+              }},
+              { text: 'Close', style: 'cancel' }
+            ]);
+          }},
+          { label: 'Promote Blog', icon: 'megaphone-outline', action: () => comingSoon('Promote Blog')},
+          { label: 'Copy Blog Link', icon: 'link-outline', action: async () => {
+            if (!userBlogs.length) {
+              Alert.alert('No blog yet', 'Please create a blog first.');
+              return;
+            }
+            const blog = userBlogs[0];
+            const url = `https://${blog.slug}.teamcal.blog`;
+            const Clipboard = await import('expo-clipboard');
+            await Clipboard.default.setStringAsync(url);
+            Alert.alert('Blog link copied', url);
+          }},
         ].map((action) => (
-          <TouchableOpacity key={action.label} style={styles.quickActionItem} onPress={() => comingSoon(action.label)}>
+          <TouchableOpacity key={action.label} style={styles.quickActionItem} onPress={action.action}>
             <View style={styles.quickActionIcon}>
               <Ionicons name={action.icon as keyof typeof Ionicons.glyphMap} size={18} color={colors.primary} />
             </View>

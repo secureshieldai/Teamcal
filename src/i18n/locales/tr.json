@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "Devam et",
+    "back": "Geri",
+    "next": "İleri",
+    "skip": "Atla",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "done": "Tamam",
+    "close": "Kapat",
+    "confirm": "Onayla",
+    "yes": "Evet",
+    "no": "Hayır",
+    "ok": "Tamam",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "tryAgain": "Tekrar dene",
+    "learnMore": "Daha fazla bilgi"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "Her geçen gün daha sağlıklı."
+  },
+  "languageSelection": {
+    "title": "Dilini seç",
+    "subtitle": "Devam etmek için tercih ettiğin dili seç",
+    "continue": "Devam et"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "Takip et. Yarış.\nBirlikte kazan.",
+      "titleHighlight": "Birlikte kazan.",
+      "subtitle": "Ekipler, meydan okumalar ve gerçek sorumluluk için tasarlanmış sosyal kalori takipçisi."
+    },
+    "slide2": {
+      "title": "Daha çok takip et.\nDaha çok yap.",
+      "titleHighlight": "Daha çok.",
+      "subtitle": "İhtiyacın olan her şey tek bir güçlü uygulamada."
+    },
+    "slide3": {
+      "title": "Akıllı yapay zekâ.\nGerçek sonuçlar.",
+      "titleHighlight": "yapay zekâ.",
+      "subtitle": "Kişiye özel koçluk, yemek planları, alışveriş yardımı ve akıllı yemek analizi al."
+    },
+    "slide4": {
+      "title": "Yapay zekâ ekibin.\nHer zaman açık.",
+      "titleHighlight": "Yapay zekâ ekibin.",
+      "subtitle": "Kazanmana yardımcı olmak için gece gündüz çalışan beş yapay zekâ uzmanı."
+    },
+    "slide5": {
+      "title": "Her şeyi tara.\nAnında kaydet.",
+      "titleHighlight": "Her şeyi.",
+      "subtitle": "Yemekleri, barkodları veya menüleri tara. Gerisini yapay zekâ halleder."
+    },
+    "slide6": {
+      "title": "Seni daha iyi yapan\nmeydan okumalar.",
+      "titleHighlight": "meydan okumalar.",
+      "subtitle": "Eğlenceli meydan okumalara katıl, hedefleri aş, ödüller kazan ve liderlik tablolarında yüksel."
+    },
+    "slide7": {
+      "title": "Yarış. Yüksel.\nKutla.",
+      "titleHighlight": "Yüksel.",
+      "subtitle": "Sıralamanı gör, ekibini destekle ve her zaferi birlikte kutla."
+    },
+    "slide8": {
+      "title": "Topluluğun.\nMotivasyonun.",
+      "titleHighlight": "Topluluğun.",
+      "subtitle": "Ekibinin ve topluluğun paylaşımları, güncellemeleri, ipuçları ve başarılarıyla ilhamını koru."
+    },
+    "slide9": {
+      "title": "Bundan 30 gün sonra\nnerede\nolacağını hayal et.",
+      "titleHighlight": "Bundan 30 gün sonra",
+      "subtitle": "Her gün birkaç dakika; daha sağlıklı alışkanlıklar, daha güçlü sorumluluk ve kalıcı sonuçlar oluşturabilir."
+    },
+    "slide10": {
+      "title": "Elde edeceğin her şey",
+      "titleHighlight": "her şey",
+      "subtitle": "Başarılı olmak için ihtiyacın olan tüm araçlar — yeni başlayan biri olsan bile."
+    },
+    "slide11": {
+      "title": "TeamCal'ı ücretsiz denemeni istiyoruz.",
+      "titleHighlight": "TeamCal",
+      "subtitle": "3 günlük ücretsiz denemeyle tüm premium özelliklerin keyfini çıkar."
+    },
+    "slide12": {
+      "title": "Kaçırmaman için bir gün önceden sana bildirim göndeririz.",
+      "titleHighlight": "bildirim",
+      "subtitle": "Deneme bitmeden istediğin zaman iptal et, ücret alınmaz."
+    },
+    "plan": {
+      "title": "Planını seç",
+      "subtitle": "3 günlük ücretsiz denemene başla",
+      "startTrial": "Ücretsiz denemeyi başlat",
+      "caption": "Denemen bitene kadar ücret alınmaz. İstediğin zaman iptal et."
+    },
+    "final": {
+      "title": "Her şey hazır!",
+      "titleHighlight": "hazır!",
+      "subtitle": "Sağlıklı alışkanlıklar oluşturalım, hedefleri aşalım ve birlikte kazanalım!",
+      "startJourney": "Yolculuğuna başla"
+    },
+    "letsGo": "Hadi başlayalım!"
+  },
+  "auth": {
+    "login": "Giriş yap",
+    "signUp": "Kaydol",
+    "logout": "Çıkış yap",
+    "loggingOut": "Çıkış yapılıyor…",
+    "email": "E-posta",
+    "password": "Şifre",
+    "confirmPassword": "Şifreyi onayla",
+    "forgotPassword": "Şifreni mi unuttun?",
+    "dontHaveAccount": "Hesabın yok mu?",
+    "alreadyHaveAccount": "Zaten hesabın var mı?",
+    "createAccount": "Hesap oluştur",
+    "resetPassword": "Şifreyi sıfırla",
+    "verifyCode": "Kodu doğrula",
+    "enterCode": "E-postana gönderilen kodu gir",
+    "sendCode": "Kod gönder",
+    "resendCode": "Kodu tekrar gönder"
+  },
+  "navigation": {
+    "home": "Ana sayfa",
+    "explore": "Keşfet",
+    "community": "Topluluk",
+    "earn": "Kazan"
+  },
+  "home": {
+    "title": "Ana sayfa",
+    "welcome": "Tekrar hoş geldin",
+    "dailyProgress": "Günlük ilerleme",
+    "calories": "Kalori",
+    "protein": "Protein",
+    "carbs": "Karbonhidrat",
+    "fat": "Yağ",
+    "water": "Su",
+    "steps": "Adım",
+    "weight": "Kilo",
+    "sleep": "Uyku"
+  },
+  "explore": {
+    "title": "Keşfet",
+    "search": "Ara",
+    "discover": "Keşfet",
+    "trending": "Trendler",
+    "categories": "Kategoriler"
+  },
+  "community": {
+    "title": "Topluluk",
+    "feed": "Akış",
+    "challenges": "Meydan okumalar",
+    "leaderboard": "Liderlik tablosu",
+    "groups": "Gruplar",
+    "messages": "Mesajlar"
+  },
+  "earn": {
+    "title": "Kazan",
+    "dashboard": "Panel",
+    "content": "İçerik",
+    "videos": "Videolar",
+    "pdfs": "PDF'ler",
+    "blogs": "Bloglar",
+    "memberships": "Üyelikler",
+    "stores": "Mağazalar"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "account": "Hesap",
+    "editProfile": "Profili düzenle",
+    "changePassword": "Şifreyi değiştir",
+    "notifications": "Bildirimler",
+    "privacy": "Gizlilik",
+    "helpSupport": "Yardım ve destek",
+    "termsOfUse": "Kullanım koşulları",
+    "privacyPolicy": "Gizlilik politikası",
+    "communityGuidelines": "Topluluk kuralları",
+    "language": "Dil",
+    "deleteAccount": "Hesabı sil",
+    "stepSync": {
+      "title": "Otomatik adımlar",
+      "titleIOS": "Apple Health adımları",
+      "titleAndroid": "Health Connect adımları",
+      "connected": "Bağlı · uygulama açıldığında ve arka planda düzenli olarak eşitlenir.",
+      "notConnected": "Telefonundaki veya giyilebilir cihazındaki toplam adımı bağla.",
+      "connect": "Bağla",
+      "disconnect": "Bağlantıyı kes",
+      "syncNow": "Şimdi eşitle",
+      "pleaseWait": "Lütfen bekle…",
+      "syncSuccess": "Adımlar eşitlendi",
+      "syncFailed": "Eşitleme başarısız",
+      "connectSuccess": "Adımlar bağlandı",
+      "connectFailed": "Adımlar bağlanamadı"
+    },
+    "deleteAccountConfirm": "Hesap silinsin mi?",
+    "deleteAccountMessage": "Bu işlem TeamCal hesabını ve ilişkili verileri kalıcı olarak siler. Bu işlem geri alınamaz.",
+    "deleteAccountFinal": "Son onay",
+    "deleteAccountFinalMessage": "Hesabın şimdi kalıcı olarak silinsin mi?",
+    "deleteAccountError": "Hesap silinemedi"
+  },
+  "profile": {
+    "title": "Profil",
+    "editProfile": "Profili düzenle",
+    "followers": "Takipçiler",
+    "following": "Takip edilenler",
+    "posts": "Gönderiler",
+    "bio": "Hakkında"
+  },
+  "challenges": {
+    "title": "Meydan okumalar",
+    "active": "Aktif",
+    "completed": "Tamamlanan",
+    "browse": "Göz at",
+    "create": "Meydan okuma oluştur",
+    "join": "Katıl",
+    "leave": "Ayrıl",
+    "details": "Ayrıntılar",
+    "leaderboard": "Liderlik tablosu",
+    "participants": "Katılımcılar"
+  },
+  "meals": {
+    "title": "Öğünler",
+    "breakfast": "Kahvaltı",
+    "lunch": "Öğle yemeği",
+    "dinner": "Akşam yemeği",
+    "snacks": "Atıştırmalıklar",
+    "addMeal": "Öğün ekle",
+    "logFood": "Yemek kaydet",
+    "scanFood": "Yemek tara",
+    "mealPlanner": "Öğün planlayıcı",
+    "recipes": "Tarifler",
+    "groceryList": "Alışveriş listesi"
+  },
+  "workout": {
+    "title": "Antrenmanlar",
+    "today": "Bugün",
+    "history": "Geçmiş",
+    "plans": "Planlar",
+    "startWorkout": "Antrenmana başla",
+    "exercises": "Egzersizler",
+    "sets": "Set",
+    "reps": "Tekrar",
+    "duration": "Süre",
+    "intensity": "Yoğunluk"
+  },
+  "progress": {
+    "title": "İlerleme",
+    "weekly": "Haftalık",
+    "monthly": "Aylık",
+    "yearly": "Yıllık",
+    "weight": "Kilo",
+    "measurements": "Ölçüler",
+    "photos": "Fotoğraflar",
+    "goals": "Hedefler"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "all": "Tümü",
+    "unread": "Okunmamış",
+    "settings": "Bildirim ayarları",
+    "empty": "Henüz bildirim yok",
+    "markAllRead": "Tümünü okundu olarak işaretle"
+  },
+  "search": {
+    "title": "Ara",
+    "placeholder": "Ara...",
+    "recent": "Son aramalar",
+    "noResults": "Sonuç bulunamadı",
+    "tryAgain": "Farklı bir arama dene"
+  },
+  "errors": {
+    "generic": "Bir şeyler ters gitti",
+    "network": "Ağ hatası. Lütfen bağlantını kontrol et.",
+    "unauthorized": "Devam etmek için giriş yapmalısın",
+    "notFound": "Bulunamadı",
+    "serverError": "Sunucu hatası. Lütfen daha sonra tekrar dene.",
+    "invalidInput": "Geçersiz giriş",
+    "required": "Bu alan zorunludur",
+    "invalidEmail": "Lütfen geçerli bir e-posta gir",
+    "passwordTooShort": "Şifre en az 8 karakter olmalıdır",
+    "passwordsMismatch": "Şifreler eşleşmiyor"
+  },
+  "empty": {
+    "generic": "Burada henüz bir şey yok",
+    "noData": "Veri yok",
+    "noResults": "Sonuç bulunamadı",
+    "noPosts": "Henüz gönderi yok",
+    "noMessages": "Henüz mesaj yok",
+    "noChallenges": "Henüz meydan okuma yok",
+    "noWorkouts": "Henüz antrenman yok",
+    "noMeals": "Henüz öğün kaydedilmedi"
+  },
+  "buttons": {
+    "add": "Ekle",
+    "create": "Oluştur",
+    "update": "Güncelle",
+    "remove": "Kaldır",
+    "share": "Paylaş",
+    "like": "Beğen",
+    "comment": "Yorum yap",
+    "follow": "Takip et",
+    "unfollow": "Takibi bırak",
+    "send": "Gönder",
+    "post": "Paylaş",
+    "upload": "Yükle",
+    "download": "İndir",
+    "viewMore": "Daha fazla göster",
+    "seeAll": "Tümünü gör"
+  },
+  "forms": {
+    "name": "Ad",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "message": "Mesaj",
+    "description": "Açıklama",
+    "title": "Başlık",
+    "category": "Kategori",
+    "tags": "Etiketler",
+    "price": "Fiyat",
+    "quantity": "Miktar"
+  },
+  "subscription": {
+    "title": "Abonelik",
+    "freeTrial": "Ücretsiz deneme",
+    "subscribe": "Abone ol",
+    "unsubscribe": "Abonelikten çık",
+    "manageSubscription": "Aboneliği yönet",
+    "currentPlan": "Mevcut plan",
+    "upgradePlan": "Planı yükselt",
+    "cancelSubscription": "Aboneliği iptal et"
+  },
+  "ai": {
+    "coach": "Yapay Zekâ Koçu",
+    "mealPlanner": "Yapay Zekâ Öğün Planlayıcı",
+    "foodAnalyzer": "Yapay Zekâ Yemek Analizcisi",
+    "groceryAssistant": "Yapay Zekâ Alışveriş Asistanı",
+    "supplementAdvisor": "Yapay Zekâ Takviye Danışmanı"
+  },
+  "tracking": {
+    "calories": "Kalori",
+    "macros": "Makrolar",
+    "water": "Su",
+    "weight": "Kilo",
+    "sleep": "Uyku",
+    "steps": "Adım",
+    "fasting": "Oruç",
+    "period": "Regl takipçisi",
+    "mood": "Ruh hâli günlüğü",
+    "supplements": "Takviyeler"
+  }
+}

@@ -22,7 +22,7 @@ export function useHomeSummary() {
   const statTiles=[
     {id:'steps',icon:'walk' as const,label:'Steps',value:(summary.data?.steps??0).toLocaleString(),goal:`/${user?.goal_steps??0}`},
     {id:'water',icon:'water' as const,label:'Water',value:`${summary.data?.water??0}`,goal:`/${user?.goal_water_ml??0} ml`},
-    {id:'workouts',icon:'barbell' as const,label:'Workouts',value:`${summary.data?.workouts??0}`,goal:'today'},
+    {id:'meals',icon:'restaurant' as const,label:'Log Meals',value:`${summary.data?.meals??0}`,goal:'today'},
     {id:'fasting',icon:'time' as const,label:'Fasting',value:fastingValue,goal:'elapsed'},
   ];
   const friendsProgress=friends.data.map(friend=>({...friend,avatar:friend.avatar||'',calories:`${friend.calories.toLocaleString()} kcal · ${friend.steps.toLocaleString()} steps`}));

@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "متابعة",
+    "back": "رجوع",
+    "next": "التالي",
+    "skip": "تخطي",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "done": "تم",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "loading": "جارٍ التحميل...",
+    "error": "خطأ",
+    "success": "نجاح",
+    "tryAgain": "حاول مرة أخرى",
+    "learnMore": "معرفة المزيد"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "أكثر صحة، يومًا بعد يوم."
+  },
+  "languageSelection": {
+    "title": "اختر لغتك",
+    "subtitle": "اختر لغتك المفضلة للمتابعة",
+    "continue": "متابعة"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "تتبّع. تنافس.\nانتصروا معًا.",
+      "titleHighlight": "انتصروا معًا.",
+      "subtitle": "متتبّع السعرات الحرارية الاجتماعي المصمَّم للفرق والتحديات والمساءلة الحقيقية."
+    },
+    "slide2": {
+      "title": "تتبّع أكثر.\nأنجز أكثر.",
+      "titleHighlight": "أكثر.",
+      "subtitle": "كل ما تحتاجه في تطبيق واحد قوي."
+    },
+    "slide3": {
+      "title": "ذكاء اصطناعي ذكي.\nنتائج حقيقية.",
+      "titleHighlight": "ذكاء اصطناعي.",
+      "subtitle": "احصل على تدريب مخصّص وخطط وجبات ومساعدة في التسوق وتحليل ذكي للطعام."
+    },
+    "slide4": {
+      "title": "فريقك من الذكاء الاصطناعي.\nيعمل دائمًا.",
+      "titleHighlight": "فريق الذكاء الاصطناعي.",
+      "subtitle": "خمسة خبراء ذكاء اصطناعي يعملون على مدار الساعة لمساعدتك على الفوز."
+    },
+    "slide5": {
+      "title": "امسح أي شيء.\nسجّل فورًا.",
+      "titleHighlight": "أي شيء.",
+      "subtitle": "امسح الطعام أو الباركود أو قوائم الطعام. والذكاء الاصطناعي يقوم بالباقي."
+    },
+    "slide6": {
+      "title": "تحديات\nتجعلك أفضل.",
+      "titleHighlight": "تحديات",
+      "subtitle": "انضم إلى تحديات ممتعة، وحقّق الأهداف، واكسب المكافآت، وتسلّق لوحات المتصدرين."
+    },
+    "slide7": {
+      "title": "تنافس. تسلّق.\nاحتفل.",
+      "titleHighlight": "تسلّق.",
+      "subtitle": "شاهد ترتيبك، وادعم فريقك، واحتفلوا معًا بكل انتصار."
+    },
+    "slide8": {
+      "title": "مجتمعك.\nدافعك.",
+      "titleHighlight": "مجتمعك.",
+      "subtitle": "ابقَ متحمّسًا بالمنشورات والتحديثات والنصائح والإنجازات من فريقك ومن المجتمع."
+    },
+    "slide9": {
+      "title": "تخيّل أين\nستكون\nبعد 30 يومًا من الآن.",
+      "titleHighlight": "بعد 30 يومًا من الآن.",
+      "subtitle": "بضع دقائق كل يوم يمكن أن تبني عادات أكثر صحة، ومساءلة أقوى، ونتائج دائمة."
+    },
+    "slide10": {
+      "title": "كل ما ستحصل عليه",
+      "titleHighlight": "ستحصل عليه",
+      "subtitle": "كل الأدوات التي تحتاجها للنجاح — حتى لو كنت مبتدئًا."
+    },
+    "slide11": {
+      "title": "نريدك أن تجرّب TeamCal مجانًا.",
+      "titleHighlight": "TeamCal",
+      "subtitle": "استمتع بجميع الميزات المميزة مع تجربة مجانية لمدة 3 أيام."
+    },
+    "slide12": {
+      "title": "سنرسل لك إشعارًا قبل يوم واحد حتى لا تفوّت شيئًا.",
+      "titleHighlight": "إشعارًا",
+      "subtitle": "ألغِ في أي وقت قبل انتهاء التجربة، دون أي رسوم."
+    },
+    "plan": {
+      "title": "اختر خطتك",
+      "subtitle": "ابدأ تجربتك المجانية لمدة 3 أيام",
+      "startTrial": "ابدأ التجربة المجانية",
+      "caption": "لن يتم محاسبتك حتى انتهاء تجربتك. ألغِ في أي وقت."
+    },
+    "final": {
+      "title": "كل شيء جاهز!",
+      "titleHighlight": "جاهز!",
+      "subtitle": "لنبنِ عادات صحية، ونحقّق الأهداف، وننتصر معًا!",
+      "startJourney": "ابدأ رحلتك"
+    },
+    "letsGo": "لنبدأ!"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "loggingOut": "جارٍ تسجيل الخروج…",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "createAccount": "إنشاء حساب",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "verifyCode": "التحقق من الرمز",
+    "enterCode": "أدخل الرمز المُرسل إلى بريدك الإلكتروني",
+    "sendCode": "إرسال الرمز",
+    "resendCode": "إعادة إرسال الرمز"
+  },
+  "navigation": {
+    "home": "الرئيسية",
+    "explore": "استكشاف",
+    "community": "المجتمع",
+    "earn": "اكسب"
+  },
+  "home": {
+    "title": "الرئيسية",
+    "welcome": "مرحبًا بعودتك",
+    "dailyProgress": "التقدّم اليومي",
+    "calories": "السعرات الحرارية",
+    "protein": "البروتين",
+    "carbs": "الكربوهيدرات",
+    "fat": "الدهون",
+    "water": "الماء",
+    "steps": "الخطوات",
+    "weight": "الوزن",
+    "sleep": "النوم"
+  },
+  "explore": {
+    "title": "استكشاف",
+    "search": "بحث",
+    "discover": "اكتشف",
+    "trending": "الرائج",
+    "categories": "الفئات"
+  },
+  "community": {
+    "title": "المجتمع",
+    "feed": "الموجز",
+    "challenges": "التحديات",
+    "leaderboard": "لوحة المتصدرين",
+    "groups": "المجموعات",
+    "messages": "الرسائل"
+  },
+  "earn": {
+    "title": "اكسب",
+    "dashboard": "لوحة التحكم",
+    "content": "المحتوى",
+    "videos": "مقاطع الفيديو",
+    "pdfs": "ملفات PDF",
+    "blogs": "المدونات",
+    "memberships": "العضويات",
+    "stores": "المتاجر"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "account": "الحساب",
+    "editProfile": "تعديل الملف الشخصي",
+    "changePassword": "تغيير كلمة المرور",
+    "notifications": "الإشعارات",
+    "privacy": "الخصوصية",
+    "helpSupport": "المساعدة والدعم",
+    "termsOfUse": "شروط الاستخدام",
+    "privacyPolicy": "سياسة الخصوصية",
+    "communityGuidelines": "إرشادات المجتمع",
+    "language": "اللغة",
+    "deleteAccount": "حذف الحساب",
+    "stepSync": {
+      "title": "الخطوات التلقائية",
+      "titleIOS": "خطوات Apple Health",
+      "titleAndroid": "خطوات Health Connect",
+      "connected": "متصل · يتم المزامنة عند فتح التطبيق ودوريًا في الخلفية.",
+      "notConnected": "اربط إجمالي خطوات هاتفك أو جهازك القابل للارتداء.",
+      "connect": "ربط",
+      "disconnect": "قطع الاتصال",
+      "syncNow": "المزامنة الآن",
+      "pleaseWait": "يرجى الانتظار…",
+      "syncSuccess": "تمت مزامنة الخطوات",
+      "syncFailed": "فشلت المزامنة",
+      "connectSuccess": "تم ربط الخطوات",
+      "connectFailed": "تعذّر ربط الخطوات"
+    },
+    "deleteAccountConfirm": "حذف الحساب؟",
+    "deleteAccountMessage": "سيؤدي هذا إلى حذف حساب TeamCal الخاص بك والبيانات المرتبطة به نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+    "deleteAccountFinal": "التأكيد النهائي",
+    "deleteAccountFinalMessage": "هل تريد حذف حسابك نهائيًا الآن؟",
+    "deleteAccountError": "تعذّر حذف الحساب"
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "editProfile": "تعديل الملف الشخصي",
+    "followers": "المتابِعون",
+    "following": "المتابَعون",
+    "posts": "المنشورات",
+    "bio": "نبذة"
+  },
+  "challenges": {
+    "title": "التحديات",
+    "active": "نشطة",
+    "completed": "مكتملة",
+    "browse": "تصفّح",
+    "create": "إنشاء تحدٍّ",
+    "join": "انضمام",
+    "leave": "مغادرة",
+    "details": "التفاصيل",
+    "leaderboard": "لوحة المتصدرين",
+    "participants": "المشاركون"
+  },
+  "meals": {
+    "title": "الوجبات",
+    "breakfast": "الإفطار",
+    "lunch": "الغداء",
+    "dinner": "العشاء",
+    "snacks": "الوجبات الخفيفة",
+    "addMeal": "إضافة وجبة",
+    "logFood": "تسجيل طعام",
+    "scanFood": "مسح طعام",
+    "mealPlanner": "مخطّط الوجبات",
+    "recipes": "الوصفات",
+    "groceryList": "قائمة التسوق"
+  },
+  "workout": {
+    "title": "التمارين",
+    "today": "اليوم",
+    "history": "السجل",
+    "plans": "الخطط",
+    "startWorkout": "بدء التمرين",
+    "exercises": "التمارين",
+    "sets": "المجموعات",
+    "reps": "التكرارات",
+    "duration": "المدة",
+    "intensity": "الشدة"
+  },
+  "progress": {
+    "title": "التقدّم",
+    "weekly": "أسبوعي",
+    "monthly": "شهري",
+    "yearly": "سنوي",
+    "weight": "الوزن",
+    "measurements": "القياسات",
+    "photos": "الصور",
+    "goals": "الأهداف"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "all": "الكل",
+    "unread": "غير المقروءة",
+    "settings": "إعدادات الإشعارات",
+    "empty": "لا توجد إشعارات بعد",
+    "markAllRead": "تحديد الكل كمقروء"
+  },
+  "search": {
+    "title": "بحث",
+    "placeholder": "بحث...",
+    "recent": "الأخيرة",
+    "noResults": "لم يتم العثور على نتائج",
+    "tryAgain": "جرّب بحثًا مختلفًا"
+  },
+  "errors": {
+    "generic": "حدث خطأ ما",
+    "network": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
+    "unauthorized": "يجب تسجيل الدخول للمتابعة",
+    "notFound": "غير موجود",
+    "serverError": "خطأ في الخادم. يرجى المحاولة لاحقًا.",
+    "invalidInput": "إدخال غير صالح",
+    "required": "هذا الحقل مطلوب",
+    "invalidEmail": "يرجى إدخال بريد إلكتروني صالح",
+    "passwordTooShort": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+    "passwordsMismatch": "كلمتا المرور غير متطابقتين"
+  },
+  "empty": {
+    "generic": "لا يوجد شيء هنا بعد",
+    "noData": "لا توجد بيانات متاحة",
+    "noResults": "لم يتم العثور على نتائج",
+    "noPosts": "لا توجد منشورات بعد",
+    "noMessages": "لا توجد رسائل بعد",
+    "noChallenges": "لا توجد تحديات بعد",
+    "noWorkouts": "لا توجد تمارين بعد",
+    "noMeals": "لم يتم تسجيل أي وجبات بعد"
+  },
+  "buttons": {
+    "add": "إضافة",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "remove": "إزالة",
+    "share": "مشاركة",
+    "like": "إعجاب",
+    "comment": "تعليق",
+    "follow": "متابعة",
+    "unfollow": "إلغاء المتابعة",
+    "send": "إرسال",
+    "post": "نشر",
+    "upload": "رفع",
+    "download": "تنزيل",
+    "viewMore": "عرض المزيد",
+    "seeAll": "عرض الكل"
+  },
+  "forms": {
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "message": "الرسالة",
+    "description": "الوصف",
+    "title": "العنوان",
+    "category": "الفئة",
+    "tags": "الوسوم",
+    "price": "السعر",
+    "quantity": "الكمية"
+  },
+  "subscription": {
+    "title": "الاشتراك",
+    "freeTrial": "تجربة مجانية",
+    "subscribe": "اشتراك",
+    "unsubscribe": "إلغاء الاشتراك",
+    "manageSubscription": "إدارة الاشتراك",
+    "currentPlan": "الخطة الحالية",
+    "upgradePlan": "ترقية الخطة",
+    "cancelSubscription": "إلغاء الاشتراك"
+  },
+  "ai": {
+    "coach": "مدرّب الذكاء الاصطناعي",
+    "mealPlanner": "مخطّط الوجبات بالذكاء الاصطناعي",
+    "foodAnalyzer": "محلّل الطعام بالذكاء الاصطناعي",
+    "groceryAssistant": "مساعد التسوق بالذكاء الاصطناعي",
+    "supplementAdvisor": "مستشار المكمّلات بالذكاء الاصطناعي"
+  },
+  "tracking": {
+    "calories": "السعرات الحرارية",
+    "macros": "العناصر الغذائية الكبرى",
+    "water": "الماء",
+    "weight": "الوزن",
+    "sleep": "النوم",
+    "steps": "الخطوات",
+    "fasting": "الصيام",
+    "period": "متتبّع الدورة الشهرية",
+    "mood": "مذكرات المزاج",
+    "supplements": "المكمّلات"
+  }
+}

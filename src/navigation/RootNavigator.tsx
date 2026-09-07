@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MainTabs from './MainTabs';
 import SplashScreen from '../screens/SplashScreen';
+import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
@@ -21,6 +22,7 @@ import RewardsScreen from '../screens/RewardsScreen';
 import InviteFriendsScreen from '../screens/InviteFriendsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import { ChangePasswordScreen, EditProfileScreen, HelpSupportScreen, NotificationSettingsScreen, PrivacyScreen } from '../screens/SettingsDetailScreens';
+import LanguageSettingsScreen from '../screens/LanguageSettingsScreen';
 import QuickLogEntryScreen from '../screens/QuickLogEntryScreen';
 import GroceryListScreen from '../screens/GroceryListScreen';
 import GlobalSearchScreen from '../screens/GlobalSearchScreen';
@@ -150,6 +152,7 @@ export default function RootNavigator() {
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
@@ -173,6 +176,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
+      <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
       <Stack.Screen name="LegalDocument" component={LegalDocumentScreen} />
       <Stack.Screen name="QuickLogEntry" component={QuickLogEntryScreen} options={{ presentation: 'modal' }} />

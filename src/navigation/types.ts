@@ -4,6 +4,7 @@ import type { LegalDocumentKey } from '../data/legalDocuments';
 
 export type RootStackParamList = {
   Splash: undefined;
+  LanguageSelection: undefined;
   Onboarding: undefined;
   Login: undefined;
   SignUp: undefined;
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   NotificationSettings: undefined;
   Privacy: undefined;
+  LanguageSettings: undefined;
   HelpSupport: undefined;
   LegalDocument: { document: LegalDocumentKey };
   QuickLogEntry: { kind: string };

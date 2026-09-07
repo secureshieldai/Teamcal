@@ -386,7 +386,7 @@ function InfoCard({text}:{text:string}){
 
 const s=StyleSheet.create({
   safe:{flex:1,backgroundColor:colors.background},
-  header:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:spacing.lg,paddingVertical:spacing.md,borderBottomWidth:1,borderBottomColor:colors.border},
+  header:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:spacing.lg,paddingTop:spacing.sm,paddingBottom:spacing.md,borderBottomWidth:1,borderBottomColor:colors.border,backgroundColor:colors.background},
   headerTitle:{...typography.h2,fontSize:16,color:colors.textPrimary},
   saveBtn:{fontSize:14,fontWeight:'700',color:colors.primary},
   navRow:{paddingHorizontal:spacing.lg,paddingVertical:spacing.md,gap:spacing.sm,paddingRight:spacing.xl},

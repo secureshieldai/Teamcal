@@ -1,0 +1,353 @@
+{
+  "common": {
+    "continue": "続ける",
+    "back": "戻る",
+    "next": "次へ",
+    "skip": "スキップ",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "done": "完了",
+    "close": "閉じる",
+    "confirm": "確認",
+    "yes": "はい",
+    "no": "いいえ",
+    "ok": "OK",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "tryAgain": "もう一度試す",
+    "learnMore": "詳細を見る"
+  },
+  "splash": {
+    "appName": "TeamCal",
+    "tagline": "毎日、もっと健康に。"
+  },
+  "languageSelection": {
+    "title": "言語を選択",
+    "subtitle": "続けるにはご希望の言語を選択してください",
+    "continue": "続ける"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "記録する。競い合う。\n共に勝つ。",
+      "titleHighlight": "共に勝つ。",
+      "subtitle": "チーム、チャレンジ、そして本当の責任感のために作られたソーシャルなカロリートラッカー。"
+    },
+    "slide2": {
+      "title": "もっと記録。\nもっと達成。",
+      "titleHighlight": "もっと。",
+      "subtitle": "必要なものすべてを、ひとつの強力なアプリで。"
+    },
+    "slide3": {
+      "title": "スマートなAI。\n確かな成果。",
+      "titleHighlight": "AI。",
+      "subtitle": "パーソナライズされたコーチング、食事プラン、買い物のサポート、スマートな食品分析を手に入れましょう。"
+    },
+    "slide4": {
+      "title": "あなたのAIチーム。\nいつでも稼働中。",
+      "titleHighlight": "AIチーム。",
+      "subtitle": "5人のAIスペシャリストが24時間体制であなたの勝利をサポートします。"
+    },
+    "slide5": {
+      "title": "何でもスキャン。\nすぐに記録。",
+      "titleHighlight": "何でも。",
+      "subtitle": "食品、バーコード、メニューをスキャン。あとはAIにおまかせ。"
+    },
+    "slide6": {
+      "title": "あなたを高める\nチャレンジ。",
+      "titleHighlight": "チャレンジ。",
+      "subtitle": "楽しいチャレンジに参加し、目標を達成し、報酬を獲得して、ランキングを駆け上がりましょう。"
+    },
+    "slide7": {
+      "title": "競う。登る。\n祝う。",
+      "titleHighlight": "登る。",
+      "subtitle": "自分の順位を確認し、チームを応援し、一つひとつの勝利を共に祝いましょう。"
+    },
+    "slide8": {
+      "title": "あなたのコミュニティ。\nあなたのモチベーション。",
+      "titleHighlight": "コミュニティ。",
+      "subtitle": "チームとコミュニティの投稿、更新、ヒント、成果でモチベーションを保ちましょう。"
+    },
+    "slide9": {
+      "title": "想像してみてください\n30日後の\nあなたの姿を。",
+      "titleHighlight": "30日後の",
+      "subtitle": "毎日数分あれば、より健康的な習慣、より強い責任感、そして持続する成果を築けます。"
+    },
+    "slide10": {
+      "title": "手に入るものすべて",
+      "titleHighlight": "手に入る",
+      "subtitle": "成功に必要なすべてのツール — 初心者でも大丈夫。"
+    },
+    "slide11": {
+      "title": "TeamCal を無料でお試しください。",
+      "titleHighlight": "TeamCal",
+      "subtitle": "3日間の無料トライアルで、すべてのプレミアム機能をお楽しみください。"
+    },
+    "slide12": {
+      "title": "見逃さないよう、終了の1日前に通知をお送りします。",
+      "titleHighlight": "通知",
+      "subtitle": "トライアル終了前ならいつでもキャンセル可能、料金はかかりません。"
+    },
+    "plan": {
+      "title": "プランを選択",
+      "subtitle": "3日間の無料トライアルを始める",
+      "startTrial": "無料トライアルを開始",
+      "caption": "トライアル終了まで課金されません。いつでもキャンセルできます。"
+    },
+    "final": {
+      "title": "準備完了！",
+      "titleHighlight": "完了！",
+      "subtitle": "健康的な習慣を築き、目標を達成し、共に勝ちましょう！",
+      "startJourney": "旅を始める"
+    },
+    "letsGo": "さあ始めよう！"
+  },
+  "auth": {
+    "login": "ログイン",
+    "signUp": "新規登録",
+    "logout": "ログアウト",
+    "loggingOut": "ログアウト中…",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirmPassword": "パスワードの確認",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "dontHaveAccount": "アカウントをお持ちでないですか？",
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+    "createAccount": "アカウントを作成",
+    "resetPassword": "パスワードをリセット",
+    "verifyCode": "コードを確認",
+    "enterCode": "メールに送信されたコードを入力してください",
+    "sendCode": "コードを送信",
+    "resendCode": "コードを再送信"
+  },
+  "navigation": {
+    "home": "ホーム",
+    "explore": "探す",
+    "community": "コミュニティ",
+    "earn": "獲得"
+  },
+  "home": {
+    "title": "ホーム",
+    "welcome": "おかえりなさい",
+    "dailyProgress": "今日の進捗",
+    "calories": "カロリー",
+    "protein": "タンパク質",
+    "carbs": "炭水化物",
+    "fat": "脂質",
+    "water": "水分",
+    "steps": "歩数",
+    "weight": "体重",
+    "sleep": "睡眠"
+  },
+  "explore": {
+    "title": "探す",
+    "search": "検索",
+    "discover": "発見",
+    "trending": "トレンド",
+    "categories": "カテゴリー"
+  },
+  "community": {
+    "title": "コミュニティ",
+    "feed": "フィード",
+    "challenges": "チャレンジ",
+    "leaderboard": "ランキング",
+    "groups": "グループ",
+    "messages": "メッセージ"
+  },
+  "earn": {
+    "title": "獲得",
+    "dashboard": "ダッシュボード",
+    "content": "コンテンツ",
+    "videos": "動画",
+    "pdfs": "PDF",
+    "blogs": "ブログ",
+    "memberships": "メンバーシップ",
+    "stores": "ストア"
+  },
+  "settings": {
+    "title": "設定",
+    "account": "アカウント",
+    "editProfile": "プロフィールを編集",
+    "changePassword": "パスワードを変更",
+    "notifications": "通知",
+    "privacy": "プライバシー",
+    "helpSupport": "ヘルプとサポート",
+    "termsOfUse": "利用規約",
+    "privacyPolicy": "プライバシーポリシー",
+    "communityGuidelines": "コミュニティガイドライン",
+    "language": "言語",
+    "deleteAccount": "アカウントを削除",
+    "stepSync": {
+      "title": "歩数の自動取得",
+      "titleIOS": "Apple ヘルスケアの歩数",
+      "titleAndroid": "Health Connect の歩数",
+      "connected": "接続済み · アプリ起動時とバックグラウンドで定期的に同期されます。",
+      "notConnected": "スマートフォンやウェアラブルの合計歩数を接続します。",
+      "connect": "接続",
+      "disconnect": "接続を解除",
+      "syncNow": "今すぐ同期",
+      "pleaseWait": "お待ちください…",
+      "syncSuccess": "歩数を同期しました",
+      "syncFailed": "同期に失敗しました",
+      "connectSuccess": "歩数を接続しました",
+      "connectFailed": "歩数を接続できませんでした"
+    },
+    "deleteAccountConfirm": "アカウントを削除しますか？",
+    "deleteAccountMessage": "TeamCal アカウントと関連データが完全に削除されます。この操作は元に戻せません。",
+    "deleteAccountFinal": "最終確認",
+    "deleteAccountFinalMessage": "今すぐアカウントを完全に削除しますか？",
+    "deleteAccountError": "アカウントを削除できません"
+  },
+  "profile": {
+    "title": "プロフィール",
+    "editProfile": "プロフィールを編集",
+    "followers": "フォロワー",
+    "following": "フォロー中",
+    "posts": "投稿",
+    "bio": "自己紹介"
+  },
+  "challenges": {
+    "title": "チャレンジ",
+    "active": "進行中",
+    "completed": "完了",
+    "browse": "見る",
+    "create": "チャレンジを作成",
+    "join": "参加",
+    "leave": "退出",
+    "details": "詳細",
+    "leaderboard": "ランキング",
+    "participants": "参加者"
+  },
+  "meals": {
+    "title": "食事",
+    "breakfast": "朝食",
+    "lunch": "昼食",
+    "dinner": "夕食",
+    "snacks": "間食",
+    "addMeal": "食事を追加",
+    "logFood": "食品を記録",
+    "scanFood": "食品をスキャン",
+    "mealPlanner": "食事プランナー",
+    "recipes": "レシピ",
+    "groceryList": "買い物リスト"
+  },
+  "workout": {
+    "title": "ワークアウト",
+    "today": "今日",
+    "history": "履歴",
+    "plans": "プラン",
+    "startWorkout": "ワークアウトを開始",
+    "exercises": "エクササイズ",
+    "sets": "セット",
+    "reps": "回数",
+    "duration": "時間",
+    "intensity": "強度"
+  },
+  "progress": {
+    "title": "進捗",
+    "weekly": "週間",
+    "monthly": "月間",
+    "yearly": "年間",
+    "weight": "体重",
+    "measurements": "サイズ",
+    "photos": "写真",
+    "goals": "目標"
+  },
+  "notifications": {
+    "title": "通知",
+    "all": "すべて",
+    "unread": "未読",
+    "settings": "通知設定",
+    "empty": "通知はまだありません",
+    "markAllRead": "すべて既読にする"
+  },
+  "search": {
+    "title": "検索",
+    "placeholder": "検索...",
+    "recent": "最近",
+    "noResults": "結果が見つかりませんでした",
+    "tryAgain": "別のキーワードで検索してください"
+  },
+  "errors": {
+    "generic": "問題が発生しました",
+    "network": "ネットワークエラー。接続を確認してください。",
+    "unauthorized": "続けるにはログインが必要です",
+    "notFound": "見つかりません",
+    "serverError": "サーバーエラー。しばらくしてからもう一度お試しください。",
+    "invalidInput": "入力が無効です",
+    "required": "この項目は必須です",
+    "invalidEmail": "有効なメールアドレスを入力してください",
+    "passwordTooShort": "パスワードは8文字以上で入力してください",
+    "passwordsMismatch": "パスワードが一致しません"
+  },
+  "empty": {
+    "generic": "まだ何もありません",
+    "noData": "データがありません",
+    "noResults": "結果が見つかりませんでした",
+    "noPosts": "投稿はまだありません",
+    "noMessages": "メッセージはまだありません",
+    "noChallenges": "チャレンジはまだありません",
+    "noWorkouts": "ワークアウトはまだありません",
+    "noMeals": "食事はまだ記録されていません"
+  },
+  "buttons": {
+    "add": "追加",
+    "create": "作成",
+    "update": "更新",
+    "remove": "削除",
+    "share": "シェア",
+    "like": "いいね",
+    "comment": "コメント",
+    "follow": "フォロー",
+    "unfollow": "フォロー解除",
+    "send": "送信",
+    "post": "投稿",
+    "upload": "アップロード",
+    "download": "ダウンロード",
+    "viewMore": "もっと見る",
+    "seeAll": "すべて見る"
+  },
+  "forms": {
+    "name": "名前",
+    "email": "メールアドレス",
+    "phone": "電話番号",
+    "message": "メッセージ",
+    "description": "説明",
+    "title": "タイトル",
+    "category": "カテゴリー",
+    "tags": "タグ",
+    "price": "価格",
+    "quantity": "数量"
+  },
+  "subscription": {
+    "title": "サブスクリプション",
+    "freeTrial": "無料トライアル",
+    "subscribe": "登録する",
+    "unsubscribe": "登録を解除",
+    "manageSubscription": "サブスクリプションを管理",
+    "currentPlan": "現在のプラン",
+    "upgradePlan": "プランをアップグレード",
+    "cancelSubscription": "サブスクリプションを解約"
+  },
+  "ai": {
+    "coach": "AIコーチ",
+    "mealPlanner": "AI食事プランナー",
+    "foodAnalyzer": "AI食品アナライザー",
+    "groceryAssistant": "AI買い物アシスタント",
+    "supplementAdvisor": "AIサプリメントアドバイザー"
+  },
+  "tracking": {
+    "calories": "カロリー",
+    "macros": "マクロ栄養素",
+    "water": "水分",
+    "weight": "体重",
+    "sleep": "睡眠",
+    "steps": "歩数",
+    "fasting": "ファスティング",
+    "period": "生理トラッカー",
+    "mood": "気分ジャーナル",
+    "supplements": "サプリメント"
+  }
+}

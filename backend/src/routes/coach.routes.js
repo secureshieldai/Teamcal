@@ -1,7 +1,7 @@
 const express = require("express");
 const { protect } = require("../middleware/auth");
 const upload = require("../middleware/upload");
-const { chat, scanMeal, lookupBarcode, generateAudience, generateArticleContent, aiRateLimit } = require("../controllers/coach.controller");
+const { chat, scanMeal, scanMealText, lookupBarcode, generateAudience, generateArticleContent, aiRateLimit } = require("../controllers/coach.controller");
 
 const router = express.Router();
 
@@ -9,6 +9,7 @@ router.use(protect);
 
 router.post("/chat", aiRateLimit, upload.single("image"), chat);
 router.post("/scan-meal", aiRateLimit, upload.single("image"), scanMeal);
+router.post("/scan-meal-text", aiRateLimit, scanMealText);
 router.post("/barcode", aiRateLimit, lookupBarcode);
 router.post("/audience/generate",aiRateLimit,generateAudience);
 router.post("/article-helper",aiRateLimit,generateArticleContent);

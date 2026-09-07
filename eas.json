@@ -9,17 +9,11 @@
       "environment": "preview",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "GOOGLE_SERVICES_JSON": "./google-services.json"
       }
     },
     "production": {
       "environment": "production",
-      "autoIncrement": true,
-      "env": {
-        "GOOGLE_SERVICES_JSON": "./google-services.json"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {
