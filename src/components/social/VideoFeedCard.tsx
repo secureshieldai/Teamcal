@@ -36,14 +36,15 @@ export type VideoFeedItem = {
 };
 
 // The Videos feed renders inside the Social screen, which keeps the app's
-// BottomTabBar visible. Its content sits ~56px above the safe-area inset, so the
-// video overlays (user info, action rail) must clear that or they render hidden
-// behind the tab bar.
-const TAB_BAR_CLEARANCE = 56;
+// BottomTabBar visible. VideoFeedTab now sizes each card to the real visible
+// area (tab bar already excluded, and the tab bar itself absorbs the bottom
+// safe-area inset), so the overlays only need a small margin above the card's
+// bottom edge — adding insets.bottom here again would float them too high.
+const BOTTOM_CLEARANCE = spacing.lg;
 
 const VideoFeedCard = ({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) => {
   const insets = useSafeAreaInsets();
-  const bottomClearance = insets.bottom + TAB_BAR_CLEARANCE;
+  const bottomClearance = BOTTOM_CLEARANCE;
   const [likes, setLikes] = useState(video.likes);
   const [liked, setLiked] = useState(false);
   const [liking, setLiking] = useState(false);

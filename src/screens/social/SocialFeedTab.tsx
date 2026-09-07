@@ -110,6 +110,15 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
     />
   ), [navigation, visiblePostId]);
 
+  // Hide the app's bottom navigation while the Reels-style Videos feed is open so
+  // it fills the screen; restore it when leaving that sub-tab or this screen.
+  useEffect(() => {
+    const setTabBar = (style: { display: 'none' } | undefined) =>
+      (navigation.setOptions as (opts: Record<string, unknown>) => void)({ tabBarStyle: style });
+    setTabBar(subTab === 'Videos' ? { display: 'none' } : undefined);
+    return () => setTabBar(undefined);
+  }, [navigation, subTab]);
+
   // Reset transient reply/like UI whenever a different story opens.
   useEffect(() => {
     if (!activeStory) return;

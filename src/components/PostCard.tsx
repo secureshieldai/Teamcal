@@ -90,7 +90,7 @@ function PostCard({ post, onComment, onDelete, onPressAuthor, activeVideo }: { p
             }
             return (
               <View key={`video-${post.id}-${i}`} style={[styles.photo, wrapStyle]}>
-                <FeedVideo uri={videoUri} active={activeVideo} style={sizeStyle} />
+                <FeedVideo uri={videoUri} active={activeVideo} style={sizeStyle} adaptAspect={single} />
               </View>
             );
           }

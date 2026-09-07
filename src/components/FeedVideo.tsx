@@ -11,19 +11,30 @@ import { colors } from '../theme';
  *  - loops, no native controls
  * Rendering/playback only — no network or backend concerns here.
  */
+// Feed videos come in every shape (portrait phone clips, landscape, square).
+// We size the frame to the video's own aspect ratio so nothing is cropped,
+// clamped to a sane range so an extreme 9:16 clip doesn't eat the whole screen.
+const MIN_ASPECT = 0.8; // 4:5 portrait
+const MAX_ASPECT = 16 / 9; // widescreen
+const DEFAULT_ASPECT = 1; // square, until the real size is known
+
 function FeedVideo({
   uri,
   active,
   style,
+  adaptAspect = true,
 }: {
   uri: string;
   active?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** When true (default) the frame follows the video's own aspect ratio. */
+  adaptAspect?: boolean;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [aspect, setAspect] = useState<number | null>(null);
   // Whether the viewer has manually taken control (so autoplay/pause stops fighting them).
   const manual = useRef(false);
 
@@ -55,9 +66,26 @@ function FeedVideo({
         else if (e.status === 'error') setFailed(true);
       },
     );
+    const applySize = (size?: { width?: number; height?: number } | null) => {
+      if (size?.width && size?.height) {
+        const r = size.width / size.height;
+        if (Number.isFinite(r) && r > 0) {
+          setAspect(Math.min(MAX_ASPECT, Math.max(MIN_ASPECT, r)));
+        }
+      }
+    };
+    const trackSub = player.addListener(
+      'videoTrackChange',
+      (e: { videoTrack?: { size?: { width?: number; height?: number } } | null }) => {
+        applySize(e.videoTrack?.size);
+      },
+    );
+    // In case the track is already resolved before the listener attaches.
+    try { applySize((player as any).videoTrack?.size); } catch { /* not ready */ }
     return () => {
       playSub.remove();
       statusSub.remove();
+      trackSub.remove();
     };
   }, [player]);
 
@@ -87,13 +115,17 @@ function FeedVideo({
     }
   };
 
+  const aspectStyle = adaptAspect
+    ? { aspectRatio: aspect ?? DEFAULT_ASPECT }
+    : null;
+
   return (
     <TouchableWithoutFeedback onPress={toggle}>
-      <View style={[styles.wrap, style]}>
+      <View style={[styles.wrap, style, aspectStyle]}>
         <VideoView
           player={player}
           style={StyleSheet.absoluteFill}
-          contentFit="cover"
+          contentFit="contain"
           nativeControls={false}
         />
 

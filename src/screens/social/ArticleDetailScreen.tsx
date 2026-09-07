@@ -71,6 +71,9 @@ export default function ArticleDetailScreen({ route, navigation }: Props) {
         }).catch(() => undefined);
 
         if (art.status === 'published') {
+          // Count a read for the author's Total Views (skip the owner's own opens).
+          if (!owner) blogsService.recordArticleView(articleId);
+
           socialService.getArticleEngagement(articleId).then(eng => {
             if (!active) return;
             setLikes(eng.likes); setLiked(eng.liked); setComments(eng.comments);

@@ -32,9 +32,17 @@ export default function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
-      tabBar={({ state, navigation }) => {
+      tabBar={({ state, navigation, descriptors }) => {
         const routeName = state.routeNames[state.index] as keyof typeof TAB_KEY_BY_ROUTE;
         const activeTab = TAB_KEY_BY_ROUTE[routeName];
+
+        // Screens can hide the bottom bar for full-screen experiences (e.g. the
+        // Reels-style Videos feed) via navigation.setOptions({ tabBarStyle: { display: 'none' } }).
+        const focusedOptions = descriptors[state.routes[state.index].key]?.options;
+        const tabBarStyle = focusedOptions?.tabBarStyle as { display?: string } | undefined;
+        if (tabBarStyle?.display === 'none') {
+          return null;
+        }
 
         return (
           <BottomTabBar

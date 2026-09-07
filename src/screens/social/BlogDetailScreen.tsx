@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import Avatar from '../../components/Avatar';
 import { colors, radii, spacing, typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import { personalService } from '../../services/api/personal.service';
+import { blogsService } from '../../services/api/blogs.service';
 import {socialService,type ArticleComment} from '../../services/api/social.service';
 import { articleMarkdownIt, articleMarkdownRules } from '../../data/articleMarkdown';
 
@@ -29,7 +30,9 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
   const [replyingTo, setReplyingTo] = useState<ArticleComment | null>(null);
   const [postingComment, setPostingComment] = useState(false);
   const [siteId,setSiteId]=useState('');const [following,setFollowing]=useState(false);
-  useEffect(()=>{const load=()=>socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);setPost({id:item.id,image:item.cover||'',title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:Boolean(item.user?.verified),date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,body:item.body||''});setLoadError('');}).catch(e=>setLoadError((e as Error).message)).finally(()=>setLoading(false));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
+  // Count one view per opened article (guard against the 15s reload re-firing it).
+  const viewedArticleId=useRef<string | null>(null);
+  useEffect(()=>{const load=()=>socialService.getSocialBlog(blogId).then(item=>{setSiteId(item.blog_id);if(item.id&&viewedArticleId.current!==item.id){viewedArticleId.current=item.id;blogsService.recordArticleView(item.id);}setPost({id:item.id,image:item.cover||'',title:item.title,category:item.category||'Community',author:item.user?.name||'Creator',authorAvatar:item.user?.avatar||'',authorVerified:Boolean(item.user?.verified),date:new Date(item.created_at).toLocaleDateString(),readMinutes:item.read_minutes||1,body:item.body||''});setLoadError('');}).catch(e=>setLoadError((e as Error).message)).finally(()=>setLoading(false));load();const timer=setInterval(load,15000);return()=>clearInterval(timer);},[blogId]);
   useEffect(() => {
     if(!post.title)return;const load=()=>Promise.all([personalService.list('saved-blog'),socialService.getArticleEngagement(post.id)]).then(([savedRows,engagement])=>{setSaved(savedRows.some(r=>r.external_key===post.id));setLiked(engagement.liked);setLikeCount(engagement.likes);setComments(engagement.comments);}).catch(()=>{});load();const timer=setInterval(load,15000);return()=>clearInterval(timer);
   }, [post.id, post.title]);

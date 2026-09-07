@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, ViewToken } from 'react-native';
+import { FlatList, LayoutChangeEvent, RefreshControl, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, ViewToken } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,9 +18,21 @@ export default function VideoFeedTab({ videos, loading, onRefresh, onEndReached,
   const insets = useSafeAreaInsets();
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Use full viewport height for TikTok/Reels-like experience
-  const itemHeight = height;
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+
+  // Size each card to the ACTUAL visible area, not the full device height.
+  // This feed renders inside the bottom tab navigator, whose tab bar shrinks the
+  // content area. Using the window height made every card ~1 tab-bar taller than
+  // the viewport, pushing the username / avatar / action counts off-screen behind
+  // the tab bar. Fall back to window height until the first layout pass.
+  const itemHeight = measuredHeight || height;
+
+  const onContainerLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    if (h > 0 && Math.abs(h - measuredHeight) > 1) {
+      setMeasuredHeight(h);
+    }
+  }, [measuredHeight]);
 
   const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
@@ -55,21 +67,18 @@ export default function VideoFeedTab({ videos, loading, onRefresh, onEndReached,
   }
 
   return (
-    <View style={styles.container}>
-      {/* Floating header with back button */}
+    <View style={styles.container} onLayout={onContainerLayout}>
+      {/* No header bar — full-screen feed. Keep only a floating back button so
+          users can leave (the app's bottom nav is hidden on this screen). */}
       {onBack && (
-        <View style={[styles.floatingHeader, { paddingTop: insets.top + spacing.sm }]}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={onBack}
-            activeOpacity={0.7}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Ionicons name="chevron-back" size={28} color={colors.white} style={styles.backIcon} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Videos</Text>
-          <View style={{ width: 28 }} />
-        </View>
+        <TouchableOpacity
+          style={[styles.backButton, { top: insets.top + spacing.sm }]}
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Ionicons name="chevron-back" size={28} color={colors.white} style={styles.backIcon} />
+        </TouchableOpacity>
       )}
 
       <FlatList
@@ -121,20 +130,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  floatingHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    zIndex: 10,
-  },
   backButton: {
-    marginLeft: -4,
+    position: 'absolute',
+    left: spacing.md,
+    zIndex: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,14 +141,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
-  },
-  headerTitle: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '700',
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   empty: {
     flex: 1,

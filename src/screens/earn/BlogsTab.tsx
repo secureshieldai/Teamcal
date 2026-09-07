@@ -154,7 +154,7 @@ export default function BlogsTab({ navigation }: Props) {
               Alert.alert('No blog yet', 'Please create a blog first.');
               return;
             }
-            navigation.navigate('BlogDashboard', { blogId: userBlogs[0].id });
+            navigation.navigate('BlogSettings', { blogId: userBlogs[0].id });
           }},
           { label: 'View Blog', icon: 'globe-outline', action: () => {
             if (!userBlogs.length) {

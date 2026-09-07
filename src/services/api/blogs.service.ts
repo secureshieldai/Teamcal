@@ -12,6 +12,7 @@ export const blogsService={
  async createArticle(value:{blogId:string;title:string;body:string;cover?:string;category?:string;tags?:string[];status?:string}){const {data}=await apiClient.post<{success:boolean;article:BlogArticle}>('/blogs/articles',value);return data.article;},
  async updateArticle(id:string,value:Record<string,unknown>){const {data}=await apiClient.patch<{success:boolean;article:BlogArticle}>(`/blogs/articles/${id}`,value);return data.article;},
  async deleteArticle(id:string){await apiClient.delete(`/blogs/articles/${id}`);},
+ async recordArticleView(id:string){try{const {data}=await apiClient.post<{success:boolean;views:number}>(`/blogs/articles/${id}/view`);return data.views;}catch{return undefined;}},
  async deleteSite(id:string){await apiClient.delete(`/blogs/sites/${id}`);},
  async analytics(id:string){const {data}=await apiClient.get<{success:boolean;analytics:{posts:number;published:number;views:number;earned:number;averageReadMinutes:number;followers:number;comments:number}}>(`/blogs/sites/${id}/analytics`);return data.analytics;},
 };
