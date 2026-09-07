@@ -24,11 +24,12 @@ function mapPosts(posts: Post[]):PostCardItem[] {
       mediaTypes.push('image');
     });
     
-    // Add video thumbnail if video exists
+    // For videos, use a placeholder thumbnail image
+    // The actual video URL is stored separately in the videos array
     if (p.video) {
-      // For videos, we show a thumbnail (could be generated or a placeholder)
-      // and mark it as video type so PostCard shows the play button
-      photos.push(p.video);
+      // Use a video thumbnail placeholder
+      // In production, you'd want to generate actual video thumbnails
+      photos.push('https://via.placeholder.com/400x400/1a1a2e/ffffff?text=Video');
       mediaTypes.push('video');
     }
     
