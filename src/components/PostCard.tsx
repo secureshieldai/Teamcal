@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
+import FeedVideo from './FeedVideo';
 import { colors, radii, spacing } from '../theme';
 import { postsService } from '../services/api/posts.service';
 import { personalService } from '../services/api/personal.service';
@@ -24,7 +25,7 @@ export type Post = {
   liked?: boolean;
 };
 
-function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void }) {
+function PostCard({ post, onComment, onDelete, onPressAuthor, activeVideo }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void; activeVideo?: boolean }) {
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
@@ -73,6 +74,26 @@ function PostCard({ post, onComment, onDelete, onPressAuthor }: { post: Post; on
           const wrapStyle = single ? styles.photoWrapSingle : styles.photoWrapGrid;
           const sizeStyle = single ? styles.photoSingle : styles.photoGrid;
           const aspectStyle = single ? styles.aspectSingle : styles.aspectGrid;
+
+          if (isVideo) {
+            const videoUri = post.videos?.[0];
+            if (!videoUri) {
+              return (
+                <View
+                  key={`video-error-${post.id}-${i}`}
+                  style={[styles.photo, styles.photoError, wrapStyle, aspectStyle]}
+                >
+                  <Ionicons name="videocam-off-outline" size={32} color={colors.textMuted} />
+                  <Text style={styles.errorText}>Unable to load</Text>
+                </View>
+              );
+            }
+            return (
+              <View key={`video-${post.id}-${i}`} style={[styles.photo, wrapStyle]}>
+                <FeedVideo uri={videoUri} active={activeVideo} style={sizeStyle} />
+              </View>
+            );
+          }
 
           if (!uri || imageErrors[i]) {
             return (

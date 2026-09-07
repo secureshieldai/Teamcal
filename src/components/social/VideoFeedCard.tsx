@@ -35,8 +35,15 @@ export type VideoFeedItem = {
   videoUrl: string;
 };
 
+// The Videos feed renders inside the Social screen, which keeps the app's
+// BottomTabBar visible. Its content sits ~56px above the safe-area inset, so the
+// video overlays (user info, action rail) must clear that or they render hidden
+// behind the tab bar.
+const TAB_BAR_CLEARANCE = 56;
+
 const VideoFeedCard = ({ video, height, isActive }: { video: VideoFeedItem; height: number; isActive?: boolean }) => {
   const insets = useSafeAreaInsets();
+  const bottomClearance = insets.bottom + TAB_BAR_CLEARANCE;
   const [likes, setLikes] = useState(video.likes);
   const [liked, setLiked] = useState(false);
   const [liking, setLiking] = useState(false);
@@ -268,7 +275,7 @@ const VideoFeedCard = ({ video, height, isActive }: { video: VideoFeedItem; heig
       )}
 
       {/* Bottom-left: User Info */}
-      <View style={styles.userInfo}>
+      <View style={[styles.userInfo, { bottom: bottomClearance + spacing.md }]}>
         <View style={styles.userRow}>
           <View style={styles.avatarContainer}>
             <Avatar uri={video.authorAvatar} size={44} />
@@ -290,7 +297,7 @@ const VideoFeedCard = ({ video, height, isActive }: { video: VideoFeedItem; heig
       </View>
 
       {/* Right-side Action Bar */}
-      <View style={styles.actionRail}>
+      <View style={[styles.actionRail, { bottom: bottomClearance + spacing.lg }]}>
         {/* Like */}
         <TouchableOpacity 
           style={styles.actionItem} 

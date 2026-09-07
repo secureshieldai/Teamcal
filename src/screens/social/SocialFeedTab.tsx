@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, type ViewToken } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -91,15 +91,24 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
 
   const keyExtractor = useCallback((item: { id: string }) => item.id, []);
 
+  // Facebook-style: only the post scrolled into view autoplays its video.
+  const [visiblePostId, setVisiblePostId] = useState<string | null>(null);
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const first = viewableItems.find((v) => v.isViewable && v.item?.id);
+    if (first) setVisiblePostId(first.item.id as string);
+  }).current;
+
   const renderPost = useCallback(({ item }: { item: FeedPost }) => (
     <PostCard
       post={item}
+      activeVideo={item.id === visiblePostId}
       onComment={(postId) => navigation.navigate('Comments', { postId })}
       onPressAuthor={item.authorId ? () => {
         navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName });
       } : undefined}
     />
-  ), [navigation]);
+  ), [navigation, visiblePostId]);
 
   // Reset transient reply/like UI whenever a different story opens.
   useEffect(() => {
@@ -292,6 +301,8 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
               />
             }
             onEndReachedThreshold={0.5}
+            viewabilityConfig={viewabilityConfig}
+            onViewableItemsChanged={onViewableItemsChanged}
             removeClippedSubviews
             initialNumToRender={6}
             maxToRenderPerBatch={8}

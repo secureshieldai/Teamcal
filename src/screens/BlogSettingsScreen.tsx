@@ -168,10 +168,10 @@ export default function BlogSettingsScreen({ route, navigation }: Props) {
     <SafeAreaView style={s.safe} edges={['top']}>
       <Hdr title="Blog Settings" onBack={()=>navigation.goBack()} onSave={activeSection!=='Danger Zone'?save:undefined} saving={saving} />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.navRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.nav} contentContainerStyle={s.navRow}>
         {SECTIONS.map(sec=>(
-          <TouchableOpacity key={sec} style={[s.pill, activeSection===sec&&s.pillActive, sec==='Danger Zone'&&s.pillDanger, activeSection===sec&&sec==='Danger Zone'&&s.pillDangerActive]} onPress={()=>setActiveSection(sec)} activeOpacity={0.8}>
-            <Text style={[s.pillText, activeSection===sec&&s.pillTextActive, sec==='Danger Zone'&&s.pillTextDanger]}>{sec}</Text>
+          <TouchableOpacity key={sec} style={[s.pill, activeSection===sec&&s.pillActive]} onPress={()=>setActiveSection(sec)} activeOpacity={0.8}>
+            <Text style={[s.pillText, activeSection===sec&&s.pillTextActive]} numberOfLines={1}>{sec}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -389,14 +389,12 @@ const s=StyleSheet.create({
   header:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:spacing.lg,paddingTop:spacing.sm,paddingBottom:spacing.md,borderBottomWidth:1,borderBottomColor:colors.border,backgroundColor:colors.background},
   headerTitle:{...typography.h2,fontSize:16,color:colors.textPrimary},
   saveBtn:{fontSize:14,fontWeight:'700',color:colors.primary},
+  nav:{flexGrow:0,flexShrink:0,borderBottomWidth:1,borderBottomColor:colors.border},
   navRow:{paddingHorizontal:spacing.lg,paddingVertical:spacing.md,gap:spacing.sm,paddingRight:spacing.xl},
-  pill:{paddingHorizontal:spacing.md,paddingVertical:spacing.xs,borderRadius:radii.sm,backgroundColor:colors.card,borderWidth:1,borderColor:colors.border},
+  pill:{width:104,paddingVertical:spacing.xs,borderRadius:radii.sm,backgroundColor:colors.card,borderWidth:1,borderColor:colors.border,alignItems:'center',justifyContent:'center'},
   pillActive:{backgroundColor:colors.primary,borderColor:colors.primary},
-  pillDanger:{borderColor:'#EF4444'},
-  pillDangerActive:{backgroundColor:'#EF4444',borderColor:'#EF4444'},
   pillText:{fontSize:13,fontWeight:'600',color:colors.textSecondary},
   pillTextActive:{color:colors.white},
-  pillTextDanger:{color:'#EF4444'},
   scroll:{padding:spacing.lg,paddingTop:0},
   section:{},
   sectionHdr:{marginTop:spacing.lg,marginBottom:spacing.md},

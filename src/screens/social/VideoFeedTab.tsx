@@ -59,11 +59,16 @@ export default function VideoFeedTab({ videos, loading, onRefresh, onEndReached,
       {/* Floating header with back button */}
       {onBack && (
         <View style={[styles.floatingHeader, { paddingTop: insets.top + spacing.sm }]}>
-          <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.8}>
-            <Ionicons name="chevron-back" size={24} color={colors.white} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="chevron-back" size={28} color={colors.white} style={styles.backIcon} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Videos</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 28 }} />
         </View>
       )}
 
@@ -127,15 +132,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    marginLeft: -4,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backIcon: {
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   headerTitle: {
     color: colors.white,
