@@ -24,12 +24,12 @@ function mapPosts(posts: Post[]):PostCardItem[] {
       mediaTypes.push('image');
     });
     
-    // For videos, use a placeholder thumbnail image
-    // The actual video URL is stored separately in the videos array
+    // For videos, use a solid color data URI as thumbnail
+    // This will always load instantly without network request
     if (p.video) {
-      // Use a video thumbnail placeholder
-      // In production, you'd want to generate actual video thumbnails
-      photos.push('https://via.placeholder.com/400x400/1a1a2e/ffffff?text=Video');
+      // 1x1 dark gray pixel as data URI - guaranteed to work
+      const videoThumbnail = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mM0NDT8DwADgwF/h8xGvAAAAABJRU5ErkJggg==';
+      photos.push(videoThumbnail);
       mediaTypes.push('video');
     }
     

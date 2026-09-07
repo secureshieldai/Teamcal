@@ -1,6 +1,8 @@
 import { apiClient } from './client';
 import { storage } from '../auth/secureStorage';
 import type { AuthResponse, RegistrationResponse, User } from '../../types/api';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 
 export const authService = {
   async register(email: string, password: string, name: string, acceptedTerms: boolean, referralCode?: string) {
@@ -49,6 +51,17 @@ export const authService = {
   },
 
   async logout() {
+    // Sign out from Google if on native platform
+    if (Platform.OS !== 'web') {
+      try {
+        const isSignedIn = await GoogleSignin.isSignedIn();
+        if (isSignedIn) {
+          await GoogleSignin.signOut();
+        }
+      } catch (error) {
+        console.log('Google sign out error:', error);
+      }
+    }
     await storage.clear();
   },
 

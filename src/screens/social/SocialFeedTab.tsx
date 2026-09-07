@@ -258,7 +258,11 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
           )}
         />
       ) : subTab === 'Videos' ? (
-        <VideoFeedTab videos={videoCards} loading={socialVideos.loading} ListHeaderComponent={SharedHeader} />
+        <VideoFeedTab 
+          videos={videoCards} 
+          loading={socialVideos.loading} 
+          onBack={() => setSubTab('Feed')}
+        />
       ) : subTab === 'Games' ? (
         <SocialGamesTab ListHeaderComponent={SharedHeader} />
       ) : subTab === 'Live' ? (

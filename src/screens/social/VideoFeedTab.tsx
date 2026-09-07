@@ -1,18 +1,21 @@
-import { FlatList, RefreshControl, StyleSheet, Text, useWindowDimensions, View, ViewToken } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, ViewToken } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../theme';
 import VideoFeedCard, { type VideoFeedItem } from '../../components/social/VideoFeedCard';
 
 type Props = {
   videos: VideoFeedItem[];
   loading: boolean;
-  ListHeaderComponent?: React.ReactElement;
   onRefresh?: () => void;
   onEndReached?: () => void;
+  onBack?: () => void;
 };
 
-export default function VideoFeedTab({ videos, loading, ListHeaderComponent, onRefresh, onEndReached }: Props) {
+export default function VideoFeedTab({ videos, loading, onRefresh, onEndReached, onBack }: Props) {
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   
@@ -52,7 +55,19 @@ export default function VideoFeedTab({ videos, loading, ListHeaderComponent, onR
   }
 
   return (
-    <FlatList
+    <View style={styles.container}>
+      {/* Floating header with back button */}
+      {onBack && (
+        <View style={[styles.floatingHeader, { paddingTop: insets.top + spacing.sm }]}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.8}>
+            <Ionicons name="chevron-back" size={24} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Videos</Text>
+          <View style={{ width: 40 }} />
+        </View>
+      )}
+
+      <FlatList
       data={videos}
       keyExtractor={(item, index) => `${item.id}-${index}`}
       showsVerticalScrollIndicator={false}
@@ -93,10 +108,43 @@ export default function VideoFeedTab({ videos, loading, ListHeaderComponent, onR
         </View>
       )}
     />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   empty: {
     flex: 1,
     padding: spacing.xxl,

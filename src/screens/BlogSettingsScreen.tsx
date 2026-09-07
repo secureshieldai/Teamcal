@@ -390,7 +390,7 @@ const s=StyleSheet.create({
   headerTitle:{...typography.h2,fontSize:16,color:colors.textPrimary},
   saveBtn:{fontSize:14,fontWeight:'700',color:colors.primary},
   navRow:{paddingHorizontal:spacing.lg,paddingVertical:spacing.md,gap:spacing.sm,paddingRight:spacing.xl},
-  pill:{paddingHorizontal:spacing.md,paddingVertical:spacing.sm,borderRadius:radii.pill,backgroundColor:colors.card,borderWidth:1,borderColor:colors.border},
+  pill:{paddingHorizontal:spacing.md,paddingVertical:spacing.xs,borderRadius:radii.sm,backgroundColor:colors.card,borderWidth:1,borderColor:colors.border},
   pillActive:{backgroundColor:colors.primary,borderColor:colors.primary},
   pillDanger:{borderColor:'#EF4444'},
   pillDangerActive:{backgroundColor:'#EF4444',borderColor:'#EF4444'},

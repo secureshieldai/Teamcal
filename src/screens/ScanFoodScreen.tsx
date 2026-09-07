@@ -50,7 +50,7 @@ export default function ScanFoodScreen() {
     const shot = await camera.current?.takePictureAsync({ quality: .75 }); if (shot) analyze({ uri: shot.uri, fileName: 'meal.jpg', mimeType: 'image/jpeg' });
   };
   const gallery = async () => {
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: .8 }); if (!picked.canceled) analyze(picked.assets[0]);
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: .8, allowsEditing: true, aspect: [4, 3] }); if (!picked.canceled) analyze(picked.assets[0]);
   };
   const scanned = async ({ data }: BarcodeScanningResult) => {
     if (barcodeLocked || busy) return; setBarcodeLocked(true); setBusy(true);
