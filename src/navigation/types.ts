@@ -148,7 +148,7 @@ export type RootStackParamList = {
   CreateStore: undefined;
   StoreDashboard: { storeId: string };
   AddProduct: { storeId: string; productId?: string };
-  LiveSetup: undefined;
+  LiveSetup: { communityId?: string; communityName?: string } | undefined;
   LiveHost: { streamId: string };
   LiveViewer: { streamId: string };
   LiveSummary: { streamId: string };

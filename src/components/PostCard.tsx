@@ -25,10 +25,12 @@ export type Post = {
   liked?: boolean;
 };
 
-function PostCard({ post, onComment, onDelete, onPressAuthor, activeVideo }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void; activeVideo?: boolean }) {
+function PostCard({ post, onComment, onDelete, onPressAuthor, activeVideo, saved: savedProp, onSavedChange }: { post: Post; onComment?: (id: string) => void; onDelete?: (id:string)=>void; onPressAuthor?: () => void; activeVideo?: boolean; saved?: boolean; onSavedChange?: () => void }) {
   const [likes, setLikes] = useState(post.likes);
   const [liked, setLiked] = useState(Boolean(post.liked));
-  const [saved, setSaved] = useState(false);
+  // `savedProp` is supplied by list screens that fetch the saved-post set once
+  // for the whole feed; only fall back to a per-card lookup when it is absent.
+  const [saved, setSaved] = useState(Boolean(savedProp));
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
   const {user}=useAuth();
@@ -41,9 +43,12 @@ function PostCard({ post, onComment, onDelete, onPressAuthor, activeVideo }: { p
     });
     setImageLoading(initialLoading);
   }, [post.photos]);
-  useEffect(() => { personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {}); }, [post.id]);
+  useEffect(() => {
+    if (savedProp !== undefined) { setSaved(savedProp); return; }
+    personalService.list('saved-post').then(rows => setSaved(rows.some(r => r.external_key === post.id))).catch(() => {});
+  }, [post.id, savedProp]);
   const toggleLike = async () => { const previous = { likes, liked }; setLiked(!liked); setLikes(Math.max(0, likes + (liked ? -1 : 1))); try { const result = await postsService.toggleLike(post.id); setLikes(result.likes); setLiked(result.liked); } catch (e) { setLikes(previous.likes); setLiked(previous.liked); Alert.alert('Unable to like post', (e as Error).message); } };
-  const toggleSaved = async () => { const previous=saved;setSaved(!saved);try{setSaved(await personalService.toggle('saved-post',post.id,{caption:post.caption,authorName:post.authorName,photos:post.photos}));}catch(error){setSaved(previous);Alert.alert('Unable to save post',(error as Error).message);} };
+  const toggleSaved = async () => { const previous=saved;setSaved(!saved);try{setSaved(await personalService.toggle('saved-post',post.id,{caption:post.caption,authorName:post.authorName,photos:post.photos}));onSavedChange?.();}catch(error){setSaved(previous);Alert.alert('Unable to save post',(error as Error).message);} };
   const openMenu=()=>{if(onDelete)return Alert.alert('Post options',undefined,[{text:'Delete Post',style:'destructive',onPress:()=>Alert.alert('Delete post','This cannot be undone.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:()=>onDelete(post.id)}])},{text:'Cancel',style:'cancel'}]);const actions:any[]=[{text:'Report Post',onPress:async()=>{try{await socialService.report('post',post.id,'Community guidelines violation');Alert.alert('Report received','Thank you. TeamCal will review this post.');}catch(error){Alert.alert('Unable to report',(error as Error).message);}}}];if(post.authorId&&post.authorId!==user?.id)actions.push({text:'Block User',style:'destructive',onPress:()=>Alert.alert(`Block ${post.authorName}?`,'You will no longer see this user’s posts.',[{text:'Cancel',style:'cancel'},{text:'Block',style:'destructive',onPress:async()=>{try{await socialService.blockUser(post.authorId!);Alert.alert('User blocked');}catch(error){Alert.alert('Unable to block',(error as Error).message);}}}])});actions.push({text:'Cancel',style:'cancel'});Alert.alert('Post options',undefined,actions);};
   return (
     <View style={styles.card}>

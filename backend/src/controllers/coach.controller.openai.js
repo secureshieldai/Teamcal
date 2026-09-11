@@ -1,6 +1,12 @@
 /**
- * OpenAI-based Coach Controller
- * Handles AI chat, food scanning, article generation, and audience posts
+ * OPTIONAL: OpenAI-based coach controller
+ * 
+ * This is an alternative implementation using OpenAI instead of Google Gemini.
+ * To use this:
+ * 1. Rename this file to coach.controller.js (backup the original first)
+ * 2. Run: npm install openai
+ * 3. Update backend/.env with correct OPENAI_MODEL (e.g., gpt-4o)
+ * 4. Restart your backend
  */
 
 const OpenAI = require("openai");
@@ -58,7 +64,7 @@ Keep replies concise (2-4 sentences max), warm, and data-driven. No markdown hea
         { role: "user", content: message || "Please analyze this image and give me relevant health coaching advice." }
       ];
 
-      // Add image if provided (requires gpt-4o)
+      // Add image if provided (requires gpt-4-vision-preview or gpt-4o)
       if (req.file) {
         const base64Image = req.file.buffer.toString("base64");
         messages[1].content = [
@@ -246,6 +252,7 @@ async function scanMealText(req, res, next) {
 }
 
 async function lookupBarcode(req, res, next) {
+  // Barcode lookup is same regardless of AI provider
   try {
     const code = String(req.body.code || "").replace(/\D/g, "");
     if (code.length < 8 || code.length > 14) {
@@ -437,7 +444,7 @@ async function generateArticleContent(req, res, next) {
   }
 }
 
-// Helper functions
+// Helper functions (same as original)
 function fallbackTitles(topic) {
   return [
     `The Complete Guide to ${topic}`,

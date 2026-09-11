@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApiQuery } from './useApiQuery';
 import { postsService } from '../services/api/posts.service';
 import { groupsService } from '../services/api/groups.service';
@@ -50,16 +50,83 @@ function mapPosts(posts: Post[]):PostCardItem[] {
   });
 }
 
-export function useFeed() {
-  // GET /api/posts/feed
-  const { data: posts, loading, error, refetch } = useApiQuery(
-    () => postsService.getFeed(),
-    [] as Post[],
-    []
-  );
+const FEED_PAGE_SIZE = 20;
+const FEED_REFRESH_MS = 60_000;
 
-  const mapped = useMemo(() => mapPosts(posts), [posts]);
-  return { posts: mapped, loading, error, refetch };
+/**
+ * Infinite feed with keyset pagination. The first page is (re)loaded on mount
+ * and every 60s; `loadMore()` appends older pages using the last post's
+ * created_at as the cursor. Pages are flattened and de-duped by id so a
+ * background refresh that overlaps already-loaded posts doesn't create
+ * duplicate rows.
+ */
+export function useFeed() {
+  const [pages, setPages] = useState<Post[][]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [reachedEnd, setReachedEnd] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Kept in sync with `pages` so loadMore can read the tail cursor without
+  // depending on (and being recreated by) every page append.
+  const pagesRef = useRef<Post[][]>([]);
+  const busyRef = useRef(false);
+  useEffect(() => { pagesRef.current = pages; }, [pages]);
+
+  const loadFirst = useCallback(async () => {
+    try {
+      const first = await postsService.getFeed(FEED_PAGE_SIZE);
+      setPages([first]);
+      setReachedEnd(first.length < FEED_PAGE_SIZE);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadMore = useCallback(async () => {
+    if (busyRef.current || reachedEnd) return;
+    const flat = pagesRef.current.flat();
+    const cursor = flat[flat.length - 1]?.created_at;
+    if (!cursor) return;
+    busyRef.current = true;
+    setLoadingMore(true);
+    try {
+      const next = await postsService.getFeed(FEED_PAGE_SIZE, { before: cursor });
+      setPages((prev) => [...prev, next]);
+      if (next.length < FEED_PAGE_SIZE) setReachedEnd(true);
+    } catch {
+      /* keep what we have; scrolling again retries */
+    } finally {
+      busyRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [reachedEnd]);
+
+  useEffect(() => {
+    loadFirst();
+    const timer = setInterval(() => {
+      // Don't yank the user back to the top mid-scroll; once they've paged in
+      // older posts, only an explicit pull-to-refresh (refetch) resets the feed.
+      if (pagesRef.current.length <= 1) loadFirst();
+    }, FEED_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [loadFirst]);
+
+  const mapped = useMemo(() => {
+    const seen = new Set<string>();
+    const unique: Post[] = [];
+    for (const post of pages.flat()) {
+      if (seen.has(post.id)) continue;
+      seen.add(post.id);
+      unique.push(post);
+    }
+    return mapPosts(unique);
+  }, [pages]);
+
+  return { posts: mapped, loading, loadingMore, reachedEnd, error, refetch: loadFirst, loadMore };
 }
 
 export function useMyPosts() {

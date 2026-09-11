@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Avatar from '../../components/Avatar';
@@ -9,31 +9,13 @@ import { meSubTabs } from '../../data/communityData';
 import { useFeed, useMyPosts } from '../../hooks/useCommunity';
 import { useProfile } from '../../hooks/useProfile';
 import type { RootStackParamList } from '../../navigation/types';
-import { personalService } from '../../services/api/personal.service';
 import {postsService} from '../../services/api/posts.service';
+import { useSavedPostIds } from '../../hooks/useSavedPostIds';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
   headerComponent?: React.ReactNode;
 };
-
-function useSavedPosts(candidates: Post[]) {
-  const [saved, setSaved] = useState<Post[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const records=await personalService.list('saved-post');
-      const keys=new Set(records.map(r=>r.external_key));
-      if (!cancelled) setSaved(candidates.filter(p=>keys.has(p.id)));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [candidates]);
-
-  return saved;
-}
 
 export default function SocialMeTab({ navigation, headerComponent }: Props) {
   const [subTab, setSubTab] = useState(meSubTabs[0]);
@@ -41,7 +23,8 @@ export default function SocialMeTab({ navigation, headerComponent }: Props) {
   const { posts: myPosts, loading: myPostsLoading, error: myPostsError,refetch } = useMyPosts();
   const { posts: feedPosts } = useFeed();
   const candidates = useMemo(() => [...myPosts, ...feedPosts], [myPosts, feedPosts]);
-  const savedPosts = useSavedPosts(candidates);
+  const { savedIds, refetch: refetchSavedPosts } = useSavedPostIds();
+  const savedPosts = useMemo(() => candidates.filter(p => savedIds.has(p.id)), [candidates, savedIds]);
   const taggedPosts=useMemo(()=>{const tags=[profileUser.handle,`@${(profileUser.name||'').replace(/\s+/g,'')}`].filter(Boolean).map(x=>x.toLowerCase());return feedPosts.filter(post=>tags.some(tag=>post.caption.toLowerCase().includes(tag)));},[feedPosts,profileUser.handle,profileUser.name]);
 
   const following = profileStats.find((s) => s.label === 'Following')?.value ?? '0';
@@ -103,7 +86,7 @@ export default function SocialMeTab({ navigation, headerComponent }: Props) {
           </>
         }
         ListEmptyComponent={<Text style={styles.empty}>{emptyText}</Text>}
-        renderItem={({ item }) => <PostCard post={item} onComment={(postId) => navigation.navigate('Comments', { postId })} onDelete={async id=>{await postsService.delete(id);await refetch();}} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
+        renderItem={({ item }) => <PostCard post={item} saved={savedIds.has(item.id)} onSavedChange={refetchSavedPosts} onComment={(postId) => navigation.navigate('Comments', { postId })} onDelete={async id=>{await postsService.delete(id);await refetch();}} onPressAuthor={item.authorId ? () => navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName }) : undefined} />}
       />
     </View>
   );

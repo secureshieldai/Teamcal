@@ -22,6 +22,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import {useApiQuery} from '../../hooks/useApiQuery';
 import {socialService} from '../../services/api/social.service';
 import {postsService} from '../../services/api/posts.service';
+import {useSavedPostIds} from '../../hooks/useSavedPostIds';
 import {useAuth} from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -33,7 +34,7 @@ type Props = {
 
 export default function SocialFeedTab({ navigation, initialSubTab, headerComponent }: Props) {
   const [subTab, setSubTab] = useState(initialSubTab ?? feedSubTabs[0]);
-  const { posts, loading: feedLoading, error: feedError, refetch } = useFeed();
+  const { posts, loading: feedLoading, loadingMore, error: feedError, refetch, loadMore } = useFeed();
   const { createPost, loading: posting } = useCreatePost();
   const [draft, setDraft] = useState('');
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
@@ -46,9 +47,10 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
   const [replySent, setReplySent] = useState(false);
   const insets = useSafeAreaInsets();
   const {user}=useAuth();
-  const socialBlogs=useApiQuery(()=>socialService.getSocialBlogs(),[],[]);
-  const socialVideos=useApiQuery(()=>socialService.getSocialVideos(),[],[]);
-  const socialStories=useApiQuery(()=>socialService.getStories(),[],[]);
+  const socialBlogs=useApiQuery(()=>socialService.getSocialBlogs(),[],[],120_000);
+  const socialVideos=useApiQuery(()=>socialService.getSocialVideos(),[],[],120_000);
+  const socialStories=useApiQuery(()=>socialService.getStories(),[],[],60_000);
+  const {savedIds:savedPostIds,refetch:refetchSavedPosts}=useSavedPostIds();
   const blogCards=socialBlogs.data.map((item)=>({
     id:item.id,
     image:item.cover||'',
@@ -56,7 +58,7 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
     author:item.user?.name||'Creator',
     date:new Date(item.created_at).toLocaleDateString([],{month:'short',day:'numeric'}),
     readMinutes:item.read_minutes||1,
-    excerpt:item.body?item.body.replace(/\s+/g,' ').trim().slice(0,140):'',
+    excerpt:(item.excerpt??item.body??'').replace(/\s+/g,' ').trim().slice(0,140),
     views:item.views||0,
     commentCount:0,
   }));
@@ -103,12 +105,14 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
     <PostCard
       post={item}
       activeVideo={item.id === visiblePostId}
+      saved={savedPostIds.has(item.id)}
+      onSavedChange={refetchSavedPosts}
       onComment={(postId) => navigation.navigate('Comments', { postId })}
       onPressAuthor={item.authorId ? () => {
         navigation.navigate('UserProfile', { userId: item.authorId!, username: item.authorName });
       } : undefined}
     />
-  ), [navigation, visiblePostId]);
+  ), [navigation, visiblePostId, savedPostIds, refetchSavedPosts]);
 
   // Hide the app's bottom navigation while the Reels-style Videos feed is open so
   // it fills the screen; restore it when leaving that sub-tab or this screen.
@@ -309,7 +313,9 @@ export default function SocialFeedTab({ navigation, initialSubTab, headerCompone
                 colors={[colors.primary]}
               />
             }
+            onEndReached={loadMore}
             onEndReachedThreshold={0.5}
+            ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
             viewabilityConfig={viewabilityConfig}
             onViewableItemsChanged={onViewableItemsChanged}
             removeClippedSubviews
@@ -518,6 +524,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.textMuted,
     marginTop: spacing.xl,
+  },
+  footerLoader: {
+    paddingVertical: spacing.lg,
   },
   storyViewer: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
   storyHeader: { position: 'absolute', zIndex: 1, top: 48, left: spacing.lg, right: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

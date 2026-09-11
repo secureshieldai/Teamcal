@@ -1,5 +1,6 @@
 const { supabase } = require("../config/supabase");
 const botHooks = require("../services/bot.hooks");
+const { enrichPosts } = require("./post.controller");
 
 /** GET /api/groups — groups the user belongs to */
 async function getMyGroups(req, res, next) {
@@ -386,7 +387,7 @@ async function getGroupActivity(req, res, next) {
       .range(skip, skip + limit - 1);
 
     if (error) throw error;
-    res.json({ success: true, posts });
+    res.json({ success: true, posts: await enrichPosts(posts, req.user.id) });
   } catch (err) {
     next(err);
   }

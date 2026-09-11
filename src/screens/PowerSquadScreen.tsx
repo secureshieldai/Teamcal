@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Alert, FlatList, Image, Linking, Modal, ScrollView,
+  Alert, FlatList, Image, Linking, Modal, ScrollView, Share,
   StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,11 +12,13 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Avatar from '../components/Avatar';
+import FeedVideo from '../components/FeedVideo';
 import { colors, radii, shadow, spacing, typography } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { groupsService } from '../services/api/groups.service';
 import { postsService } from '../services/api/posts.service';
+import { liveService, type LiveStream } from '../services/api/live.service';
 import { personalService } from '../services/api/personal.service';
 import { earnService } from '../services/api/earn.service';
 import { useAuth } from '../context/AuthContext';
@@ -195,7 +197,7 @@ export default function PowerSquadScreen() {
 
         {/* Tab content */}
         <View style={{ minHeight: 400 }}>
-          {tab === 'Feed' && <FeedTab groupId={groupId} isMember={isMember} isAdmin={isAdmin} posts={activity.data} onRefresh={activity.refetch} streaks={streaks} />}
+          {tab === 'Feed' && <FeedTab groupId={groupId} groupName={group?.name} isMember={isMember} isAdmin={isAdmin} posts={activity.data} onRefresh={activity.refetch} streaks={streaks} />}
           {tab === 'Q&A' && <QATab groupId={groupId} isMember={isMember} />}
           {tab === 'Resources' && <ResourcesTab groupId={groupId} isAdmin={isAdmin} />}
           {tab === 'Top 10' && <Top10Tab members={members} />}
@@ -228,26 +230,60 @@ export default function PowerSquadScreen() {
 
 // ─── Feed Tab ─────────────────────────────────────────────────────────────────
 
-function FeedTab({ groupId, isMember, isAdmin, posts, onRefresh, streaks }: {
-  groupId?: string; isMember: boolean; isAdmin: boolean;
+function FeedTab({ groupId, groupName, isMember, isAdmin, posts, onRefresh, streaks }: {
+  groupId?: string; groupName?: string; isMember: boolean; isAdmin: boolean;
   posts: any[]; onRefresh: () => void; streaks: Record<string, number>;
 }) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [draft, setDraft] = useState('');
   const [posting, setPosting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [video, setVideo] = useState<{ uri: string; mimeType?: string | null; fileName?: string | null } | null>(null);
+
+  // Live streams broadcasting to this community, refreshed whenever the screen regains focus.
+  const live = useApiQuery<LiveStream[]>(
+    () => groupId
+      ? liveService.listStreams().then(rows => rows.filter(r => r.community_id === groupId && r.status === 'live'))
+      : Promise.resolve([]),
+    [],
+    [groupId],
+  );
+  useFocusEffect(useCallback(() => { live.refetch(); }, [groupId]));
+  const liveStream = live.data[0];
+
+  const openGoLive = () => navigation.navigate('LiveSetup', { communityId: groupId, communityName: groupName });
 
   const pickImages = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 10, quality: 0.6 });
-    if (!r.canceled) setImages(prev => [...prev, ...r.assets.map(a => a.uri)].slice(0, 10));
+    if (!r.canceled) { setVideo(null); setImages(prev => [...prev, ...r.assets.map(a => a.uri)].slice(0, 10)); }
+  };
+
+  const pickVideo = async () => {
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 1 });
+    if (!r.canceled && r.assets[0]) {
+      setImages([]);
+      setVideo({ uri: r.assets[0].uri, mimeType: r.assets[0].mimeType, fileName: r.assets[0].fileName });
+    }
   };
 
   const publish = async () => {
-    if (!groupId || (!draft.trim() && !images.length)) return;
+    if (!groupId || (!draft.trim() && !images.length && !video)) return;
     setPosting(true);
     try {
-      const imageUrls = await Promise.all(images.map(uri => postsService.uploadImage({ uri, mimeType: 'image/jpeg', fileName: 'post.jpg' })));
-      await postsService.create({ text: draft.trim(), images: imageUrls.length ? imageUrls : undefined, community: groupId });
-      setDraft(''); setImages([]);
+      let videoUrl: string | undefined;
+      let imageUrls: string[] = [];
+      if (video) {
+        videoUrl = await postsService.uploadVideo({ uri: video.uri, mimeType: video.mimeType || 'video/mp4', fileName: video.fileName || 'video.mp4' });
+      } else if (images.length) {
+        imageUrls = await Promise.all(images.map(uri => postsService.uploadImage({ uri, mimeType: 'image/jpeg', fileName: 'post.jpg' })));
+      }
+      await postsService.create({
+        text: draft.trim(),
+        images: imageUrls.length ? imageUrls : undefined,
+        video: videoUrl,
+        community: groupId,
+      });
+      setDraft(''); setImages([]); setVideo(null);
       onRefresh();
     } catch (e) { Alert.alert('Error', (e as Error).message); }
     finally { setPosting(false); }
@@ -256,20 +292,46 @@ function FeedTab({ groupId, isMember, isAdmin, posts, onRefresh, streaks }: {
   return (
     <View style={s.tabContent}>
       {/* Live banner */}
-      <View style={[s.liveBanner, shadow.soft]}>
-        <View style={s.liveBannerLeft}>
-          <View style={s.liveBannerIcon}>
-            <Ionicons name="radio-outline" size={18} color={colors.primary} />
+      {liveStream ? (
+        <TouchableOpacity
+          style={[s.liveBanner, shadow.soft]}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('LiveViewer', { streamId: liveStream.id })}
+        >
+          <View style={s.liveBannerLeft}>
+            <View style={[s.liveBannerIcon, { backgroundColor: '#FFE5E5' }]}>
+              <Ionicons name="radio" size={18} color="#FF4444" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={s.liveNowPill}><Text style={s.liveNowPillText}>LIVE</Text></View>
+                <Text style={s.liveBannerTitle} numberOfLines={1}>{liveStream.host?.name ?? 'Someone'} is live now</Text>
+              </View>
+              <Text style={s.liveBannerSub} numberOfLines={1}>
+                {liveStream.title} · {liveStream.viewer_count} watching
+              </Text>
+            </View>
           </View>
-          <View>
-            <Text style={s.liveBannerTitle}>No one is live right now</Text>
-            <Text style={s.liveBannerSub}>Tap to go live in this community</Text>
+          <View style={s.goLiveBtn}>
+            <Text style={s.goLiveBtnText}>Watch</Text>
           </View>
-        </View>
-        <TouchableOpacity style={s.goLiveBtn} onPress={() => Alert.alert('Go Live', 'Coming soon.')}>
-          <Text style={s.goLiveBtnText}>Go Live</Text>
         </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={[s.liveBanner, shadow.soft]}>
+          <View style={s.liveBannerLeft}>
+            <View style={s.liveBannerIcon}>
+              <Ionicons name="radio-outline" size={18} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={s.liveBannerTitle}>No one is live right now</Text>
+              <Text style={s.liveBannerSub}>Tap to go live in this community</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={s.goLiveBtn} onPress={openGoLive}>
+            <Text style={s.goLiveBtnText}>Go Live</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Composer */}
       {isMember && (
@@ -287,16 +349,25 @@ function FeedTab({ groupId, isMember, isAdmin, posts, onRefresh, streaks }: {
               ))}
             </ScrollView>
           )}
-          <View style={s.composerActions}>
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <TouchableOpacity style={s.composerIconBtn} onPress={pickImages}>
-                <Ionicons name="image-outline" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity style={s.composerIconBtn} onPress={() => Alert.alert('Audio', 'Audio recording coming soon.')}>
-                <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
+          {video && (
+            <View style={s.videoPreview}>
+              <Ionicons name="videocam" size={18} color={colors.primary} />
+              <Text style={s.videoPreviewText} numberOfLines={1}>{video.fileName || 'Video selected'}</Text>
+              <TouchableOpacity onPress={() => setVideo(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={s.postBtn} onPress={publish} disabled={posting}>
+          )}
+          <View style={s.composerActions}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <TouchableOpacity style={s.composerIconBtn} onPress={pickImages} disabled={!!video}>
+                <Ionicons name="image-outline" size={20} color={video ? colors.border : colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity style={s.composerIconBtn} onPress={pickVideo} disabled={images.length > 0}>
+                <Ionicons name="videocam-outline" size={20} color={images.length > 0 ? colors.border : colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={s.postBtn} onPress={publish} disabled={posting || (!draft.trim() && !images.length && !video)}>
               <Ionicons name="send-outline" size={14} color="#fff" />
               <Text style={s.postBtnText}>{posting ? 'Posting…' : 'Post'}</Text>
             </TouchableOpacity>
@@ -313,61 +384,127 @@ function FeedTab({ groupId, isMember, isAdmin, posts, onRefresh, streaks }: {
   );
 }
 
+function relativeTime(iso?: string): string {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const diff = Math.max(0, Date.now() - then) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+  return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
 function CommunityPost({ post, isAdmin, onRefresh, streak = 0, navigation }: { post: any; isAdmin: boolean; onRefresh: () => void; streak?: number; navigation: any }) {
-  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState<number>(post.likes || 0);
+  const [liked, setLiked] = useState<boolean>(Boolean(post.liked));
   const [saved, setSaved] = useState(false);
+
+  // Multi-image posts land in image_urls; `image` is the legacy single-photo field.
+  const images: string[] = post.image_urls?.length ? post.image_urls : post.image ? [post.image] : [];
+
+  useEffect(() => {
+    personalService.list('saved-post')
+      .then(rows => setSaved(rows.some((r: any) => r.external_key === post.id)))
+      .catch(() => {});
+  }, [post.id]);
+
+  const toggleLike = async () => {
+    const prev = { likes, liked };
+    setLiked(!liked);
+    setLikes(Math.max(0, likes + (liked ? -1 : 1)));
+    try {
+      const r = await postsService.toggleLike(post.id);
+      setLikes(r.likes);
+      setLiked(r.liked);
+    } catch (e) {
+      setLikes(prev.likes);
+      setLiked(prev.liked);
+      Alert.alert('Unable to like post', (e as Error).message);
+    }
+  };
+
+  const toggleSaved = async () => {
+    const prev = saved;
+    setSaved(!saved);
+    try {
+      setSaved(await personalService.toggle('saved-post', post.id, { caption: post.text, authorName: post.user?.name }));
+    } catch (e) {
+      setSaved(prev);
+      Alert.alert('Unable to save post', (e as Error).message);
+    }
+  };
+
+  const onShare = () => {
+    Share.share({ message: `${post.user?.name ?? 'A member'}: ${post.text ?? ''}`.trim() }).catch(() => {});
+  };
+
+  const openMenu = () => {
+    Alert.alert('Post options', undefined, [
+      { text: 'Delete post', style: 'destructive', onPress: () => {
+        Alert.alert('Delete post', 'This cannot be undone.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: async () => {
+            try { await postsService.delete(post.id); onRefresh(); }
+            catch (e) { Alert.alert('Unable to delete', (e as Error).message); }
+          } },
+        ]);
+      } },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   return (
     <View style={[s.postCard, shadow.soft]}>
-      <TouchableOpacity 
-        style={s.postHeader}
-        onPress={() => post.user?.id && navigation.navigate('UserProfile', { userId: post.user.id, username: post.user.name })}
-        disabled={!post.user?.id}
-        activeOpacity={0.7}
-      >
-        <Avatar uri={post.user?.avatar || ''} size={36} />
-        <View style={{ flex: 1, marginLeft: spacing.sm }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text style={s.postAuthor}>@{post.user?.name?.replace(/\s+/g, '.').toLowerCase() || 'member'}</Text>
-            {streak > 0 && (
-              <View style={s.streakChip}>
-                <Ionicons name="flame" size={10} color="#F59E0B" />
-                <Text style={s.streakChipText}>{streak}</Text>
-              </View>
-            )}
+      <View style={s.postHeader}>
+        <TouchableOpacity
+          style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+          onPress={() => post.user?.id && navigation.navigate('UserProfile', { userId: post.user.id, username: post.user.name })}
+          disabled={!post.user?.id}
+          activeOpacity={0.7}
+        >
+          <Avatar uri={post.user?.avatar || ''} size={36} />
+          <View style={{ flex: 1, marginLeft: spacing.sm }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Text style={s.postAuthor}>@{post.user?.name?.replace(/\s+/g, '.').toLowerCase() || 'member'}</Text>
+              {streak > 0 && (
+                <View style={s.streakChip}>
+                  <Ionicons name="flame" size={10} color="#F59E0B" />
+                  <Text style={s.streakChipText}>{streak}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={s.postSubLabel}>{relativeTime(post.created_at) || 'Community post'}</Text>
           </View>
-          <Text style={s.postSubLabel}>Community post</Text>
-        </View>
-        {post.pinned && (
-          <View style={s.pinnedBadge}>
-            <Ionicons name="pin-outline" size={11} color={colors.primary} />
-            <Text style={s.pinnedText}>Pinned</Text>
-          </View>
-        )}
+        </TouchableOpacity>
         {isAdmin && (
-          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={openMenu} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
 
       <Text style={s.postBody}>{post.text}</Text>
 
-      {post.image ? <Image source={{ uri: post.image }} style={s.postImage} /> : null}
+      {images.map((uri, i) => (
+        <Image key={`${uri}-${i}`} source={{ uri }} style={s.postImage} />
+      ))}
+      {post.video ? <FeedVideo uri={post.video} style={s.postImage} /> : null}
 
       <View style={s.postFooter}>
-        <TouchableOpacity style={s.footerBtn} onPress={() => setLiked(l => !l)}>
+        <TouchableOpacity style={s.footerBtn} onPress={toggleLike}>
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? '#FF4D5E' : colors.textSecondary} />
-          <Text style={s.footerBtnText}>{(post.likes || 0) + (liked ? 1 : 0)}</Text>
+          <Text style={s.footerBtnText}>{likes}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.footerBtn}>
+        <TouchableOpacity style={s.footerBtn} onPress={() => navigation.navigate('Comments', { postId: post.id })}>
           <Ionicons name="chatbubble-outline" size={15} color={colors.textSecondary} />
-          <Text style={s.footerBtnText}>{post.comments || 0}</Text>
+          <Text style={s.footerBtnText}>{post.comments_count || 0}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.footerBtn}>
+        <TouchableOpacity style={s.footerBtn} onPress={onShare}>
           <Ionicons name="share-social-outline" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={() => setSaved(v => !v)}>
+        <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={toggleSaved}>
           <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={16} color={saved ? colors.primary : colors.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -378,6 +515,7 @@ function CommunityPost({ post, isAdmin, onRefresh, streak = 0, navigation }: { p
 // ─── Q&A Tab ──────────────────────────────────────────────────────────────────
 
 function QATab({ groupId, isMember }: { groupId?: string; isMember: boolean }) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [question, setQuestion] = useState('');
   const [posting, setPosting] = useState(false);
   const qaKey = `qa-${groupId}`;
@@ -399,16 +537,8 @@ function QATab({ groupId, isMember }: { groupId?: string; isMember: boolean }) {
       {isMember && (
         <View style={[s.composer, shadow.soft]}>
           <TextInput style={s.composerInput} value={question} onChangeText={setQuestion} placeholder="Ask a question…" placeholderTextColor={colors.textMuted} multiline />
-          <View style={s.composerActions}>
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <TouchableOpacity style={s.composerIconBtn}>
-                <Ionicons name="image-outline" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity style={s.composerIconBtn}>
-                <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity style={s.postBtn} onPress={submitQuestion} disabled={posting}>
+          <View style={[s.composerActions, { justifyContent: 'flex-end' }]}>
+            <TouchableOpacity style={s.postBtn} onPress={submitQuestion} disabled={posting || !question.trim()}>
               <Ionicons name="send-outline" size={14} color="#fff" />
               <Text style={s.postBtnText}>{posting ? 'Posting…' : 'Post'}</Text>
             </TouchableOpacity>
@@ -871,6 +1001,7 @@ function StandaloneResourceCard({ item, isAdmin, onDelete, onOpen }: { item: any
 // ─── Top 10 Tab ───────────────────────────────────────────────────────────────
 
 function Top10Tab({ members }: { members: any[] }) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const sorted = [...members]
     .sort((a, b) => (b.user?.points ?? b.user?.xp ?? 0) - (a.user?.points ?? a.user?.xp ?? 0))
     .slice(0, 10);
@@ -1025,6 +1156,8 @@ const s = StyleSheet.create({
   liveBannerSub: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
   goLiveBtn: { backgroundColor: colors.primary, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   goLiveBtnText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  liveNowPill: { backgroundColor: '#FF4444', borderRadius: radii.pill, paddingHorizontal: 6, paddingVertical: 1.5 },
+  liveNowPillText: { color: '#fff', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
 
   // Composer
   composer: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md },
@@ -1036,6 +1169,8 @@ const s = StyleSheet.create({
   imagePreviewWrap: { width: 72, height: 72, borderRadius: radii.md, overflow: 'hidden' },
   imagePreview: { width: '100%', height: '100%' },
   imageRemove: { position: 'absolute', top: 3, right: 3 },
+  videoPreview: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.background, borderRadius: radii.md, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, marginBottom: spacing.sm },
+  videoPreviewText: { flex: 1, fontSize: 12, color: colors.textPrimary },
 
   // Post card
   postCard: { backgroundColor: colors.card, borderRadius: radii.xl, padding: spacing.md },

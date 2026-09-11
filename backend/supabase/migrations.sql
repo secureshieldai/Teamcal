@@ -422,3 +422,56 @@ where a.tracker = 'friend'
   and (a.meta->>'targetId') ~ '^[0-9a-f-]{36}$'
   and exists (select 1 from users u where u.id = (a.meta->>'targetId')::uuid)
 on conflict (requester_id, addressee_id) do nothing;
+
+-- ============================================================
+-- Migration 020: Feed engagement counters + article excerpt.
+--
+-- enrichPosts() used to load every post_likes and post_comments row for the
+-- feed page on every request (and every 15s poll) only to count them in JS.
+-- That is O(total engagement on the page), so once posts picked up thousands
+-- of likes/comments the Social feed took 30-50s to load. Keep denormalized
+-- counters on the posts row (like the existing posts.likes column) and let the
+-- feed read them directly. getSocialBlogs() likewise shipped every article's
+-- full body just to render a 140-char excerpt; add a stored excerpt column.
+-- ============================================================
+
+alter table posts add column if not exists comments_count int not null default 0;
+
+-- Backfill counters from the source tables (one-time).
+update posts p set
+  likes          = coalesce((select count(*) from post_likes    l where l.post_id = p.id), 0),
+  comments_count = coalesce((select count(*) from post_comments c where c.post_id = p.id), 0);
+
+create or replace function bump_post_likes() returns trigger language plpgsql as $$
+begin
+  if (tg_op = 'INSERT') then
+    update posts set likes = likes + 1 where id = new.post_id;
+  elsif (tg_op = 'DELETE') then
+    update posts set likes = greatest(0, likes - 1) where id = old.post_id;
+  end if;
+  return null;
+end $$;
+
+drop trigger if exists trg_post_likes_count on post_likes;
+create trigger trg_post_likes_count
+  after insert or delete on post_likes
+  for each row execute function bump_post_likes();
+
+create or replace function bump_post_comments() returns trigger language plpgsql as $$
+begin
+  if (tg_op = 'INSERT') then
+    update posts set comments_count = comments_count + 1 where id = new.post_id;
+  elsif (tg_op = 'DELETE') then
+    update posts set comments_count = greatest(0, comments_count - 1) where id = old.post_id;
+  end if;
+  return null;
+end $$;
+
+drop trigger if exists trg_post_comments_count on post_comments;
+create trigger trg_post_comments_count
+  after insert or delete on post_comments
+  for each row execute function bump_post_comments();
+
+-- Stored, whitespace-collapsed plain-text excerpt for the Social blog list.
+alter table articles add column if not exists excerpt text
+  generated always as (left(regexp_replace(coalesce(body, ''), '\s+', ' ', 'g'), 200)) stored;

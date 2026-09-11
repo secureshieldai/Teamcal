@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -19,13 +20,16 @@ type Visibility = 'public' | 'followers' | 'community';
 
 export default function LiveSetupScreen() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, 'LiveSetup'>>();
+  const communityId = route.params?.communityId;
+  const communityName = route.params?.communityName;
   const [cameraPermission, requestCamera] = useCameraPermissions();
   const [micPermission, requestMic] = useMicrophonePermissions();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState<string | undefined>();
-  const [visibility, setVisibility] = useState<Visibility>('public');
+  const [visibility, setVisibility] = useState<Visibility>(communityId ? 'community' : 'public');
   const [allowComments, setAllowComments] = useState(true);
   const [allowReactions, setAllowReactions] = useState(true);
   const [facing, setFacing] = useState<'front' | 'back'>('front');
@@ -72,6 +76,7 @@ export default function LiveSetupScreen() {
         description: description.trim() || undefined,
         coverImage,
         visibility,
+        communityId: visibility === 'community' ? communityId : undefined,
         allowComments,
         allowReactions,
       });
@@ -93,7 +98,7 @@ export default function LiveSetupScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={s.headerTitle}>Go Live</Text>
+          <Text style={s.headerTitle}>{communityName ? `Go Live · ${communityName}` : 'Go Live'}</Text>
           <View style={{ width: 24 }} />
         </View>
 

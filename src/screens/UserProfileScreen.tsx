@@ -11,6 +11,7 @@ import { socialService, type PublicProfile } from '../services/api/social.servic
 import { postsService } from '../services/api/posts.service';
 import type { Post as ApiPost } from '../types/api';
 import PostCard, { type Post as PostCardPost } from '../components/PostCard';
+import { useSavedPostIds } from '../hooks/useSavedPostIds';
 import { useAuth } from '../context/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
@@ -36,6 +37,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const { userId, username } = route.params;
   const { user: me } = useAuth();
   const isOwnProfile = me?.id === userId;
+  const { savedIds, refetch: refetchSavedPosts } = useSavedPostIds();
 
   const [activeTab, setActiveTab] = useState<Tab>('Posts');
   const [profile, setProfile] = useState<PublicProfile | null>(null);
@@ -273,7 +275,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
                 </View>
               ) : (
                 <View style={{ gap: spacing.md }}>
-                  {posts.map(p => <PostCard key={p.id} post={toCardPost(p)} />)}
+                  {posts.map(p => <PostCard key={p.id} post={toCardPost(p)} saved={savedIds.has(p.id)} onSavedChange={refetchSavedPosts} />)}
                 </View>
               )}
             </ScrollView>

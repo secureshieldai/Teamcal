@@ -1,57 +1,53 @@
-const fetch = require('node-fetch');
+/**
+ * Claude Controller - NOW USING OPENAI
+ * This controller has been migrated to use OpenAI instead of Claude
+ * All Claude-related features now use OpenAI GPT-4o
+ */
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
-const CLAUDE_WORKSPACE_ID = process.env.CLAUDE_WORKSPACE_ID;
+const OpenAI = require("openai");
+
+const AI_ENABLED = Boolean(
+  process.env.OPENAI_API_KEY && 
+  !/^your_|placeholder|change-me|sk-proj-$/i.test(process.env.OPENAI_API_KEY)
+);
+
+let openai;
+if (AI_ENABLED) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 exports.chat = async (req, res) => {
   try {
-    const { messages, maxTokens = 1024, temperature = 1, system, model = 'claude-3-5-sonnet-20241022' } = req.body;
+    const { messages, maxTokens = 1024, temperature = 1, system, model = 'gpt-4o' } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    if (!CLAUDE_API_KEY) {
-      return res.status(500).json({ error: 'Claude API key not configured on server' });
+    if (!AI_ENABLED) {
+      return res.status(500).json({ error: 'OpenAI API key not configured on server' });
     }
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01',
-    };
+    const openaiMessages = system 
+      ? [{ role: 'system', content: system }, ...messages]
+      : messages;
 
-    // Add workspace ID if provided (for identity-linked API keys)
-    if (CLAUDE_WORKSPACE_ID) {
-      headers['anthropic-workspace-id'] = CLAUDE_WORKSPACE_ID;
-    }
-
-    const response = await fetch(CLAUDE_API_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        messages,
-        temperature,
-        ...(system && { system }),
-      }),
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || model,
+      messages: openaiMessages,
+      max_tokens: maxTokens,
+      temperature: temperature,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Claude API request failed');
-    }
-
-    const data = await response.json();
     res.json({
-      text: data.content[0]?.text || '',
-      usage: data.usage,
-      model: data.model,
+      text: completion.choices[0].message.content || '',
+      usage: completion.usage,
+      model: completion.model,
     });
   } catch (error) {
-    console.error('Claude API error:', error);
+    console.error('OpenAI API error:', error);
     res.status(500).json({ error: error.message });
   }
 };

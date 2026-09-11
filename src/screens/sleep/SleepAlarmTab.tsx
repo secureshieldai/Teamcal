@@ -1,11 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { useApiQuery } from '../../hooks/useApiQuery';
 import { sleepService, type SleepAnalytics } from '../../services/api/sleep.service';
 
 const SOUNDS = ['Sunrise', 'Forest', 'Ocean', 'Birds', 'Chimes'];
+
+// Map sound names to audio files
+// Note: Sound files need to be added to assets/sounds/ directory
+// See assets/sounds/README.md for requirements
+const SOUND_FILES: Record<string, any> = {};
+
+// Lazy load sound files to avoid require errors if files don't exist
+try {
+  SOUND_FILES.Sunrise = require('../../../assets/sounds/sunrise.mp3');
+} catch (e) {}
+try {
+  SOUND_FILES.Forest = require('../../../assets/sounds/forest.mp3');
+} catch (e) {}
+try {
+  SOUND_FILES.Ocean = require('../../../assets/sounds/ocean.mp3');
+} catch (e) {}
+try {
+  SOUND_FILES.Birds = require('../../../assets/sounds/birds.mp3');
+} catch (e) {}
+try {
+  SOUND_FILES.Chimes = require('../../../assets/sounds/chimes.mp3');
+} catch (e) {}
 const WAKE_WINDOW_MIN = 5;
 const WAKE_WINDOW_MAX = 60;
 
@@ -29,8 +52,15 @@ export default function SleepAlarmTab() {
   const [editingTime, setEditingTime] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [audioInstance, setAudioInstance] = useState<Audio.Sound | null>(null);
 
   useEffect(() => {
+    // Configure audio mode
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+    });
+
     sleepService
       .getAlarmPrefs()
       .then((prefs) => {
@@ -40,6 +70,13 @@ export default function SleepAlarmTab() {
         setSound(prefs.sound);
       })
       .finally(() => setLoaded(true));
+
+    // Cleanup audio on unmount
+    return () => {
+      if (audioInstance) {
+        audioInstance.unloadAsync();
+      }
+    };
   }, []);
 
   const { h, m } = parseTime(wakeTime);
@@ -48,6 +85,43 @@ export default function SleepAlarmTab() {
 
   const adjustHour = (delta: number) => setWakeTime(formatTime(h + delta, m));
   const adjustMinute = (delta: number) => setWakeTime(formatTime(h, m + delta * 5));
+
+  const playSound = async (soundName: string) => {
+    try {
+      // Check if sound file exists
+      if (!SOUND_FILES[soundName]) {
+        setSound(soundName);
+        Alert.alert(
+          'Sound preview unavailable',
+          `${soundName} sound file not found. Add MP3 files to assets/sounds/ directory. See assets/sounds/README.md for details.`
+        );
+        return;
+      }
+
+      // Stop and unload previous sound if any
+      if (audioInstance) {
+        await audioInstance.stopAsync();
+        await audioInstance.unloadAsync();
+      }
+
+      // Load and play new sound
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        SOUND_FILES[soundName],
+        { shouldPlay: true, volume: 0.8 }
+      );
+      setAudioInstance(newSound);
+      setSound(soundName);
+
+      // Auto-stop after 3 seconds preview
+      setTimeout(async () => {
+        await newSound.stopAsync();
+      }, 3000);
+    } catch (error) {
+      console.error('Error playing sound:', error);
+      setSound(soundName);
+      Alert.alert('Sound preview failed', 'Unable to play sound preview.');
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -144,7 +218,7 @@ export default function SleepAlarmTab() {
         <Text style={styles.rowTitle}>Sound</Text>
         <View style={styles.soundRow}>
           {SOUNDS.map((s) => (
-            <TouchableOpacity key={s} style={[styles.soundChip, sound === s && styles.soundChipActive]} onPress={() => setSound(s)}>
+            <TouchableOpacity key={s} style={[styles.soundChip, sound === s && styles.soundChipActive]} onPress={() => playSound(s)}>
               <Text style={[styles.soundChipText, sound === s && styles.soundChipTextActive]}>{s}</Text>
             </TouchableOpacity>
           ))}

@@ -162,6 +162,7 @@ create table if not exists posts (
   image           text,
   image_urls      text[] not null default '{}',
   likes           int default 0,
+  comments_count  int not null default 0,
   liked_by        uuid[] default '{}',
   community       text,         -- group id when post belongs to a group
   community_cover text,
@@ -205,6 +206,40 @@ create table if not exists post_likes (
 
 create index if not exists idx_post_likes_user on post_likes(user_id, created_at desc);
 
+-- Keep posts.likes / posts.comments_count denormalized so the feed never has to
+-- count engagement rows at read time (see enrichPosts / migration 020).
+create or replace function bump_post_likes() returns trigger language plpgsql as $$
+begin
+  if (tg_op = 'INSERT') then
+    update posts set likes = likes + 1 where id = new.post_id;
+  elsif (tg_op = 'DELETE') then
+    update posts set likes = greatest(0, likes - 1) where id = old.post_id;
+  end if;
+  return null;
+end $$;
+
+do $$ begin
+  create trigger trg_post_likes_count
+    after insert or delete on post_likes
+    for each row execute function bump_post_likes();
+exception when duplicate_object then null; end $$;
+
+create or replace function bump_post_comments() returns trigger language plpgsql as $$
+begin
+  if (tg_op = 'INSERT') then
+    update posts set comments_count = comments_count + 1 where id = new.post_id;
+  elsif (tg_op = 'DELETE') then
+    update posts set comments_count = greatest(0, comments_count - 1) where id = old.post_id;
+  end if;
+  return null;
+end $$;
+
+do $$ begin
+  create trigger trg_post_comments_count
+    after insert or delete on post_comments
+    for each row execute function bump_post_comments();
+exception when duplicate_object then null; end $$;
+
 -- Creator publishing data used by /api/blogs.
 create table if not exists blog_sites (
   id                  uuid primary key default gen_random_uuid(),
@@ -239,6 +274,7 @@ create table if not exists articles (
   title         text not null,
   cover         text,
   body          text default '',
+  excerpt       text generated always as (left(regexp_replace(coalesce(body, ''), '\s+', ' ', 'g'), 200)) stored,
   category      text,
   tags          text[] default '{}',
   status        text default 'draft',

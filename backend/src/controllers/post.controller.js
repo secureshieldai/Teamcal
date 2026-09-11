@@ -2,7 +2,35 @@ const { supabase } = require("../config/supabase");
 const { notifySafely } = require("../services/notification.service");
 const { uploadPublicImage, uploadPublicVideo } = require("../services/storage.service");
 
-async function enrichPosts(posts,userId){const ids=(posts||[]).map(x=>x.id);if(!ids.length)return posts||[];const [{data:comments},{data:likes}]=await Promise.all([supabase.from('post_comments').select('post_id').in('post_id',ids),supabase.from('post_likes').select('post_id,user_id').in('post_id',ids)]);const commentCounts={};const likeCounts={};(comments||[]).forEach(x=>commentCounts[x.post_id]=(commentCounts[x.post_id]||0)+1);(likes||[]).forEach(x=>likeCounts[x.post_id]=(likeCounts[x.post_id]||0)+1);return posts.map(x=>({...x,likes:likeCounts[x.id]||0,comments_count:commentCounts[x.id]||0,liked:(likes||[]).some(l=>l.post_id===x.id&&l.user_id===userId)}));}
+/**
+ * Attach engagement info to a page of posts.
+ *
+ * `posts.likes` and `posts.comments_count` are denormalized counters kept up to
+ * date by DB triggers (migration 020), so we read them straight off the row.
+ * The only per-request lookup is which of these posts the current user liked,
+ * and that is bounded to the page size (<=50 rows) via the (user_id, post_id)
+ * index. The previous version fetched every like row and every comment row for
+ * the page, which grew with total engagement and made the feed take tens of
+ * seconds once posts accumulated activity.
+ */
+async function enrichPosts(posts, userId) {
+  const list = posts || [];
+  if (!list.length) return list;
+  const ids = list.map((x) => x.id);
+  const { data: myLikes, error } = await supabase
+    .from("post_likes")
+    .select("post_id")
+    .eq("user_id", userId)
+    .in("post_id", ids);
+  if (error) throw error;
+  const likedIds = new Set((myLikes || []).map((x) => x.post_id));
+  return list.map((x) => ({
+    ...x,
+    likes: x.likes || 0,
+    comments_count: x.comments_count || 0,
+    liked: likedIds.has(x.id),
+  }));
+}
 
 /** POST /api/posts */
 async function createPost(req, res, next) {
@@ -139,13 +167,28 @@ async function getUserPosts(req, res, next) {
   }
 }
 
-/** GET /api/posts/feed?limit=20&skip=0 */
+/**
+ * GET /api/posts/feed?limit=20&before=<ISO timestamp>
+ *
+ * Keyset pagination: pass the `created_at` of the last row you have as `before`
+ * to get the next page. This scans the (created_at desc) partial index straight
+ * to the cursor, unlike `skip`/OFFSET which re-reads and discards every earlier
+ * row on each page. `skip` is still honored for older clients.
+ *
+ * `community IS NULL` = top-level posts only. Group posts (community = group id)
+ * have their own /groups/:id/activity feed which enforces private-group
+ * membership, so they must not surface here; stories (community = 'story') are
+ * excluded by the same clause. This also lets the planner use the
+ * `idx_posts_feed` partial index instead of the non-sargable OR/neq it replaces.
+ */
 async function getFeed(req, res, next) {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
+    const before = req.query.before ? new Date(req.query.before) : null;
+    const hasBefore = before && !Number.isNaN(before.getTime());
     const skip = Number(req.query.skip) || 0;
 
-    const { data: posts, error } = await supabase
+    let query = supabase
       .from("posts")
       .select(`
         *,
@@ -154,12 +197,19 @@ async function getFeed(req, res, next) {
         )
       `)
       .is("deleted_at", null)
-      .or("community.is.null,community.neq.story")
-      .order("created_at", { ascending: false })
-      .range(skip, skip + limit - 1);
+      .is("community", null)
+      .order("created_at", { ascending: false });
 
+    if (hasBefore) {
+      query = query.lt("created_at", before.toISOString()).limit(limit);
+    } else {
+      query = query.range(skip, skip + limit - 1);
+    }
+
+    const { data: posts, error } = await query;
     if (error) throw error;
-    res.json({ success: true, posts:await enrichPosts(posts,req.user.id) });
+
+    res.json({ success: true, posts: await enrichPosts(posts, req.user.id) });
   } catch (err) {
     next(err);
   }
@@ -189,16 +239,18 @@ async function likePost(req, res, next) {
       const { error: likeError } = await supabase.from("post_likes").insert({ post_id: post.id, user_id: uid });
       if (likeError) throw likeError;
     }
-    const { count: newLikes, error: countError } = await supabase.from("post_likes")
-      .select("*", { count: "exact", head: true }).eq("post_id", post.id);
-    if (countError) throw countError;
-    await supabase.from("posts").update({ likes: newLikes || 0 }).eq("id", post.id);
+    // posts.likes is maintained by the trg_post_likes_count trigger (migration
+    // 020); just read the fresh value back for the response.
+    const { data: fresh, error: freshError } = await supabase.from("posts")
+      .select("likes").eq("id", post.id).single();
+    if (freshError) throw freshError;
+    const newLikes = fresh?.likes || 0;
 
     if (!alreadyLiked && post.user_id !== uid) {
       notifySafely(post.user_id, "like", "New like", "Someone liked your post.", { actorId: uid, entityId: post.id });
     }
 
-    res.json({ success: true, likes: newLikes || 0, liked: !alreadyLiked });
+    res.json({ success: true, likes: newLikes, liked: !alreadyLiked });
   } catch (err) {
     next(err);
   }

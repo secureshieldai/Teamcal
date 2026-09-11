@@ -1,13 +1,16 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const OpenAI = require("openai");
 
-// Same guard pattern as coach.controller.js
+// OpenAI guard pattern
 const AI_ENABLED = Boolean(
-  process.env.GEMINI_API_KEY && !/^your_|placeholder|change-me/i.test(process.env.GEMINI_API_KEY)
+  process.env.OPENAI_API_KEY && 
+  !/^your_|placeholder|change-me|sk-proj-$/i.test(process.env.OPENAI_API_KEY)
 );
-let genAI, model;
+
+let openai;
 if (AI_ENABLED) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 }
 
 // Prohibited data the bot must never solicit or accept.
@@ -117,18 +120,28 @@ Keep replies concise (2-5 sentences). No markdown headers, no bullet lists.
 ${kbText || "(empty)"}
 === END KNOWLEDGE BASE ===`;
 
-  const convo = history
-    .slice(-10)
-    .map((m) => `${m.role === "user" ? "Customer" : "Assistant"}: ${m.content}`)
-    .join("\n");
-  const prompt = `${systemPrompt}\n\n${convo}\nCustomer: ${userMessage}\nAssistant:`;
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-10).map((m) => ({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.content
+    })),
+    { role: "user", content: userMessage }
+  ];
 
   try {
-    const result = await model.generateContent([prompt]);
-    const reply = result.response.text().trim();
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o",
+      messages,
+      max_tokens: 300,
+      temperature: 0.7,
+    });
+
+    const reply = completion.choices[0].message.content.trim();
     const handoffSuggested = /connect you with a person|connect you with a human|speak (to|with) (a|someone)/i.test(reply);
     return { reply: reply || HANDOFF_LINE, handoffSuggested };
   } catch (err) {
+    console.error('OpenAI bot error:', err);
     const answer = faqFallback(kb, userMessage);
     return { reply: answer || HANDOFF_LINE, handoffSuggested: !answer };
   }

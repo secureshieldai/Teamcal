@@ -87,13 +87,16 @@ export const postsService = {
     return data.url;
   },
   /**
-   * GET /api/posts/feed?limit=20&skip=0
-   * Returns { posts } with user relation joined
+   * GET /api/posts/feed?limit=20&before=<ISO timestamp>
+   * Returns { posts } with user relation joined. Pass `before` (the created_at
+   * of the last post you have) for keyset pagination; omit it for the first page.
    */
-  async getFeed(limit = 20, skip = 0) {
+  async getFeed(limit = 20, opts: { before?: string } = {}) {
+    const params: Record<string, string | number> = { limit };
+    if (opts.before) params.before = opts.before;
     const { data } = await apiClient.get<{ success: boolean; posts: Post[] }>(
       '/posts/feed',
-      { params: { limit, skip } }
+      { params }
     );
     return data.posts;
   },

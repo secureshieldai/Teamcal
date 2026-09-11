@@ -14,7 +14,10 @@ interface QueryState<T> {
 export function useApiQuery<T>(
   fetcher: () => Promise<T>,
   initialData: T,
-  deps: unknown[] = []
+  deps: unknown[] = [],
+  // Background poll cadence. Heavy list endpoints (feeds) should pass a longer
+  // interval — a 15s poll per screen does not scale to a large user base.
+  intervalMs = 15_000
 ) {
   const [state, setState] = useState<QueryState<T>>({
     data: initialData,
@@ -43,9 +46,10 @@ export function useApiQuery<T>(
 
   useEffect(() => {
     run();
-    const timer = setInterval(run, 15_000);
+    if (!intervalMs) return;
+    const timer = setInterval(run, intervalMs);
     return () => clearInterval(timer);
-  }, [run]);
+  }, [run, intervalMs]);
 
   return { ...state, refetch: run };
 }
