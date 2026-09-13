@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, Tou
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, spacing } from '../../theme';
-import { useClaudeAI } from '../../hooks/useClaudeAI';
+import { coachService } from '../../services/api/coach.service';
 
 const CAPTION_TONES = ['Professional', 'Casual', 'Funny', 'Motivational', 'Educational'] as const;
 type CaptionTone = typeof CAPTION_TONES[number];
@@ -18,7 +18,7 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState<CaptionTone>(CAPTION_TONES[0]);
   const [generated, setGenerated] = useState<string | null>(null);
-  const { generateCaption, loading } = useClaudeAI();
+  const [loading, setLoading] = useState(false);
 
   const close = () => {
     setTopic('');
@@ -29,12 +29,15 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
 
   const generate = async () => {
     if (!topic.trim()) return;
+    setLoading(true);
     try {
-      const context = `Topic: ${topic}\nTone: ${tone}`;
-      const result = await generateCaption(context);
-      setGenerated(result);
+      const prompt = `Generate an engaging social media caption for: ${topic}\nTone: ${tone}\nMake it catchy, relevant, and include relevant hashtags. Return ONLY the caption.`;
+      const result = await coachService.generateArticleContent({ action: 'chat', topic: prompt });
+      setGenerated(result.text || '');
     } catch (error) {
       console.error('Failed to generate caption:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,7 +111,7 @@ export default function AIAssistantModal({ visible, onClose, onUseCaption }: Pro
                 {loading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.actionText}>Generate with Claude AI</Text>
+                  <Text style={styles.actionText}>Generate caption</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>

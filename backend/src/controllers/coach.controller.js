@@ -8,8 +8,8 @@ const rateLimit = require("express-rate-limit");
 const { lookupUsdaBarcode } = require("../services/foodDataCentral.service");
 
 const AI_ENABLED = Boolean(
-  process.env.OPENAI_API_KEY && 
-  !/^your_|placeholder|change-me|sk-proj-$/i.test(process.env.OPENAI_API_KEY)
+  process.env.OPENAI_API_KEY &&
+  !/^(your_|placeholder|change-me)/i.test(process.env.OPENAI_API_KEY)
 );
 
 let openai;

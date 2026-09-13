@@ -6,7 +6,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { coachService, type ArticleHelperAction } from '../services/api/coach.service';
 import { colors, radii, shadow, spacing, typography } from '../theme';
-import { useClaudeAI } from '../hooks/useClaudeAI';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AIHelper'>;
 
@@ -27,7 +26,6 @@ export default function AIHelperScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(false);
   const [wordCount, setWordCount] = useState('500');
   const [showWordCount, setShowWordCount] = useState(false);
-  const { generateText, improveWriting, loading: claudeLoading } = useClaudeAI();
 
   const notAvailable = () => Alert.alert('Not available yet', 'This isn\'t supported in this build yet.');
 
@@ -54,35 +52,55 @@ export default function AIHelperScreen({ navigation, route }: Props) {
     
     try {
       let text = '';
-      
+      const articleTopic = topic || 'this article';
+
       switch (action) {
-        case 'write':
+        case 'write': {
           const words = wordCount ? parseInt(wordCount) : 500;
-          text = await generateText(`Write a comprehensive blog post about "${topic || 'this article'}" in approximately ${words} words. Make it engaging, informative, and well-structured.`, { maxTokens: 4000 });
+          const result = await coachService.generateArticleContent({
+            action: 'write',
+            topic: articleTopic,
+            instructions: `Approximately ${words} words. Make it engaging, informative, and well-structured.`,
+          });
+          text = result.text || '';
           break;
-          
-        case 'outline':
-          text = await generateText(`Create a detailed outline for an article about "${topic || 'this article'}". Include main sections and key points.`, { maxTokens: 1500 });
+        }
+
+        case 'outline': {
+          const result = await coachService.generateArticleContent({ action: 'outline', topic: articleTopic });
+          text = result.text || '';
           break;
-          
-        case 'intro':
-          text = await generateText(`Write an engaging and captivating introduction for an article about "${topic || 'this article'}". Hook the reader from the first sentence.`, { maxTokens: 800 });
+        }
+
+        case 'intro': {
+          const result = await coachService.generateArticleContent({ action: 'intro', topic: articleTopic });
+          text = result.text || '';
           break;
-          
-        case 'titles':
-          const titlesResult = await generateText(`Suggest 5 creative and engaging blog post titles about "${topic || 'this article'}". Format as a numbered list.`, { maxTokens: 500 });
-          text = titlesResult;
+        }
+
+        case 'titles': {
+          const result = await coachService.generateArticleContent({ action: 'titles', topic: articleTopic });
+          text = (result.titles || []).map((t, i) => `${i + 1}. ${t}`).join('\n');
           break;
-          
-        case 'improve':
-          text = await improveWriting(existingContent || topic);
+        }
+
+        case 'improve': {
+          const result = await coachService.generateArticleContent({
+            action: 'improve',
+            topic: articleTopic,
+            existingContent: existingContent || topic,
+          });
+          text = result.text || '';
           break;
-          
-        case 'chat':
-          text = await generateText(topic, { maxTokens: 2000 });
+        }
+
+        case 'chat': {
+          const result = await coachService.generateArticleContent({ action: 'chat', topic });
+          text = result.text || '';
           break;
+        }
       }
-      
+
       setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text, insertable: true }]);
     } catch (e) {
       setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: `Something went wrong: ${(e as Error).message}` }]);
@@ -126,8 +144,8 @@ export default function AIHelperScreen({ navigation, route }: Props) {
               <Ionicons name="sparkles" size={20} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.introTitle}>Hi! I'm Claude, your AI writing assistant</Text>
-              <Text style={styles.introSubtitle}>Powered by Claude AI, I can help you brainstorm ideas, write content, improve it, and more.</Text>
+              <Text style={styles.introTitle}>Hi! I'm your AI writing assistant</Text>
+              <Text style={styles.introSubtitle}>I can help you brainstorm ideas, write content, improve it, and more.</Text>
             </View>
           </View>
 
