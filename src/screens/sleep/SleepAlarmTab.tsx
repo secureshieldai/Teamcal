@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import { colors, radii, shadow, spacing } from '../../theme';
 import { useApiQuery } from '../../hooks/useApiQuery';
 import { sleepService, type SleepAnalytics } from '../../services/api/sleep.service';
@@ -54,15 +53,8 @@ export default function SleepAlarmTab() {
   const [editingTime, setEditingTime] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [audioInstance, setAudioInstance] = useState<Audio.Sound | null>(null);
 
   useEffect(() => {
-    // Configure audio mode
-    Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-    });
-
     sleepService
       .getAlarmPrefs()
       .then((prefs) => {
@@ -72,13 +64,6 @@ export default function SleepAlarmTab() {
         setSound(prefs.sound);
       })
       .finally(() => setLoaded(true));
-
-    // Cleanup audio on unmount
-    return () => {
-      if (audioInstance) {
-        audioInstance.unloadAsync();
-      }
-    };
   }, []);
 
   const { h, m } = parseTime(wakeTime);
@@ -89,40 +74,14 @@ export default function SleepAlarmTab() {
   const adjustMinute = (delta: number) => setWakeTime(formatTime(h, m + delta * 5));
 
   const playSound = async (soundName: string) => {
-    try {
-      // Check if sound file exists
-      if (!SOUND_FILES[soundName]) {
-        setSound(soundName);
-        Alert.alert(
-          'Sound preview unavailable',
-          `${soundName} sound file not found. Add MP3 files to assets/sounds/ directory. See assets/sounds/README.md for details.`
-        );
-        return;
-      }
-
-      // Stop and unload previous sound if any
-      if (audioInstance) {
-        await audioInstance.stopAsync();
-        await audioInstance.unloadAsync();
-      }
-
-      // Load and play new sound
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        SOUND_FILES[soundName],
-        { shouldPlay: true, volume: 0.8 }
-      );
-      setAudioInstance(newSound);
-      setSound(soundName);
-
-      // Auto-stop after 3 seconds preview
-      setTimeout(async () => {
-        await newSound.stopAsync();
-      }, 3000);
-    } catch (error) {
-      console.error('Error playing sound:', error);
-      setSound(soundName);
-      Alert.alert('Sound preview failed', 'Unable to play sound preview.');
-    }
+    // Temporarily disabled - sound files not added yet
+    // See assets/sounds/README.md for instructions
+    setSound(soundName);
+    Alert.alert(
+      'Sound Preview Unavailable',
+      `${soundName} sound selected and saved. Sound preview will be available after adding MP3 files to assets/sounds/. See the README in that folder for instructions.`,
+      [{ text: 'OK' }]
+    );
   };
 
   const save = async () => {
