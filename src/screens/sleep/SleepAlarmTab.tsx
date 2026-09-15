@@ -11,24 +11,26 @@ const SOUNDS = ['Sunrise', 'Forest', 'Ocean', 'Birds', 'Chimes'];
 // Map sound names to audio files
 // Note: Sound files need to be added to assets/sounds/ directory
 // See assets/sounds/README.md for requirements
+// IMPORTANT: Uncomment these once you add the MP3 files to assets/sounds/
 const SOUND_FILES: Record<string, any> = {};
 
-// Lazy load sound files to avoid require errors if files don't exist
-try {
-  SOUND_FILES.Sunrise = require('../../../assets/sounds/sunrise.mp3');
-} catch (e) {}
-try {
-  SOUND_FILES.Forest = require('../../../assets/sounds/forest.mp3');
-} catch (e) {}
-try {
-  SOUND_FILES.Ocean = require('../../../assets/sounds/ocean.mp3');
-} catch (e) {}
-try {
-  SOUND_FILES.Birds = require('../../../assets/sounds/birds.mp3');
-} catch (e) {}
-try {
-  SOUND_FILES.Chimes = require('../../../assets/sounds/chimes.mp3');
-} catch (e) {}
+// UNCOMMENT THESE LINES AFTER ADDING MP3 FILES:
+// try {
+//   SOUND_FILES.Sunrise = require('../../../assets/sounds/sunrise.mp3');
+// } catch (e) {}
+// try {
+//   SOUND_FILES.Forest = require('../../../assets/sounds/forest.mp3');
+// } catch (e) {}
+// try {
+//   SOUND_FILES.Ocean = require('../../../assets/sounds/ocean.mp3');
+// } catch (e) {}
+// try {
+//   SOUND_FILES.Birds = require('../../../assets/sounds/birds.mp3');
+// } catch (e) {}
+// try {
+//   SOUND_FILES.Chimes = require('../../../assets/sounds/chimes.mp3');
+// } catch (e) {}
+
 const WAKE_WINDOW_MIN = 5;
 const WAKE_WINDOW_MAX = 60;
 
