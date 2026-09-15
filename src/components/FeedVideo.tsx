@@ -14,7 +14,7 @@ import { colors } from '../theme';
 // Feed videos come in every shape (portrait phone clips, landscape, square).
 // We size the frame to the video's own aspect ratio so nothing is cropped,
 // clamped to a sane range so an extreme 9:16 clip doesn't eat the whole screen.
-const MIN_ASPECT = 0.8; // 4:5 portrait
+const MIN_ASPECT = 9 / 16; // full-height portrait (e.g. TikTok/Reels clips)
 const MAX_ASPECT = 16 / 9; // widescreen
 const DEFAULT_ASPECT = 1; // square, until the real size is known
 

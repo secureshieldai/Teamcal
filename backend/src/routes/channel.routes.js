@@ -10,6 +10,11 @@ router.get('/discover', channelController.discoverChannels);
 router.get('/trending', channelController.getTrending);
 router.get('/search', channelController.searchChannels);
 router.get('/category/:category', channelController.getByCategory);
+
+// Routes with specific prefixes must come before the generic '/:id' route
+router.get('/my/channels', protect, channelController.getMyChannels);
+router.get('/my/following', protect, channelController.getFollowingChannels);
+
 router.get('/:id', channelController.getChannel);
 router.get('/:id/posts', channelController.getChannelPosts);
 
@@ -17,8 +22,6 @@ router.get('/:id/posts', channelController.getChannelPosts);
 router.use(protect);
 
 router.post('/', channelController.createChannel);
-router.get('/my/channels', channelController.getMyChannels);
-router.get('/my/following', channelController.getFollowingChannels);
 
 router.put('/:id', channelOwner, channelController.updateChannel);
 router.delete('/:id', channelOwner, channelController.deleteChannel);

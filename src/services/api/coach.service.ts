@@ -5,6 +5,9 @@ export interface CoachChatContext {
   hydrationMl?: number;
   steps?: number;
   sleepHours?: number;
+  cyclePhase?: string;
+  cycleDay?: number;
+  nextPeriodInDays?: number;
 }
 
 export interface CoachSuggestion {

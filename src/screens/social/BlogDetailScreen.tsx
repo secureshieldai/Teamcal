@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
@@ -64,7 +64,7 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
   </View>{comments.filter(item=>item.parentCommentId===comment.id).reverse().map(reply=>renderComment(reply,depth+1))}</View>;}
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
@@ -75,7 +75,12 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {loading?<ActivityIndicator color={colors.primary} style={{marginTop:40}}/>:loadError?<Text style={{padding:spacing.lg,color:colors.macroProtein}}>Unable to load article: {loadError}</Text>:<ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+      {loading?<ActivityIndicator color={colors.primary} style={{marginTop:40}}/>:loadError?<Text style={{padding:spacing.lg,color:colors.macroProtein}}>Unable to load article: {loadError}</Text>:<ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Image source={{ uri: post.image }} style={styles.hero} />
 
         <View style={styles.body}>
@@ -133,24 +138,25 @@ export default function BlogDetailScreen({ route, navigation }: Props) {
         </View>
       </ScrollView>}
 
-      <View style={styles.composer}>
-        <View style={{flex:1}}>
-        {replyingTo?<View style={styles.replyingRow}><Text style={styles.replyingText}>Replying to {replyingTo.name}</Text><TouchableOpacity onPress={()=>setReplyingTo(null)}><Ionicons name="close-circle" size={17} color={colors.textMuted}/></TouchableOpacity></View>:null}
-        <TextInput
-          style={styles.composerInput}
-          placeholder={replyingTo?`Reply to ${replyingTo.name}...`:'Share your thoughts...'}
-          placeholderTextColor={colors.textMuted}
-          value={draft}
-          onChangeText={setDraft}
-          onSubmitEditing={sendComment}
-          returnKeyType="send"
-          editable={!postingComment}
-        />
+        <View style={styles.composer}>
+          <View style={{flex:1}}>
+          {replyingTo?<View style={styles.replyingRow}><Text style={styles.replyingText}>Replying to {replyingTo.name}</Text><TouchableOpacity onPress={()=>setReplyingTo(null)}><Ionicons name="close-circle" size={17} color={colors.textMuted}/></TouchableOpacity></View>:null}
+          <TextInput
+            style={styles.composerInput}
+            placeholder={replyingTo?`Reply to ${replyingTo.name}...`:'Share your thoughts...'}
+            placeholderTextColor={colors.textMuted}
+            value={draft}
+            onChangeText={setDraft}
+            onSubmitEditing={sendComment}
+            returnKeyType="send"
+            editable={!postingComment}
+          />
+          </View>
+          <TouchableOpacity style={[styles.sendButton,(!draft.trim()||postingComment)&&styles.sendButtonDisabled]} onPress={sendComment} disabled={!draft.trim()||postingComment}>
+            {postingComment?<ActivityIndicator size="small" color={colors.white}/>:<Ionicons name="send" size={16} color={colors.white} />}
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={[styles.sendButton,(!draft.trim()||postingComment)&&styles.sendButtonDisabled]} onPress={sendComment} disabled={!draft.trim()||postingComment}>
-          {postingComment?<ActivityIndicator size="small" color={colors.white}/>:<Ionicons name="send" size={16} color={colors.white} />}
-        </TouchableOpacity>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -197,7 +197,7 @@ export default function UploadVideoScreen({ navigation }: Props) {
           <CategoryDropdown value={category} onChange={setCategory} />
           <Field label="Tags" value={tags} onChangeText={setTags} placeholder="mindset, motivation, success" maxLength={100} />
           <LanguageDropdown value={language} onChange={setLanguage} />
-          <ThumbnailPicker uri={thumbnailUri} onPick={pickThumbnail} onAiHelper={() => navigation.navigate('AIHelper', { blogId: '', existingContent: title })} />
+          <ThumbnailPicker uri={thumbnailUri} onPick={pickThumbnail} />
         </ScrollView>
       )}
 

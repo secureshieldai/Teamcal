@@ -27,6 +27,13 @@ export default function CommunityScreen() {
           <Text style={styles.pageSubtitle}>Community, chats & stories</Text>
         </View>
         <TouchableOpacity
+          style={[styles.iconButton, tab === 'Me' && styles.iconButtonActive]}
+          onPress={() => setTab('Me')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="person-circle-outline" size={20} color={tab === 'Me' ? colors.white : colors.textPrimary} />
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.iconButton}
           onPress={() => navigation.navigate('GlobalSearch')}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -112,6 +119,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconButtonActive: {
+    backgroundColor: colors.primary,
   },
   tabsWrap: {
     paddingHorizontal: spacing.lg,
